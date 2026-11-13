@@ -1,0 +1,96 @@
+# Rar N Rush
+
+[English](README.md) · **Français**
+
+[![CI](https://github.com/werewolf004/Rar-N-Rush/actions/workflows/ci.yml/badge.svg)](https://github.com/werewolf004/Rar-N-Rush/actions/workflows/ci.yml)
+[![Licence : MIT OR Apache-2.0](https://img.shields.io/badge/licence-MIT%20OR%20Apache--2.0-blue.svg)](#licence)
+![Plateforme : Windows](https://img.shields.io/badge/plateforme-Windows%2010%2F11-lightgrey.svg)
+![MSRV 1.95](https://img.shields.io/badge/MSRV-1.95-orange.svg)
+
+Rar N Rush surveille ton dossier de téléchargements. Pour chaque jeu de fichiers, il vérifie les données PAR2 ou SFV, répare les fichiers abîmés si besoin, puis extrait automatiquement les archives RAR.
+
+Écrit en Rust avec une interface [egui](https://github.com/emilk/egui). Le concept s'inspire de l'application Par-N-Rar, mais le code est une réécriture indépendante.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/main-fr-dark.png">
+  <img alt="Fenêtre principale : quatre jeux de fichiers avec leur statut, leur progression et leur détail, et le journal en dessous" src="docs/screenshots/main-fr-light.png">
+</picture>
+
+## Fonctionnalités
+
+- **Surveillance d'un dossier** : le dossier surveillé (et, au choix, ses sous-dossiers) est analysé à intervalle régulier. Un jeu n'est traité qu'une fois ses fichiers stables : un téléchargement en cours n'est jamais touché.
+- **PAR2** : vérification et réparation via `par2.exe` ([par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) recommandé). S'il manque des blocs de récupération, le jeu attend et repart dès que de nouveaux fichiers arrivent.
+- **SFV** : vérification CRC32 native.
+- **RAR** : extraction avec la bibliothèque officielle UnRAR. Gère les archives multi-volumes (`.partN.rar`, `.rar` + `.r00`), les mots de passe (liste essayée automatiquement, ou saisie dans la fenêtre), les en-têtes chiffrés et les archives contenues dans une archive.
+- **Sécurité des données** : par défaut, un fichier existant n'est jamais écrasé (on utilise `nom (1).ext`). Les chemins qui sortiraient du dossier de destination sont refusés. Les fichiers sources peuvent être envoyés à la corbeille, jamais supprimés définitivement.
+- **Interface** : français ou anglais (suit Windows par défaut) ; thème clair, foncé ou automatique, qui suit Windows en direct.
+- **Portable** : les réglages sont enregistrés à côté de l'exécutable.
+
+## Installation
+
+1. Télécharge `rar-n-rush-vX.Y.Z-windows-x64.zip` depuis la page [Releases](https://github.com/werewolf004/Rar-N-Rush/releases).
+2. Vérifie l'archive avec le fichier `.sha256` publié à côté :
+   ```powershell
+   Get-FileHash .\rar-n-rush-vX.Y.Z-windows-x64.zip -Algorithm SHA256
+   ```
+3. Décompresse-la où tu veux et lance `rar-n-rush.exe`.
+4. Pour la réparation PAR2, place `par2.exe` à côté de `rar-n-rush.exe`, ajoute-le au `PATH` ou indique son chemin dans les réglages.
+
+Configuration requise : Windows 10 ou 11 (64 bits).
+
+## Prise en main
+
+Au premier lancement, choisis le dossier où arrivent tes téléchargements :
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/onboarding-fr.png">
+  <img alt="Premier lancement : un bouton invite à choisir le dossier à surveiller" src="docs/screenshots/onboarding-fr.png">
+</picture>
+
+La surveillance démarre tout de suite. Chaque jeu de fichiers apparaît dans la liste avec son statut :
+
+| Statut | Signification |
+|---|---|
+| En attente | Des fichiers arrivent encore. |
+| Prêt | Complet, attend son tour. |
+| Vérification / Réparation / Extraction | En cours de traitement. |
+| Mot de passe requis | Saisis le mot de passe dans la ligne et valide avec Entrée. |
+| Réparation impossible | Pas assez de blocs PAR2 : le jeu attend d'autres fichiers. |
+| Terminé | Extrait avec succès. |
+| Erreur | Voir la colonne Détail et le journal ; **Réessayer** relance le jeu. |
+| Ignoré | Ignoré par toi ; **Réessayer** le traite quand même. |
+
+Ouvre **Réglages** pour changer les dossiers, les délais, la langue, le thème et le comportement. Chaque option est décrite dans [docs/OPTIONS.fr.md](docs/OPTIONS.fr.md).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/settings-fr-dark.png">
+  <img alt="Fenêtre des réglages" src="docs/screenshots/settings-fr-light.png">
+</picture>
+
+## Documentation
+
+| Document | Contenu |
+|---|---|
+| [docs/OPTIONS.fr.md](docs/OPTIONS.fr.md) | Chaque réglage : nom, valeur par défaut, plage, effet |
+| [docs/DEPENDENCIES.fr.md](docs/DEPENDENCIES.fr.md) | Chaque dépendance et son rôle |
+| [docs/THIRD-PARTY-LICENSES.md](docs/THIRD-PARTY-LICENSES.md) | Les 215 crates du binaire, avec leurs licences |
+| [CHANGELOG.fr.md](CHANGELOG.fr.md) | Les changements de chaque version |
+| [ROADMAP.fr.md](ROADMAP.fr.md) | La suite prévue |
+| [CONTRIBUTING.fr.md](CONTRIBUTING.fr.md) | Compiler, tester et contribuer |
+| [SECURITY.fr.md](SECURITY.fr.md) | Modèle de sécurité et signalement d'une faille |
+
+## Compiler depuis les sources
+
+Il faut Rust 1.95 ou plus récent et les outils de build C++ de Visual Studio (MSVC), qui compilent UnRAR.
+
+```bash
+cargo build --release
+```
+
+L'exécutable est produit dans `target/release/rar-n-rush.exe`. Voir [CONTRIBUTING.fr.md](CONTRIBUTING.fr.md) pour les tests et contrôles.
+
+## Licence
+
+Rar N Rush est distribué au choix sous la [licence MIT](LICENSE-MIT) ou la [licence Apache 2.0](LICENSE-APACHE).
+
+La bibliothèque UnRAR embarquée est sous licence UnRAR : elle autorise l'extraction d'archives mais interdit d'utiliser son code pour recréer l'algorithme de compression RAR. Voir [docs/THIRD-PARTY-LICENSES.md](docs/THIRD-PARTY-LICENSES.md).

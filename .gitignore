@@ -1,0 +1,5 @@
+/target
+# Local runtime files written next to the executable
+rar-n-rush.toml
+rar-n-rush-processed.txt
+*.tmp

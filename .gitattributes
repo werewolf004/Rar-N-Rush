@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.rar binary
+*.par2 binary
+*.png binary
+*.cmd text eol=crlf
