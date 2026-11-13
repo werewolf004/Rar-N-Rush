@@ -11,7 +11,7 @@ use eframe::egui;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
 use rar_n_rush::engine::{Engine, Status};
-use rar_n_rush::settings::{LanguagePref, Settings, Store, ThemePref};
+use rar_n_rush::settings::{LanguagePref, LoadIssue, Settings, Store, ThemePref};
 use rar_n_rush::ui::App;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -91,6 +91,15 @@ impl Drop for Demo {
 }
 
 fn harness(settings: Settings, store_dir: &Path, gpu: bool) -> Harness<'static, App> {
+    harness_with_issue(settings, store_dir, gpu, None)
+}
+
+fn harness_with_issue(
+    settings: Settings,
+    store_dir: &Path,
+    gpu: bool,
+    issue: Option<LoadIssue>,
+) -> Harness<'static, App> {
     let theme = match settings.theme {
         ThemePref::Dark => egui::Theme::Dark,
         _ => egui::Theme::Light,
@@ -106,7 +115,7 @@ fn harness(settings: Settings, store_dir: &Path, gpu: bool) -> Harness<'static, 
     builder.build_eframe(move |cc| {
         let ctx = cc.egui_ctx.clone();
         let engine = Engine::start(settings, store.clone(), move || ctx.request_repaint()).unwrap();
-        App::new(&cc.egui_ctx, engine, store)
+        App::new(&cc.egui_ctx, engine, store, issue)
     })
 }
 
@@ -224,6 +233,25 @@ fn saving_settings_switches_language_live() {
     h.get_by_label("⚙  Réglages");
     let saved = Store::at(&state).load_settings().unwrap();
     assert_eq!(saved.language, LanguagePref::French);
+}
+
+#[test]
+fn settings_problem_is_shown_until_dismissed() {
+    let state = tempfile::tempdir().unwrap();
+    let issue = LoadIssue::InvalidValues {
+        keys: vec!["theme".into()],
+        backup: None,
+    };
+    let settings = Settings {
+        language: LanguagePref::English,
+        ..Settings::default()
+    };
+    let mut h = harness_with_issue(settings, state.path(), false, Some(issue));
+    frames(&mut h, 2);
+    h.get_by_label_contains("Invalid values were reset to their default: theme");
+    h.get_by_label("OK").click();
+    frames(&mut h, 2);
+    assert!(h.query_by_label_contains("Invalid values").is_none());
 }
 
 /// Regenerates `docs/screenshots/*.png`. Run with:

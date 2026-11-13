@@ -30,8 +30,15 @@ Rar N Rush processes files downloaded from the Internet, which must be treated a
 - Source files are sent to the **Recycle Bin**, never deleted permanently, and only after a fully successful run.
 - `par2.exe` is started without a shell, with arguments passed separately (no command injection), without a console window, and only from the path set by the user, the program folder or `PATH`.
 
+### No network access
+
+- Rar N Rush never connects to the Internet: **no update check**, no telemetry, no crash reporting.
+- This is enforced by `cargo deny`: HTTP, TLS and async networking crates (`reqwest`, `hyper`, `rustls`, `tokio`, `self_update`…) are banned, so CI fails if one ever enters the dependency graph.
+
 ### Persistent data
 
+- Settings are never silently lost: each key is read on its own, invalid values are reset individually, and the original file is backed up first (`rar-n-rush.toml.<date-time>.bak`). The user is told in a banner.
+- An existing settings file is always found again, next to the executable or in `%APPDATA%\RarNRush`, even after the executable is moved.
 - Settings and the processed-sets list are written atomically (temporary file then rename): a crash cannot leave a truncated file.
 - A set is recorded as processed **before** its status is shown, so a crash cannot cause it to be processed twice.
 - **Known limitation**: archive passwords are stored in plain text in `rar-n-rush.toml`, as stated next to the field in the settings window. Moving them to the Windows Credential Manager is planned for v0.3.0.

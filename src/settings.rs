@@ -192,19 +192,91 @@ impl Store {
         Self { dir: dir.into() }
     }
 
-    /// Portable store next to the executable, or `%APPDATA%\RarNRush` as a fallback.
-    pub fn portable() -> Self {
-        if let Some(dir) = std::env::current_exe()
+    /// Finds the settings folder for this computer (see [`Store::locate_in`]):
+    /// next to the executable (portable mode) or `%APPDATA%\RarNRush`.
+    pub fn locate() -> Self {
+        let beside_exe = std::env::current_exe()
             .ok()
-            .and_then(|p| p.parent().map(Path::to_path_buf))
-            && is_writable(&dir)
+            .and_then(|p| p.parent().map(Path::to_path_buf));
+        let appdata = std::env::var_os("APPDATA")
+            .map_or_else(|| PathBuf::from("."), PathBuf::from)
+            .join("RarNRush");
+        Self::locate_in(beside_exe, appdata)
+    }
+
+    /// Chooses between the `portable` folder and the `fallback` folder.
+    ///
+    /// An **existing** settings file always wins, so the configuration is found
+    /// again even if the executable was moved or its folder became read-only:
+    /// 1. settings file in `portable`;
+    /// 2. settings file in `fallback`;
+    /// 3. no file yet: `portable` if writable, otherwise `fallback`.
+    pub fn locate_in(portable: Option<PathBuf>, fallback: PathBuf) -> Self {
+        if let Some(dir) = &portable
+            && dir.join(SETTINGS_FILE).is_file()
         {
-            return Self { dir };
+            return Self { dir: dir.clone() };
         }
-        let base = std::env::var_os("APPDATA").map_or_else(|| PathBuf::from("."), PathBuf::from);
-        Self {
-            dir: base.join("RarNRush"),
+        if fallback.join(SETTINGS_FILE).is_file() {
+            return Self { dir: fallback };
         }
+        match portable {
+            Some(dir) if is_writable(&dir) => Self { dir },
+            _ => Self { dir: fallback },
+        }
+    }
+
+    /// Loads settings without ever failing, and **never loses** the user's values:
+    /// - a missing file gives the defaults;
+    /// - each key is read on its own: valid values are kept, invalid ones are reset
+    ///   to their default and reported;
+    /// - a file that is not valid TOML is kept aside under a backup name.
+    ///
+    /// Whenever something is reset, the original file is copied to a backup
+    /// before anything can overwrite it.
+    pub fn load(&self) -> Loaded {
+        let path = self.dir.join(SETTINGS_FILE);
+        let text = match fs::read_to_string(&path) {
+            Ok(text) => text,
+            Err(e) if e.kind() == io::ErrorKind::NotFound => return Loaded::clean(Settings::default()),
+            Err(e) => {
+                return Loaded {
+                    settings: Settings::default(),
+                    issue: Some(LoadIssue::Unreadable {
+                        path,
+                        error: e.to_string(),
+                    }),
+                };
+            }
+        };
+        // Notepad may save UTF-8 with a byte-order mark, which TOML rejects.
+        let text = text.strip_prefix('\u{feff}').unwrap_or(&text);
+        let Ok(table) = text.parse::<toml::Table>() else {
+            return Loaded {
+                settings: Settings::default(),
+                issue: Some(LoadIssue::Corrupt {
+                    backup: self.backup(&path),
+                }),
+            };
+        };
+        let (settings, invalid_keys) = merge_valid_keys(table);
+        if invalid_keys.is_empty() {
+            return Loaded::clean(settings);
+        }
+        Loaded {
+            settings,
+            issue: Some(LoadIssue::InvalidValues {
+                keys: invalid_keys,
+                backup: self.backup(&path),
+            }),
+        }
+    }
+
+    /// Copies `path` to `rar-n-rush.toml.<date-time>.bak`. `None` if the copy failed.
+    fn backup(&self, path: &Path) -> Option<PathBuf> {
+        let stamp = chrono::Local::now().format("%Y%m%d-%H%M%S");
+        let backup = self.dir.join(format!("{SETTINGS_FILE}.{stamp}.bak"));
+        fs::copy(path, &backup).ok().map(|_| backup)
     }
 
     /// Folder used by this store.
@@ -276,6 +348,75 @@ impl Store {
         }
         fs::rename(&tmp, &path).map_err(io_err(&path))
     }
+}
+
+/// Result of [`Store::load`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Loaded {
+    /// Settings to use.
+    pub settings: Settings,
+    /// Problem found in the settings file, to show to the user.
+    pub issue: Option<LoadIssue>,
+}
+
+impl Loaded {
+    fn clean(settings: Settings) -> Self {
+        Self {
+            settings,
+            issue: None,
+        }
+    }
+}
+
+/// Problem found while loading the settings file.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum LoadIssue {
+    /// The file could not be read (permissions, lock…). Defaults are used.
+    Unreadable {
+        /// Settings file.
+        path: PathBuf,
+        /// System error message.
+        error: String,
+    },
+    /// The file is not valid TOML. Defaults are used; the file was copied to `backup`.
+    Corrupt {
+        /// Copy of the original file, if it could be made.
+        backup: Option<PathBuf>,
+    },
+    /// Some values were invalid and reset to their default; the others were kept.
+    InvalidValues {
+        /// Keys that were reset.
+        keys: Vec<String>,
+        /// Copy of the original file, if it could be made.
+        backup: Option<PathBuf>,
+    },
+}
+
+/// Starts from the defaults and applies every key of `table` that deserialises
+/// correctly on its own. Returns the settings and the names of rejected keys.
+/// Unknown keys (e.g. from a newer version) are ignored, not reported.
+fn merge_valid_keys(table: toml::Table) -> (Settings, Vec<String>) {
+    let Ok(toml::Value::Table(mut merged)) = toml::Value::try_from(Settings::default()) else {
+        return (Settings::default(), Vec::new());
+    };
+    let mut invalid = Vec::new();
+    for (key, value) in table {
+        let mut candidate = merged.clone();
+        candidate.insert(key.clone(), value);
+        if toml::Value::Table(candidate.clone())
+            .try_into::<Settings>()
+            .is_ok()
+        {
+            merged = candidate;
+        } else {
+            invalid.push(key);
+        }
+    }
+    let settings = toml::Value::Table(merged)
+        .try_into::<Settings>()
+        .unwrap_or_default()
+        .validated();
+    (settings, invalid)
 }
 
 fn is_writable(dir: &Path) -> bool {
@@ -355,6 +496,128 @@ mod tests {
             Store::at(dir.path()).load_settings(),
             Err(SettingsError::Parse { .. })
         ));
+    }
+
+    fn issue_backup(issue: Option<&LoadIssue>) -> PathBuf {
+        match issue {
+            Some(
+                LoadIssue::Corrupt { backup: Some(b) } | LoadIssue::InvalidValues { backup: Some(b), .. },
+            ) => b.clone(),
+            other => panic!("expected a backup, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn load_keeps_valid_values_and_resets_only_invalid_ones() {
+        let dir = tempfile::tempdir().unwrap();
+        let original = "watch_dir = 'D:\\dl'\nscan_interval_secs = 'often'\ntheme = 'purple'\n\
+                        passwords = ['a', 'b']\nfuture_option = 42\n";
+        fs::write(dir.path().join(SETTINGS_FILE), original).unwrap();
+        let loaded = Store::at(dir.path()).load();
+        assert_eq!(loaded.settings.watch_dir, "D:\\dl");
+        assert_eq!(loaded.settings.passwords, vec!["a".to_owned(), "b".to_owned()]);
+        assert_eq!(
+            loaded.settings.scan_interval_secs,
+            Settings::default().scan_interval_secs
+        );
+        assert_eq!(loaded.settings.theme, ThemePref::System);
+        match &loaded.issue {
+            Some(LoadIssue::InvalidValues { keys, .. }) => {
+                let mut keys = keys.clone();
+                keys.sort();
+                assert_eq!(keys, vec!["scan_interval_secs".to_owned(), "theme".to_owned()]);
+            }
+            other => panic!("unexpected {other:?}"),
+        }
+        // The original file is copied before anything can overwrite it.
+        let backup = issue_backup(loaded.issue.as_ref());
+        assert_eq!(fs::read_to_string(backup).unwrap(), original);
+        assert_eq!(
+            fs::read_to_string(dir.path().join(SETTINGS_FILE)).unwrap(),
+            original
+        );
+    }
+
+    #[test]
+    fn corrupt_file_is_backed_up_not_lost() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join(SETTINGS_FILE), "watch_dir = 'unterminated").unwrap();
+        let loaded = Store::at(dir.path()).load();
+        assert_eq!(loaded.settings, Settings::default());
+        let backup = issue_backup(loaded.issue.as_ref());
+        assert_eq!(fs::read_to_string(backup).unwrap(), "watch_dir = 'unterminated");
+    }
+
+    #[test]
+    fn utf8_bom_from_notepad_is_accepted() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join(SETTINGS_FILE), "\u{feff}watch_dir = 'X'\n").unwrap();
+        let loaded = Store::at(dir.path()).load();
+        assert_eq!(loaded.issue, None);
+        assert_eq!(loaded.settings.watch_dir, "X");
+    }
+
+    #[test]
+    fn unknown_keys_are_not_an_issue() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(
+            dir.path().join(SETTINGS_FILE),
+            "watch_dir = 'X'\nnew_in_v9 = true\n",
+        )
+        .unwrap();
+        assert_eq!(Store::at(dir.path()).load().issue, None);
+    }
+
+    #[test]
+    fn every_setting_survives_save_and_load() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::at(dir.path());
+        let s = Settings {
+            watch_dir: "D:\\in".into(),
+            extract_dir: "E:\\out".into(),
+            create_subfolder: false,
+            recursive: false,
+            par2_path: "C:\\tools\\par2.exe".into(),
+            delete_after_success: true,
+            extract_nested: false,
+            overwrite_existing: true,
+            scan_interval_secs: 42,
+            stable_secs: 7,
+            passwords: vec!["p1".into(), "p é 2".into()],
+            autostart: false,
+            language: LanguagePref::French,
+            theme: ThemePref::Dark,
+        };
+        for _ in 0..3 {
+            store.save_settings(&s).unwrap(); // repeated saves replace the file in place
+        }
+        assert_eq!(store.load(), Loaded::clean(s));
+    }
+
+    #[test]
+    fn locate_finds_the_existing_configuration() {
+        let root = tempfile::tempdir().unwrap();
+        let (portable, fallback) = (root.path().join("app"), root.path().join("appdata"));
+        fs::create_dir_all(&portable).unwrap();
+        fs::create_dir_all(&fallback).unwrap();
+
+        // Fresh install: portable folder when writable, fallback otherwise.
+        assert_eq!(
+            Store::locate_in(Some(portable.clone()), fallback.clone()).dir(),
+            portable
+        );
+        assert_eq!(Store::locate_in(None, fallback.clone()).dir(), fallback);
+
+        // A file in the fallback folder is found even though the portable folder is writable.
+        fs::write(fallback.join(SETTINGS_FILE), "").unwrap();
+        assert_eq!(
+            Store::locate_in(Some(portable.clone()), fallback.clone()).dir(),
+            fallback
+        );
+
+        // A file next to the executable wins over the fallback.
+        fs::write(portable.join(SETTINGS_FILE), "").unwrap();
+        assert_eq!(Store::locate_in(Some(portable.clone()), fallback).dir(), portable);
     }
 
     #[test]

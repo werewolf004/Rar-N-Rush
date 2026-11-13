@@ -24,7 +24,8 @@ Rar N Rush surveille ton dossier de téléchargements. Pour chaque jeu de fichie
 - **RAR** : extraction avec la bibliothèque officielle UnRAR. Gère les archives multi-volumes (`.partN.rar`, `.rar` + `.r00`), les mots de passe (liste essayée automatiquement, ou saisie dans la fenêtre), les en-têtes chiffrés et les archives contenues dans une archive.
 - **Sécurité des données** : par défaut, un fichier existant n'est jamais écrasé (on utilise `nom (1).ext`). Les chemins qui sortiraient du dossier de destination sont refusés. Les fichiers sources peuvent être envoyés à la corbeille, jamais supprimés définitivement.
 - **Interface** : français ou anglais (suit Windows par défaut) ; thème clair, foncé ou automatique, qui suit Windows en direct.
-- **Portable** : les réglages sont enregistrés à côté de l'exécutable.
+- **Réglages fiables** : fichier portable à côté de l'exécutable, retrouvé même si tu le déplaces ; une valeur invalide est remise par défaut individuellement (jamais tout le fichier) après une copie de sauvegarde, et tu en es averti.
+- **Hors ligne** : aucune vérification de mise à jour, aucune télémétrie, aucun accès réseau. La mise à jour reste ton choix : télécharge une nouvelle release quand tu le veux.
 
 ## Installation
 

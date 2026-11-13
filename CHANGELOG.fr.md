@@ -21,7 +21,9 @@ Première version publique : toute la chaîne de traitement, des fondations qual
 - Interface egui : liste des jeux avec statut, progression et détail, actions Ignorer, Réessayer, Ouvrir et Retirer, journal filtrable, fenêtre des réglages.
 - Interface en français et en anglais, qui suit la langue de Windows par défaut.
 - Thème clair, foncé ou automatique (suit Windows en direct).
-- Réglages portables à côté de l'exécutable avec écriture atomique, repli sur `%APPDATA%\RarNRush`.
+- Réglages portables à côté de l'exécutable avec écriture atomique, repli sur `%APPDATA%\RarNRush`. Un fichier de réglages existant est toujours retrouvé (d'abord à côté de l'exécutable, puis dans `%APPDATA%`), même après un déplacement de l'exécutable.
+- Les réglages ne sont jamais perdus en silence : chaque clé est chargée séparément, une valeur invalide est remise par défaut individuellement après une copie de sauvegarde (`rar-n-rush.toml.<date-heure>.bak`), et un bandeau avertit l'utilisateur. Le BOM UTF-8 du Bloc-notes est accepté.
+- Aucun accès réseau : ni vérification de mise à jour, ni télémétrie. Les crates réseau sont interdits par `cargo deny`.
 - Documentation en français et en anglais : README, référence des réglages, dépendances, guide de contribution, politique de sécurité, feuille de route, captures générées hors écran.
 - CI (GitHub Actions) : formatage, `clippy::pedantic` avec avertissements bloquants, tests unitaires, d'intégration et d'interface sans fenêtre, vérification de la MSRV, `cargo deny`. Workflow de release qui publie le binaire, son SHA-256 et la section correspondante de ce journal.
 

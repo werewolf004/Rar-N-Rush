@@ -29,6 +29,22 @@ confidence-threshold = 0.9
 multiple-versions = "allow"
 wildcards = "deny"
 allow-wildcard-paths = true
+# Rar N Rush never goes online: no update check, no telemetry. Any HTTP/TLS/async
+# networking crate entering the dependency graph fails the build.
+deny = [
+    { crate = "reqwest", reason = "no network access by design" },
+    { crate = "ureq", reason = "no network access by design" },
+    { crate = "hyper", reason = "no network access by design" },
+    { crate = "curl", reason = "no network access by design" },
+    { crate = "isahc", reason = "no network access by design" },
+    { crate = "attohttpc", reason = "no network access by design" },
+    { crate = "rustls", reason = "no network access by design" },
+    { crate = "native-tls", reason = "no network access by design" },
+    { crate = "openssl", reason = "no network access by design" },
+    { crate = "tokio", reason = "no network access by design" },
+    { crate = "self_update", reason = "no update check by design" },
+    { crate = "self-replace", reason = "no update check by design" },
+]
 
 [sources]
 unknown-registry = "deny"

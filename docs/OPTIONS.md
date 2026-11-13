@@ -2,9 +2,26 @@
 
 **English** · [Français](OPTIONS.fr.md)
 
-Every setting is available in the **Settings** window and stored in `rar-n-rush.toml`. That file sits next to `rar-n-rush.exe` (portable mode), or in `%APPDATA%\RarNRush` when the program folder is not writable.
+Every setting is available in the **Settings** window and stored in `rar-n-rush.toml`. Changes apply as soon as you click **Save**; the file is written atomically (a crash can never leave it half-written).
 
-Missing keys take their default value, so an old or partial file keeps working. Out-of-range numbers are clamped to the allowed range when the file is loaded.
+## Where the file is
+
+At start-up, Rar N Rush looks for the file in this order and uses the **first one that exists**, so your configuration is found again even if you move the executable:
+
+1. next to `rar-n-rush.exe` (portable mode);
+2. in `%APPDATA%\RarNRush`.
+
+On a first start (no file anywhere), it is created next to `rar-n-rush.exe`, or in `%APPDATA%\RarNRush` when the program folder is not writable (for example under `Program Files`).
+
+## If the file has a problem
+
+Your settings are never silently lost:
+
+- a missing key takes its default value (an old or partial file keeps working); unknown keys are ignored;
+- each key is read on its own: **valid values are kept**, only invalid ones are reset to their default;
+- out-of-range numbers are clamped to the allowed range;
+- a byte-order mark added by Notepad is accepted;
+- whenever something is reset, the original file is first copied to `rar-n-rush.toml.<date-time>.bak`, and a banner at the top of the window says which keys were reset and where the copy is.
 
 ![Settings window](screenshots/settings-en-light.png)
 

@@ -21,7 +21,9 @@ First public version: the complete processing chain, a quality foundation and th
 - egui interface: list of sets with status, progress and detail, Skip, Retry, Open folder and Remove actions, filterable log, settings window.
 - English and French interface, following the Windows language by default.
 - Light, dark or automatic theme (follows Windows live).
-- Portable settings next to the executable with atomic writes, falling back to `%APPDATA%\RarNRush`.
+- Portable settings next to the executable with atomic writes, falling back to `%APPDATA%\RarNRush`. An existing settings file is always found again (next to the executable first, then `%APPDATA%`), even after the executable is moved.
+- Settings are never silently lost: each key is loaded on its own, invalid values are reset individually after a backup copy (`rar-n-rush.toml.<date-time>.bak`), and a banner tells the user. A UTF-8 byte-order mark (Notepad) is accepted.
+- No network access at all: no update check, no telemetry. Networking crates are banned by `cargo deny`.
 - Documentation in English and French: README, settings reference, dependencies, contributing guide, security policy, roadmap, screenshots generated off-screen.
 - CI (GitHub Actions): formatting, `clippy::pedantic` with warnings as errors, unit, integration and headless UI tests, MSRV check, `cargo deny`. Release workflow that publishes the binary, its SHA-256 and the matching changelog section.
 

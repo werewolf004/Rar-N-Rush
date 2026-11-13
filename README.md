@@ -24,7 +24,8 @@ Written in Rust with an [egui](https://github.com/emilk/egui) interface. The con
 - **RAR**: extraction with the official UnRAR library. Supports multi-volume archives (`.partN.rar`, `.rar` + `.r00`), passwords (a list tried automatically, or typed in the window), encrypted headers and archives nested inside archives.
 - **Data safety**: existing files are never overwritten by default (`name (1).ext` is used instead). Paths that would escape the destination folder are refused. Source files can be sent to the Recycle Bin, never deleted permanently.
 - **Interface**: English or French (follows Windows by default); light, dark or automatic theme following Windows live.
-- **Portable**: settings live next to the executable.
+- **Reliable settings**: portable file next to the executable, found again even if you move it; invalid values are reset one by one (never the whole file) after a backup copy, and you are told about it.
+- **Offline**: no update check, no telemetry, no network access at all. Updating is your choice: download a new release when you want one.
 
 ## Installation
 

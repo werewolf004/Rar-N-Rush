@@ -2,9 +2,26 @@
 
 [English](OPTIONS.md) · **Français**
 
-Chaque réglage est accessible dans la fenêtre **Réglages** et enregistré dans `rar-n-rush.toml`. Ce fichier se trouve à côté de `rar-n-rush.exe` (mode portable), ou dans `%APPDATA%\RarNRush` quand le dossier du programme est protégé en écriture.
+Chaque réglage est accessible dans la fenêtre **Réglages** et enregistré dans `rar-n-rush.toml`. Les changements s'appliquent dès le clic sur **Enregistrer** ; le fichier est écrit de façon atomique (un plantage ne peut jamais le laisser à moitié écrit).
 
-Une clé absente prend sa valeur par défaut : un fichier ancien ou partiel reste donc valide. Un nombre hors plage est ramené dans la plage autorisée au chargement.
+## Emplacement du fichier
+
+Au démarrage, Rar N Rush cherche le fichier dans cet ordre et utilise **le premier qui existe** : ta configuration est donc retrouvée même si tu déplaces l'exécutable.
+
+1. à côté de `rar-n-rush.exe` (mode portable) ;
+2. dans `%APPDATA%\RarNRush`.
+
+Au tout premier démarrage (aucun fichier nulle part), il est créé à côté de `rar-n-rush.exe`, ou dans `%APPDATA%\RarNRush` si le dossier du programme est protégé en écriture (par exemple sous `Program Files`).
+
+## Si le fichier pose problème
+
+Tes réglages ne sont jamais perdus en silence :
+
+- une clé absente prend sa valeur par défaut (un fichier ancien ou partiel reste valide) ; une clé inconnue est ignorée ;
+- chaque clé est lue séparément : **les valeurs valides sont conservées**, seules les invalides reviennent à leur valeur par défaut ;
+- un nombre hors plage est ramené dans la plage autorisée ;
+- le marqueur d'ordre des octets (BOM) ajouté par le Bloc-notes est accepté ;
+- dès qu'une valeur est remise par défaut, le fichier d'origine est d'abord copié sous `rar-n-rush.toml.<date-heure>.bak`, et un bandeau en haut de la fenêtre indique les clés concernées et l'emplacement de la copie.
 
 ![Fenêtre des réglages](screenshots/settings-fr-light.png)
 

@@ -2,7 +2,9 @@
 
 use crate::engine::{Command, Engine, EngineState, Job, LogLine, Status};
 use crate::i18n::{Lang, Localize, Texts};
-use crate::settings::{LanguagePref, SCAN_INTERVAL_RANGE, STABLE_RANGE, Settings, Store, ThemePref};
+use crate::settings::{
+    LanguagePref, LoadIssue, SCAN_INTERVAL_RANGE, STABLE_RANGE, Settings, Store, ThemePref,
+};
 use eframe::egui::{self, Color32, RichText};
 use egui_extras::{Column, TableBuilder};
 use std::collections::HashMap;
@@ -21,6 +23,8 @@ pub struct App {
     password_inputs: HashMap<u64, String>,
     errors_only: bool,
     settings_error: Option<String>,
+    /// Problem found in the settings file at start-up, shown until dismissed.
+    load_issue: Option<LoadIssue>,
 }
 
 /// Snapshot of the engine state taken once per frame, so the lock is held briefly.
@@ -77,7 +81,7 @@ fn open_in_explorer(path: &Path) {
 
 impl App {
     /// Creates the application and starts the engine.
-    pub fn new(ctx: &egui::Context, engine: Engine, store: Store) -> Self {
+    pub fn new(ctx: &egui::Context, engine: Engine, store: Store, load_issue: Option<LoadIssue>) -> Self {
         let settings = engine.with_state(|s| s.settings.clone());
         ctx.set_theme(theme_preference(settings.theme));
         Self {
@@ -90,6 +94,7 @@ impl App {
             password_inputs: HashMap::new(),
             errors_only: false,
             settings_error: None,
+            load_issue,
         }
     }
 
@@ -196,6 +201,26 @@ impl App {
             }
         });
         ui.add_space(6.0);
+    }
+
+    /// Warning shown when the settings file had a problem at start-up.
+    fn load_issue_banner(&mut self, ui: &mut egui::Ui, dark: bool) {
+        let Some(issue) = &self.load_issue else { return };
+        let text = issue.localize(self.lang);
+        let mut dismiss = false;
+        ui.add_space(4.0);
+        ui.horizontal_wrapped(|ui| {
+            ui.colored_label(
+                status_color(Status::NeedPassword, dark),
+                RichText::new("⚠").strong(),
+            );
+            ui.label(RichText::new(text).color(status_color(Status::NeedPassword, dark)));
+            dismiss = ui.button(self.texts().ok).clicked();
+        });
+        ui.add_space(4.0);
+        if dismiss {
+            self.load_issue = None;
+        }
     }
 
     fn log_panel(&mut self, ui: &mut egui::Ui, snap: &Snapshot, dark: bool) {
@@ -481,6 +506,9 @@ impl eframe::App for App {
         ctx.request_repaint_after(Duration::from_secs(1));
 
         egui::Panel::top("toolbar").show(root, |ui| self.toolbar(ui, &snap));
+        if self.load_issue.is_some() {
+            egui::Panel::top("load_issue").show(root, |ui| self.load_issue_banner(ui, dark));
+        }
         egui::Panel::bottom("log")
             .resizable(true)
             .default_size(170.0)

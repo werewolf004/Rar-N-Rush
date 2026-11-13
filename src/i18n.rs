@@ -7,7 +7,7 @@
 use crate::engine::{Detail, JobError, Notice, Status};
 use crate::extract::{ArchiveProblem, ExtractError};
 use crate::par2::Par2Error;
-use crate::settings::LanguagePref;
+use crate::settings::{LanguagePref, LoadIssue};
 use crate::sfv::{Problem, SfvError};
 
 /// Interface language actually used.
@@ -441,6 +441,52 @@ impl Localize for Detail {
             Self::SkippedByUser => pick(lang, "Skipped by the user", "Ignoré par l'utilisateur").into(),
             Self::Cancelled => pick(lang, "Cancelled", "Annulé").into(),
             Self::Error(e) => e.localize(lang),
+        }
+    }
+}
+
+impl Localize for LoadIssue {
+    fn localize(&self, lang: Lang) -> String {
+        let backup_note = |backup: &Option<std::path::PathBuf>| match (backup, lang) {
+            (Some(b), Lang::En) => format!(" A copy of the original file was saved as {}.", b.display()),
+            (Some(b), Lang::Fr) => format!(
+                " Une copie du fichier d'origine a été enregistrée sous {}.",
+                b.display()
+            ),
+            (None, Lang::En) => " The original file could not be copied.".to_owned(),
+            (None, Lang::Fr) => " Le fichier d'origine n'a pas pu être copié.".to_owned(),
+        };
+        match (self, lang) {
+            (Self::Unreadable { path, error }, Lang::En) => format!(
+                "The settings file {} could not be read ({error}). Default settings are used; saving will replace that file.",
+                path.display()
+            ),
+            (Self::Unreadable { path, error }, Lang::Fr) => format!(
+                "Le fichier de réglages {} est illisible ({error}). Les réglages par défaut sont utilisés ; enregistrer remplacera ce fichier.",
+                path.display()
+            ),
+            (Self::Corrupt { backup }, Lang::En) => {
+                format!(
+                    "The settings file was damaged; default settings are used.{}",
+                    backup_note(backup)
+                )
+            }
+            (Self::Corrupt { backup }, Lang::Fr) => {
+                format!(
+                    "Le fichier de réglages était endommagé ; les réglages par défaut sont utilisés.{}",
+                    backup_note(backup)
+                )
+            }
+            (Self::InvalidValues { keys, backup }, Lang::En) => format!(
+                "Invalid values were reset to their default: {}. Your other settings were kept.{}",
+                keys.join(", "),
+                backup_note(backup)
+            ),
+            (Self::InvalidValues { keys, backup }, Lang::Fr) => format!(
+                "Des valeurs invalides ont été remises par défaut : {}. Tes autres réglages ont été conservés.{}",
+                keys.join(", "),
+                backup_note(backup)
+            ),
         }
     }
 }

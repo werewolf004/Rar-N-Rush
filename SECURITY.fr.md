@@ -30,8 +30,15 @@ Rar N Rush traite des fichiers téléchargés depuis Internet, qu'il faut consid
 - Les fichiers sources sont envoyés à la **corbeille**, jamais supprimés définitivement, et seulement après un traitement entièrement réussi.
 - `par2.exe` est lancé sans shell, avec des arguments passés séparément (pas d'injection de commande), sans fenêtre console, et uniquement depuis le chemin choisi par l'utilisateur, le dossier du programme ou le `PATH`.
 
+### Aucun accès réseau
+
+- Rar N Rush ne se connecte jamais à Internet : **aucune vérification de mise à jour**, aucune télémétrie, aucun rapport de plantage.
+- C'est imposé par `cargo deny` : les crates HTTP, TLS et réseau asynchrone (`reqwest`, `hyper`, `rustls`, `tokio`, `self_update`…) sont interdits, la CI échoue si l'un d'eux entre dans les dépendances.
+
 ### Données persistantes
 
+- Les réglages ne sont jamais perdus en silence : chaque clé est lue séparément, une valeur invalide est remise par défaut individuellement, et le fichier d'origine est d'abord sauvegardé (`rar-n-rush.toml.<date-heure>.bak`). L'utilisateur est averti par un bandeau.
+- Un fichier de réglages existant est toujours retrouvé, à côté de l'exécutable ou dans `%APPDATA%\RarNRush`, même après un déplacement de l'exécutable.
 - Les réglages et la liste des jeux traités sont écrits de façon atomique (fichier temporaire puis renommage) : un plantage ne peut pas laisser un fichier tronqué.
 - Un jeu est enregistré comme traité **avant** que son statut ne s'affiche : un plantage ne peut pas provoquer un double traitement.
 - **Limite connue** : les mots de passe d'archives sont stockés en clair dans `rar-n-rush.toml`, comme indiqué sous le champ dans la fenêtre des réglages. Leur passage dans le Gestionnaire d'identifiants Windows est prévu en v0.3.0.
