@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- **Watched folder** bar in the main window: the watched folder can be changed at any time, even during processing, without opening the settings. Type a path and press Enter (Esc cancels), pick one of the last 10 folders under **Recent folders**, or use **Browse…**. A folder that does not exist is refused with a message, and the current settings are kept.
+- New setting `recent_watch_dirs` (list of recently watched folders).
+
+### Changed
+
+- The monitoring state (Watching / Paused, time of the last scan) moved to the toolbar.
+
 ## [0.1.0] - 2026-11-13
 
 First public version: the complete processing chain, a quality foundation and the documentation.

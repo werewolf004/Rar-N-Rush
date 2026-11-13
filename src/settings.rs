@@ -20,6 +20,8 @@ pub const PROCESSED_FILE: &str = "rar-n-rush-processed.txt";
 pub const SCAN_INTERVAL_RANGE: std::ops::RangeInclusive<u64> = 2..=3600;
 /// Allowed range for [`Settings::stable_secs`].
 pub const STABLE_RANGE: std::ops::RangeInclusive<u64> = 0..=3600;
+/// Maximum length of [`Settings::recent_watch_dirs`].
+pub const RECENT_WATCH_DIRS_MAX: usize = 10;
 
 /// Errors raised while reading or writing settings and state.
 #[derive(Debug, thiserror::Error)]
@@ -54,6 +56,8 @@ pub enum SettingsError {
 pub struct Settings {
     /// Folder being watched.
     pub watch_dir: String,
+    /// Recently watched folders, most recent first (offered in the main window).
+    pub recent_watch_dirs: Vec<String>,
     /// Extraction folder. Empty means "next to the source files".
     pub extract_dir: String,
     /// Extract each set into a sub-folder named after the set.
@@ -113,6 +117,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             watch_dir: String::new(),
+            recent_watch_dirs: Vec::new(),
             extract_dir: String::new(),
             create_subfolder: true,
             recursive: true,
@@ -143,7 +148,24 @@ impl Settings {
         self.par2_path = self.par2_path.trim().to_owned();
         self.passwords.retain(|p| !p.is_empty());
         self.passwords.dedup();
+        self.recent_watch_dirs = dedup_paths(
+            std::mem::take(&mut self.recent_watch_dirs)
+                .iter()
+                .map(|d| d.trim())
+                .filter(|d| !d.is_empty()),
+        );
         self
+    }
+
+    /// Returns a copy watching `dir`, with `dir` moved to the front of the recent folders.
+    #[must_use]
+    pub fn with_watch_dir(mut self, dir: &str) -> Self {
+        let dir = dir.trim();
+        dir.clone_into(&mut self.watch_dir);
+        if !dir.is_empty() {
+            self.recent_watch_dirs.insert(0, dir.to_owned());
+        }
+        self.validated()
     }
 
     /// Watched folder, if one is configured.
@@ -419,6 +441,16 @@ fn merge_valid_keys(table: toml::Table) -> (Settings, Vec<String>) {
     (settings, invalid)
 }
 
+/// Keeps the first occurrence of each path (compared case-insensitively, as on Windows,
+/// ignoring a trailing separator) and at most [`RECENT_WATCH_DIRS_MAX`] entries.
+fn dedup_paths<'a>(dirs: impl Iterator<Item = &'a str>) -> Vec<String> {
+    let mut seen = HashSet::new();
+    dirs.filter(|d| seen.insert(d.trim_end_matches(['\\', '/']).to_lowercase()))
+        .take(RECENT_WATCH_DIRS_MAX)
+        .map(str::to_owned)
+        .collect()
+}
+
 fn is_writable(dir: &Path) -> bool {
     let probe = dir.join(".rnr-write-test");
     let ok = fs::write(&probe, b"").is_ok();
@@ -450,6 +482,32 @@ mod tests {
         assert_eq!(s.stable_secs, 3600);
         assert_eq!(s.watch_dir, "C:\\dl");
         assert_eq!(s.passwords, vec!["a".to_owned()]);
+    }
+
+    #[test]
+    fn with_watch_dir_moves_folder_to_front_of_recents() {
+        let s = Settings::default()
+            .with_watch_dir("C:\\a")
+            .with_watch_dir(" C:\\b ")
+            .with_watch_dir("c:\\A\\");
+        assert_eq!(s.watch_dir, "c:\\A\\");
+        assert_eq!(
+            s.recent_watch_dirs,
+            vec!["c:\\A\\".to_owned(), "C:\\b".to_owned()]
+        );
+    }
+
+    #[test]
+    fn recent_folders_are_bounded_and_skip_blanks() {
+        let mut s = Settings::default().with_watch_dir("");
+        assert_eq!(s.recent_watch_dirs, Vec::<String>::new());
+        for i in 0..25 {
+            s = s.with_watch_dir(&format!("D:\\in{i}"));
+        }
+        s.recent_watch_dirs.push("   ".into());
+        let s = s.validated();
+        assert_eq!(s.recent_watch_dirs.len(), RECENT_WATCH_DIRS_MAX);
+        assert_eq!(s.recent_watch_dirs[0], "D:\\in24");
     }
 
     #[test]
@@ -574,6 +632,7 @@ mod tests {
         let store = Store::at(dir.path());
         let s = Settings {
             watch_dir: "D:\\in".into(),
+            recent_watch_dirs: vec!["D:\\in".into(), "D:\\old".into()],
             extract_dir: "E:\\out".into(),
             create_subfolder: false,
             recursive: false,

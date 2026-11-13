@@ -29,7 +29,8 @@ Your settings are never silently lost:
 
 | Key | Window label | Type | Default | Effect |
 |---|---|---|---|---|
-| `watch_dir` | Watched folder | path | *(empty)* | Folder scanned for new sets. Empty means monitoring cannot start. |
+| `watch_dir` | Watched folder | path | *(empty)* | Folder scanned for new sets. Empty means monitoring cannot start. Also editable at any time in the **Watched folder** bar of the main window: type a path and press Enter, pick one under **Recent folders**, or use **Browse…**. A folder that does not exist is refused. |
+| `recent_watch_dirs` | Recent folders *(main window)* | list of paths | `[]` | Folders watched recently, most recent first, offered by **Recent folders**. Kept up to date automatically, at most 10 entries, duplicates removed (case-insensitive). |
 | `extract_dir` | Destination | path | *(empty)* | Where archives are extracted. Empty means "next to the source files". When it is inside the watched folder, it is excluded from scans. |
 | `par2_path` | par2.exe | path | *(empty)* | Path to `par2.exe`. Empty means automatic lookup: next to `rar-n-rush.exe`, then in `PATH`. The window shows the resolved path, or a warning if none is found. |
 
@@ -70,6 +71,7 @@ Your settings are never silently lost:
 
 ```toml
 watch_dir = 'D:\Downloads'
+recent_watch_dirs = ['D:\Downloads', 'E:\Usenet']
 extract_dir = 'D:\Extracted'
 create_subfolder = true
 recursive = true

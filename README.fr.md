@@ -48,7 +48,9 @@ Au premier lancement, choisis le dossier où arrivent tes téléchargements :
   <img alt="Premier lancement : un bouton invite à choisir le dossier à surveiller" src="docs/screenshots/onboarding-fr.png">
 </picture>
 
-La surveillance démarre tout de suite. Chaque jeu de fichiers apparaît dans la liste avec son statut :
+La surveillance démarre tout de suite. Tu peux changer de dossier à tout moment, même pendant un traitement, depuis la barre **Dossier surveillé** en haut de la fenêtre : saisis un chemin et valide avec Entrée (Échap annule), choisis-en un dans **Dossiers récents**, ou clique sur **Parcourir…**. **Ouvrir** affiche le dossier dans l'Explorateur.
+
+Chaque jeu de fichiers apparaît dans la liste avec son statut :
 
 | Statut | Signification |
 |---|---|

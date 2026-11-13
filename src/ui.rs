@@ -23,6 +23,12 @@ pub struct App {
     password_inputs: HashMap<u64, String>,
     errors_only: bool,
     settings_error: Option<String>,
+    /// Text of the watched-folder field in the main window.
+    watch_input: String,
+    /// `true` while the user edits the watched-folder field (not yet applied).
+    watch_dirty: bool,
+    /// Why the last watched-folder change was refused.
+    watch_error: Option<String>,
     /// Problem found in the settings file at start-up, shown until dismissed.
     load_issue: Option<LoadIssue>,
 }
@@ -94,6 +100,9 @@ impl App {
             password_inputs: HashMap::new(),
             errors_only: false,
             settings_error: None,
+            watch_input: settings.watch_dir.clone(),
+            watch_dirty: false,
+            watch_error: None,
             load_issue,
         }
     }
@@ -113,40 +122,59 @@ impl App {
         self.settings_error = None;
     }
 
-    /// Saves and applies settings. Returns `false` (and shows the error) on failure.
-    fn apply_settings(&mut self, ctx: &egui::Context, mut settings: Settings) -> bool {
-        settings.passwords = self
-            .passwords_text
-            .lines()
-            .map(str::trim)
-            .map(str::to_owned)
-            .collect();
+    /// Saves the settings, then applies them. Nothing is applied when saving fails,
+    /// so what the user sees always matches the file. Returns the localised error.
+    fn apply_settings(&mut self, ctx: &egui::Context, settings: Settings) -> Result<(), String> {
         let settings = settings.validated();
-        if let Err(e) = self.store.save_settings(&settings) {
-            self.settings_error = Some(self.lang.save_failed(&e.to_string()));
-            return false;
-        }
+        self.store
+            .save_settings(&settings)
+            .map_err(|e| self.lang.save_failed(&e.to_string()))?;
         self.lang = Lang::resolve(settings.language);
         if self.theme != settings.theme {
             self.theme = settings.theme;
             ctx.set_theme(theme_preference(settings.theme));
         }
         self.engine.send(Command::UpdateSettings(settings));
-        true
+        Ok(())
     }
 
-    fn choose_watch_dir(&mut self, ctx: &egui::Context, current: &Settings) {
-        let Some(dir) = rfd::FileDialog::new()
-            .set_title(self.texts().pick_watch_dir)
-            .pick_folder()
-        else {
+    /// Opens the folder picker, starting from the current folder when it exists.
+    fn pick_watch_dir(&self, current: &Settings) -> Option<String> {
+        let mut dialog = rfd::FileDialog::new().set_title(self.texts().pick_watch_dir);
+        if let Some(dir) = current.watch_path().filter(|d| d.is_dir()) {
+            dialog = dialog.set_directory(dir);
+        }
+        dialog.pick_folder().map(|d| d.to_string_lossy().into_owned())
+    }
+
+    /// Watches `dir` from now on. Refused (with a message) when it is not an existing
+    /// folder. Monitoring starts if no folder was watched before; otherwise the
+    /// running/paused state is kept.
+    fn set_watch_dir(&mut self, ctx: &egui::Context, current: &Settings, dir: &str) {
+        let dir = dir.trim();
+        if !Path::new(dir).is_dir() {
+            dir.clone_into(&mut self.watch_input);
+            self.watch_dirty = true;
+            self.watch_error = Some(self.texts().folder_missing.to_owned());
             return;
-        };
-        let mut settings = current.clone();
-        settings.watch_dir = dir.to_string_lossy().into_owned();
-        self.passwords_text = settings.passwords.join("\n");
-        if self.apply_settings(ctx, settings) {
-            self.engine.send(Command::SetRunning(true));
+        }
+        let first_folder = current.watch_path().is_none();
+        let settings = current.clone().with_watch_dir(dir);
+        match self.apply_settings(ctx, settings.clone()) {
+            Ok(()) => {
+                self.watch_input = settings.watch_dir;
+                self.watch_dirty = false;
+                self.watch_error = None;
+                // An open settings window must not put the old folder back on save.
+                if let Some(draft) = &mut self.draft {
+                    draft.watch_dir.clone_from(&self.watch_input);
+                    draft.recent_watch_dirs = settings.recent_watch_dirs;
+                }
+                if first_folder {
+                    self.engine.send(Command::SetRunning(true));
+                }
+            }
+            Err(e) => self.watch_error = Some(e),
         }
     }
 
@@ -180,27 +208,75 @@ impl App {
             if ui.button(t.settings).clicked() {
                 self.open_settings(&snap.settings);
             }
-        });
-        ui.add_space(2.0);
-        ui.horizontal(|ui| match snap.settings.watch_path() {
-            None => {
+            ui.separator();
+            if snap.settings.watch_path().is_none() {
                 ui.label(RichText::new(t.no_folder).italics());
-            }
-            Some(dir) => {
+            } else {
                 ui.label(if snap.running { t.watching } else { t.paused });
-                if ui
-                    .link(dir.display().to_string())
-                    .on_hover_text(t.open_in_explorer)
-                    .clicked()
-                {
-                    open_in_explorer(&dir);
-                }
                 if let (true, Some(at)) = (snap.running, snap.last_scan) {
                     ui.weak(format!("· {}", self.lang.scanned_ago(at.elapsed().as_secs())));
                 }
             }
         });
+        ui.add_space(4.0);
+        self.watch_bar(ui, snap);
         ui.add_space(6.0);
+    }
+
+    /// Watched-folder bar: editable path, recent folders, browse and open buttons.
+    /// The folder can be changed at any time, even while sets are being processed.
+    fn watch_bar(&mut self, ui: &mut egui::Ui, snap: &Snapshot) {
+        let t = self.texts();
+        let dark = ui.visuals().dark_mode;
+        if !self.watch_dirty {
+            self.watch_input.clone_from(&snap.settings.watch_dir);
+        }
+        let mut chosen: Option<String> = None;
+        ui.horizontal(|ui| {
+            let label = ui.label(t.watch_dir);
+            let width = (ui.available_width() - 300.0).clamp(160.0, 640.0);
+            let field = ui
+                .add(
+                    egui::TextEdit::singleline(&mut self.watch_input)
+                        .hint_text(t.watch_hint)
+                        .desired_width(width),
+                )
+                .labelled_by(label.id);
+            if field.changed() {
+                self.watch_dirty = true;
+                self.watch_error = None;
+            }
+            if field.lost_focus() {
+                if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                    self.watch_dirty = false;
+                    self.watch_error = None;
+                } else if self.watch_dirty && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                    chosen = Some(self.watch_input.clone());
+                }
+            }
+            if self.watch_dirty && ui.button(t.ok).on_hover_text(t.watch_apply_hint).clicked() {
+                chosen = Some(self.watch_input.clone());
+            }
+            if let Some(dir) = recent_folders_menu(ui, &snap.settings, t) {
+                chosen = Some(dir);
+            }
+            if ui.button(t.browse).on_hover_text(t.pick_watch_dir).clicked()
+                && let Some(dir) = self.pick_watch_dir(&snap.settings)
+            {
+                chosen = Some(dir);
+            }
+            if let Some(dir) = snap.settings.watch_path()
+                && ui.button(t.open).on_hover_text(t.open_in_explorer).clicked()
+            {
+                open_in_explorer(&dir);
+            }
+        });
+        if let Some(e) = &self.watch_error {
+            ui.colored_label(status_color(Status::Failed, dark), e);
+        }
+        if let Some(dir) = chosen {
+            self.set_watch_dir(ui.ctx(), &snap.settings, &dir);
+        }
     }
 
     /// Warning shown when the settings file had a problem at start-up.
@@ -391,7 +467,14 @@ impl App {
                 });
             });
         if save {
-            if !self.apply_settings(ctx, draft.clone()) {
+            draft.passwords = self
+                .passwords_text
+                .lines()
+                .map(str::trim)
+                .map(str::to_owned)
+                .collect();
+            if let Err(e) = self.apply_settings(ctx, draft.clone()) {
+                self.settings_error = Some(e);
                 self.draft = Some(draft);
             }
         } else if open && !cancel {
@@ -471,6 +554,27 @@ fn settings_grid(ui: &mut egui::Ui, draft: &mut Settings, t: &Texts, lang: Lang,
     ui.end_row();
 }
 
+/// Drop-down listing the recently watched folders. Returns the folder picked, if any.
+fn recent_folders_menu(ui: &mut egui::Ui, settings: &Settings, t: &Texts) -> Option<String> {
+    let recents: Vec<&String> = settings
+        .recent_watch_dirs
+        .iter()
+        .filter(|d| **d != settings.watch_dir)
+        .collect();
+    let mut picked = None;
+    ui.add_enabled_ui(!recents.is_empty(), |ui| {
+        ui.menu_button(t.recent_folders, |ui| {
+            ui.set_min_width(360.0);
+            for dir in recents {
+                if ui.button(dir.as_str()).clicked() {
+                    picked = Some(dir.clone());
+                }
+            }
+        });
+    });
+    picked
+}
+
 /// Check boxes of the settings window.
 fn settings_toggles(ui: &mut egui::Ui, draft: &mut Settings, t: &Texts) {
     ui.checkbox(&mut draft.recursive, t.recursive);
@@ -525,8 +629,10 @@ impl eframe::App for App {
                     ui.add_space(4.0);
                     ui.label(t.onboarding_body);
                     ui.add_space(12.0);
-                    if ui.button(RichText::new(t.choose_folder).size(16.0)).clicked() {
-                        self.choose_watch_dir(&ctx, &snap.settings);
+                    if ui.button(RichText::new(t.choose_folder).size(16.0)).clicked()
+                        && let Some(dir) = self.pick_watch_dir(&snap.settings)
+                    {
+                        self.set_watch_dir(&ctx, &snap.settings, &dir);
                     }
                 });
             } else if snap.jobs.is_empty() {

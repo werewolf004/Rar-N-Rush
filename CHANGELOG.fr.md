@@ -6,6 +6,15 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+### Ajouté
+
+- Barre **Dossier surveillé** dans la fenêtre principale : le dossier surveillé se change à tout moment, même pendant un traitement, sans ouvrir les réglages. Saisis un chemin et valide avec Entrée (Échap annule), choisis l'un des 10 derniers dossiers dans **Dossiers récents**, ou utilise **Parcourir…**. Un dossier inexistant est refusé avec un message, et les réglages en cours sont conservés.
+- Nouveau réglage `recent_watch_dirs` (liste des dossiers surveillés récemment).
+
+### Modifié
+
+- L'état de la surveillance (active / en pause, heure de la dernière analyse) est passé dans la barre d'outils.
+
 ## [0.1.0] - 2026-11-13
 
 Première version publique : toute la chaîne de traitement, des fondations qualité et la documentation.

@@ -29,7 +29,8 @@ Tes réglages ne sont jamais perdus en silence :
 
 | Clé | Libellé dans la fenêtre | Type | Défaut | Effet |
 |---|---|---|---|---|
-| `watch_dir` | Dossier surveillé | chemin | *(vide)* | Dossier analysé pour trouver de nouveaux jeux. Vide : la surveillance ne peut pas démarrer. |
+| `watch_dir` | Dossier surveillé | chemin | *(vide)* | Dossier analysé pour trouver de nouveaux jeux. Vide : la surveillance ne peut pas démarrer. Modifiable à tout moment dans la barre **Dossier surveillé** de la fenêtre principale : saisis un chemin et valide avec Entrée, choisis-en un dans **Dossiers récents**, ou utilise **Parcourir…**. Un dossier inexistant est refusé. |
+| `recent_watch_dirs` | Dossiers récents *(fenêtre principale)* | liste de chemins | `[]` | Dossiers surveillés récemment, du plus récent au plus ancien, proposés par **Dossiers récents**. Tenue à jour automatiquement, 10 entrées au plus, sans doublon (casse ignorée). |
 | `extract_dir` | Destination | chemin | *(vide)* | Dossier d'extraction. Vide : à côté des fichiers sources. S'il se trouve dans le dossier surveillé, il est exclu des analyses. |
 | `par2_path` | par2.exe | chemin | *(vide)* | Chemin de `par2.exe`. Vide : recherche automatique, d'abord à côté de `rar-n-rush.exe`, puis dans le `PATH`. La fenêtre affiche le chemin trouvé, ou un avertissement. |
 
@@ -70,6 +71,7 @@ Tes réglages ne sont jamais perdus en silence :
 
 ```toml
 watch_dir = 'D:\Telechargements'
+recent_watch_dirs = ['D:\Telechargements', 'E:\Usenet']
 extract_dir = 'D:\Extraits'
 create_subfolder = true
 recursive = true

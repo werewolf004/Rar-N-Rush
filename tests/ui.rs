@@ -201,13 +201,13 @@ fn settings_window_opens_and_closes() {
     h.step();
     h.get_by_label("⚙  Settings").click();
     frames(&mut h, 3);
-    h.get_by_label("Watched folder");
+    h.get_by_label("Destination");
     h.get_by_label("Follow Windows");
     h.get_by_label("Overwrite existing files (otherwise use “name (1).ext”)");
     h.get_by_label("Cancel").click();
     frames(&mut h, 3);
     assert!(
-        h.query_by_label("Watched folder").is_none(),
+        h.query_by_label("Destination").is_none(),
         "settings window must close"
     );
 }
@@ -252,6 +252,82 @@ fn settings_problem_is_shown_until_dismissed() {
     h.get_by_label("OK").click();
     frames(&mut h, 2);
     assert!(h.query_by_label_contains("Invalid values").is_none());
+}
+
+/// The editable watched-folder field of the main window.
+fn watch_field<'a>(h: &'a Harness<'static, App>) -> egui_kittest::Node<'a> {
+    h.get_by_role_and_label(egui::accesskit::Role::TextInput, "Watched folder")
+}
+
+/// Types `text` into the watched-folder field and presses Enter.
+fn type_watch_dir(h: &mut Harness<'static, App>, text: &str) {
+    watch_field(h).focus();
+    frames(h, 2);
+    watch_field(h).set_text_value_accesskit(text);
+    frames(h, 2);
+    h.key_press(egui::Key::Enter);
+    frames(h, 3);
+}
+
+#[test]
+fn watched_folder_is_changed_from_the_main_window() {
+    let demo = Demo::new(false);
+    let state = demo.state_dir("watch");
+    let other = demo.root.join("Other");
+    fs::create_dir_all(&other).unwrap();
+    let settings = demo.settings(LanguagePref::English, ThemePref::Light);
+    let first = settings.watch_dir.clone();
+    let mut h = harness(settings, &state, false);
+    frames(&mut h, 2);
+    assert_eq!(watch_field(&h).value().as_deref(), Some(first.as_str()));
+
+    type_watch_dir(&mut h, &other.display().to_string());
+
+    let saved = Store::at(&state).load_settings().unwrap();
+    assert_eq!(saved.watch_dir, other.display().to_string());
+    assert_eq!(saved.recent_watch_dirs, vec![other.display().to_string()]);
+    let live = h.state().engine().with_state(|s| s.settings.watch_dir.clone());
+    assert_eq!(live, other.display().to_string());
+    assert!(h.query_by_label("This folder does not exist.").is_none());
+}
+
+#[test]
+fn missing_folder_is_refused_and_settings_are_kept() {
+    let demo = Demo::new(false);
+    let state = demo.state_dir("missing");
+    let settings = demo.settings(LanguagePref::English, ThemePref::Light);
+    let first = settings.watch_dir.clone();
+    Store::at(&state).save_settings(&settings).unwrap();
+    let mut h = harness(settings, &state, false);
+    frames(&mut h, 2);
+
+    type_watch_dir(&mut h, &demo.root.join("does-not-exist").display().to_string());
+
+    h.get_by_label("This folder does not exist.");
+    assert_eq!(Store::at(&state).load_settings().unwrap().watch_dir, first);
+    let live = h.state().engine().with_state(|s| s.settings.watch_dir.clone());
+    assert_eq!(live, first);
+}
+
+#[test]
+fn recent_folder_is_picked_from_the_drop_down() {
+    let demo = Demo::new(false);
+    let state = demo.state_dir("recent");
+    let other = demo.root.join("Other");
+    fs::create_dir_all(&other).unwrap();
+    let mut settings = demo.settings(LanguagePref::English, ThemePref::Light);
+    settings.recent_watch_dirs = vec![settings.watch_dir.clone(), other.display().to_string()];
+    let mut h = harness(settings, &state, false);
+    frames(&mut h, 2);
+
+    h.get_by_label("Recent folders").click();
+    frames(&mut h, 3);
+    h.get_by_label(&other.display().to_string()).click();
+    frames(&mut h, 3);
+
+    let saved = Store::at(&state).load_settings().unwrap();
+    assert_eq!(saved.watch_dir, other.display().to_string());
+    assert_eq!(saved.recent_watch_dirs[0], other.display().to_string());
 }
 
 /// Regenerates `docs/screenshots/*.png`. Run with:

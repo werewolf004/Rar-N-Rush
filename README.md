@@ -48,7 +48,9 @@ On first launch, choose the folder where your downloads arrive:
   <img alt="First launch: a button invites you to choose the folder to watch" src="docs/screenshots/onboarding-en.png">
 </picture>
 
-Monitoring starts right away. Each set of files appears in the list with its status:
+Monitoring starts right away. You can switch to another folder at any time, even while sets are being processed, from the **Watched folder** bar at the top of the window: type a path and press Enter (Esc cancels), pick one under **Recent folders**, or click **Browse…**. **Open** shows the folder in File Explorer.
+
+Each set of files appears in the list with its status:
 
 | Status | Meaning |
 |---|---|
