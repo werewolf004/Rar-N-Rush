@@ -20,11 +20,9 @@ Mots de passe d'archives dans le Gestionnaire d'identifiants Windows (migrés de
 
 par2cmdline-turbo fourni dans le zip de release (version et SHA-256 figés, licence et source incluses ; l'application reste hors ligne) ; tests de bout en bout avec le vrai par2 en CI (volumes abîmés ou manquants, blocs insuffisants, attente des volumes de récupération) ; tests de capture pixel par pixel des écrans principaux sans GPU ; noms accessibles pour chaque champ des réglages.
 
-## v0.5.0 — Intégration Windows
+## ✅ v0.5.0 — Intégration Windows
 
-- ~~Icône dans la zone de notification, réduction et fermeture vers cette zone.~~ Avancé en v0.2.0.
-- ✅ Notifications Windows quand un jeu est terminé, échoue ou demande un mot de passe (seulement quand la fenêtre n'est pas au premier plan).
-- ✅ Démarrage avec Windows (optionnel), une seule instance à la fois.
+Icône dans la zone de notification (avancée en v0.2.0) ; une seule instance par dossier de réglages, un deuxième lancement ramène la fenêtre ; démarrage avec Windows en option, réduit ou dans la zone de notification ; notifications Windows quand un jeu se termine, échoue ou demande un mot de passe alors que la fenêtre n'est pas au premier plan. Tout reste dans le registre de l'utilisateur courant et est annulé quand l'option est désactivée.
 
 ## v1.0.0 — Distribution
 

@@ -6,6 +6,10 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+## [0.5.0] - 2026-11-14
+
+Intégration Windows : une seule instance à la fois, démarrage avec Windows en option, et notifications Windows quand la fenêtre n'est pas au premier plan.
+
 ### Ajouté
 
 - **Une seule instance à la fois** : relancer Rar N Rush ramène la fenêtre ouverte au premier plan (même depuis la zone de notification) au lieu de lancer une deuxième copie sur les mêmes réglages.
@@ -109,7 +113,8 @@ Première version publique : toute la chaîne de traitement, des fondations qual
 
 - `#![forbid(unsafe_code)]` sur tout le crate ; `unwrap`, `expect` et `panic` sont interdits hors des tests.
 
-[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.4.0...HEAD
+[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.1.0...v0.2.0

@@ -20,11 +20,9 @@ Archive passwords in the Windows Credential Manager (migrated from the settings 
 
 par2cmdline-turbo shipped in the release zip (pinned version and SHA-256, licence and source included; the application stays offline); end-to-end tests with the real par2 in CI (damaged and missing volumes, not enough blocks, waiting for recovery volumes); pixel snapshot tests of the main screens without a GPU; accessible names for every settings field.
 
-## v0.5.0 — Windows integration
+## ✅ v0.5.0 — Windows integration
 
-- ~~Icon in the notification area, minimise/close to tray.~~ Brought forward to v0.2.0.
-- ✅ Windows notifications when a set finishes, fails or needs a password (only while the window is not in front).
-- ✅ Start with Windows (optional), single running instance.
+Notification-area icon (brought forward to v0.2.0); one instance per settings folder, a second start brings the window back; optional start with Windows, minimised or in the notification area; Windows notifications when a set finishes, fails or needs a password while the window is not in front. Everything stays in the current user's registry and is undone when the option is turned off.
 
 ## v1.0.0 — Distribution
 

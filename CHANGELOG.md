@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-14
+
+Windows integration: one instance at a time, optional start with Windows, and Windows notifications while the window is not in front.
+
 ### Added
 
 - **One instance at a time**: starting Rar N Rush again brings the open window to the front (even from the notification area) instead of running a second copy on the same settings.
@@ -109,7 +113,8 @@ First public version: the complete processing chain, a quality foundation and th
 
 - `#![forbid(unsafe_code)]` on the whole crate; `unwrap`, `expect` and `panic` are denied outside tests.
 
-[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.1.0...v0.2.0
