@@ -56,6 +56,8 @@ cargo deny check
 | `src/tidy.rs` | Déplacement des fichiers annexes, suppression des dossiers vides |
 | `src/tray.rs`, `src/icon.rs` | Icône de la zone de notification, icône de l'application |
 | `src/instance.rs`, `src/autostart.rs`, `src/notify.rs` | Une seule instance, démarrage avec Windows, notifications Windows |
+| `src/uninstall.rs` | Nettoyage du registre lancé par l'installateur à la désinstallation |
+| `installer/rar-n-rush.wxs`, `scripts/*-msi.ps1`, `scripts/fetch-wix.ps1` | Paquet Windows Installer (WiX 5) : source, construction, test de bout en bout |
 | `fuzz/` | Cibles de fuzzing (`cargo fuzz`), hors du build principal |
 | `tests/` | Tests d'intégration et d'interface ; `tests/fixtures/` contient de vraies archives RAR |
 | `vendor/unrar/` | Crate `unrar` corrigé, voir `PATCHES.md` |
@@ -72,6 +74,13 @@ cargo deny check
   ```
 
   Sans `RAR_N_RUSH_PAR2`, ces tests sont ignorés en local et échouent en CI.
+- L'installateur est testé de bout en bout par `scripts/test-msi.ps1` (la CI le lance à chaque push) : installation silencieuse, mise à jour, désinstallation, avec vérification des fichiers, du raccourci du menu Démarrer et du registre après chaque étape. Il faut un runtime .NET (6 ou plus récent) pour WiX, que `scripts/fetch-wix.ps1` télécharge (version figée, SHA-256 vérifié). Il installe pour l'utilisateur courant : il refuse donc de tourner si Rar N Rush est déjà installé ou enregistré sur ce compte, et supprime tout ce qu'il a créé à la fin :
+
+  ```powershell
+  pwsh scripts/fetch-par2.ps1
+  cargo build --release --locked
+  pwsh scripts/test-msi.ps1     # ou : pwsh scripts/build-msi.ps1 -> target/msi/*.msi
+  ```
 - Les tests d'interface pilotent la vraie application via son arbre d'accessibilité avec `egui_kittest`. Aucune fenêtre n'est ouverte.
 - Les tests n'affichent jamais de notification Windows et ne touchent jamais la vraie entrée de démarrage : les notifications passent par un faux `Notifier`, et les tests du registre utilisent des clés jetables sous `HKEY_CURRENT_USER\Software\RarNRush-test-<pid>-…`, supprimées à la fin. `tests/single_instance.rs` lance le vrai programme pendant que le verrou est tenu et vérifie qu'il se ferme aussitôt, sans fenêtre.
 - Les tests de capture pixel par pixel (`snapshots` dans `tests/ui.rs`) comparent les écrans principaux à `tests/snapshots/*.png` : fenêtre principale (anglais clair et foncé, français), les trois pages des réglages, l'écran d'accueil. Ils sont rendus par le rasteriseur logiciel de Windows (WARP) : pas besoin de GPU, et ils tournent en CI. Les heures sont figées pour que chaque exécution donne la même image ; la démo est placée dans `C:\Users\Public\RarNRush-snapshots`. Ils vérifient aussi que chaque widget a un nom accessible. Après un changement visuel voulu, regarde les fichiers `*.diff.png` (la CI les joint dans l'artefact `snapshot-diffs`), puis mets les images à jour et commite-les :

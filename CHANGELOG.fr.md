@@ -6,6 +6,14 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+### Ajouté
+
+- Paquet Windows Installer (`rar-n-rush-vX.Y.Z-windows-x64.msi`), à côté du zip portable. Il installe pour l'utilisateur courant seulement, dans `%LOCALAPPDATA%\Programs\Rar N Rush`, sans droits administrateur, et ajoute un raccourci dans le menu Démarrer. Un paquet plus récent remplace la version installée et garde les réglages, les mots de passe et « Démarrer avec Windows ». Le désinstaller supprime aussi son entrée « Démarrer avec Windows » et son identité de notification ; les réglages et les mots de passe sont conservés. Il est publié avec sa somme SHA-256 et couvert par l'attestation de provenance.
+
+### Modifié
+
+- Le programme installé garde ses réglages dans `%APPDATA%\RarNRush` (fichier repère `rar-n-rush.installed` à côté de lui). Le zip portable ne change pas.
+
 ## [0.5.1] - 2026-11-14
 
 Corrige deux façons dont les réglages ou les mots de passe enregistrés pouvaient être perdus, et ajoute le guide utilisateur. Recommandée pour tous.

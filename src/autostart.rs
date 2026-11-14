@@ -107,14 +107,27 @@ impl Autostart {
                 Ok(Change::Written)
             }
             (false, None) => Ok(Change::None),
-            (false, Some(_)) => {
-                windows_registry::CURRENT_USER
-                    .create(&self.key)
-                    .and_then(|key| key.remove_value(&self.name))
-                    .map_err(|e| self.error(e.message()))?;
-                Ok(Change::Removed)
-            }
+            (false, Some(_)) => self.remove(),
         }
+    }
+
+    /// Removes the entry only if it starts this very executable: uninstalling
+    /// one copy must not turn off the autostart of another copy (a portable
+    /// one, for example). Paths are compared without regard to (ASCII) case,
+    /// as Windows does.
+    pub fn remove_if_ours(&self) -> Result<Change, AutostartError> {
+        match self.registered()? {
+            Some(cmd) if cmd.eq_ignore_ascii_case(&self.command) => self.remove(),
+            _ => Ok(Change::None),
+        }
+    }
+
+    fn remove(&self) -> Result<Change, AutostartError> {
+        windows_registry::CURRENT_USER
+            .create(&self.key)
+            .and_then(|key| key.remove_value(&self.name))
+            .map_err(|e| self.error(e.message()))?;
+        Ok(Change::Removed)
     }
 }
 
@@ -189,6 +202,38 @@ mod tests {
         let new = Autostart::at(&key.0, "Rar N Rush", &new_place);
         assert_eq!(new.apply(true).unwrap(), Change::Written);
         assert_eq!(new.registered().unwrap().as_deref(), Some(new.command()));
+    }
+
+    #[test]
+    fn uninstall_removes_only_its_own_entry() {
+        let key = TestKey::new("uninstall");
+        let installed = Autostart::at(
+            &key.0,
+            "Rar N Rush",
+            Path::new(r"C:\Users\A\AppData\Local\Programs\Rar N Rush\rar-n-rush.exe"),
+        );
+        let portable = Autostart::at(&key.0, "Rar N Rush", Path::new(r"D:\Tools\rar-n-rush.exe"));
+
+        portable.apply(true).unwrap();
+        assert_eq!(installed.remove_if_ours().unwrap(), Change::None);
+        assert_eq!(
+            portable.registered().unwrap().as_deref(),
+            Some(portable.command())
+        );
+
+        installed.apply(true).unwrap();
+        let other_case = Autostart::at(
+            &key.0,
+            "Rar N Rush",
+            Path::new(r"c:\users\a\appdata\local\programs\rar n rush\RAR-N-RUSH.EXE"),
+        );
+        assert_eq!(other_case.remove_if_ours().unwrap(), Change::Removed);
+        assert_eq!(installed.registered().unwrap(), None);
+        assert_eq!(
+            installed.remove_if_ours().unwrap(),
+            Change::None,
+            "nothing left to remove"
+        );
     }
 
     #[test]

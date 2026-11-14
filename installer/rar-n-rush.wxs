@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Windows Installer package for Rar N Rush (WiX Toolset 5), built by
+  scripts/build-msi.ps1.
+
+  - Per-user: installs to %LOCALAPPDATA%\Programs\Rar N Rush, no administrator
+    rights, no UAC prompt.
+  - Start menu shortcut.
+  - A newer package replaces an older one (major upgrade); an older package
+    refuses to replace a newer one.
+  - The marker file rar-n-rush.installed makes the program keep its settings in
+    %APPDATA%\RarNRush instead of the program folder.
+  - On removal (not on upgrade), rar-n-rush.exe is started with the uninstall
+    argument (see src/uninstall.rs) to remove the
+    autostart entry of this copy and the notification identity. Settings and
+    stored passwords are kept.
+
+  The UpgradeCode below must never change: it is what lets a new version
+  replace the installed one.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="Rar N Rush"
+           Manufacturer="Rar N Rush contributors"
+           Version="$(Version)"
+           UpgradeCode="D56A2825-92AE-42C5-8A0C-EE6C467607DA"
+           Scope="perUser"
+           Language="1033"
+           Compressed="yes">
+    <SummaryInformation Description="Rar N Rush $(Version): watches a folder, repairs PAR2 sets and extracts RAR archives." />
+
+    <MajorUpgrade AllowSameVersionUpgrades="yes"
+                  DowngradeErrorMessage="A newer version of Rar N Rush is already installed. / Une version plus récente de Rar N Rush est déjà installée." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="AppIcon" SourceFile="$(IconFile)" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/werewolf004/Rar-N-Rush" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/werewolf004/Rar-N-Rush/blob/main/docs/USER-GUIDE.md" />
+    <Property Id="ARPNOMODIFY" Value="1" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="ProgramsDir" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="Rar N Rush" />
+      </Directory>
+    </StandardDirectory>
+
+    <!-- Files under the user profile: the key path is a registry value under
+         HKCU, as Windows Installer requires for per-user locations. -->
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Component Id="App" Guid="7E24D798-A804-413F-8CDA-84E6148B67DA">
+        <File Id="RarNRushExe" Source="$(SourceDir)\rar-n-rush.exe" KeyPath="no" />
+        <File Source="$(SourceDir)\par2.exe" KeyPath="no" />
+        <File Source="$(SourceDir)\par2-COPYING.txt" KeyPath="no" />
+        <File Source="$(SourceDir)\LICENSE-MIT" KeyPath="no" />
+        <File Source="$(SourceDir)\LICENSE-APACHE" KeyPath="no" />
+        <File Source="$(SourceDir)\THIRD-PARTY-LICENSES.md" KeyPath="no" />
+        <File Source="$(SourceDir)\rar-n-rush.installed" KeyPath="no" />
+        <RegistryValue Root="HKCU" Key="Software\RarNRush\Installer" Name="InstallDir"
+                       Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
+        <RemoveFolder Id="RemoveInstallFolder" Directory="INSTALLFOLDER" On="uninstall" />
+        <RemoveFolder Id="RemoveProgramsDir" Directory="ProgramsDir" On="uninstall" />
+        <RemoveRegistryKey Root="HKCU" Key="Software\RarNRush\Installer" Action="removeOnUninstall" />
+      </Component>
+    </ComponentGroup>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Component Id="StartMenuShortcut" Guid="A4367D66-43D2-45F7-B604-CAD293055780">
+        <Shortcut Id="AppShortcut" Name="Rar N Rush"
+                  Description="Repairs and extracts downloaded archives"
+                  Target="[INSTALLFOLDER]rar-n-rush.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="AppIcon" />
+        <RegistryValue Root="HKCU" Key="Software\RarNRush\Installer" Name="Shortcut"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <Feature Id="Main" Title="Rar N Rush">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="StartMenuShortcut" />
+    </Feature>
+
+    <!-- Registry clean-up done by the program itself, before its files go.
+         Not during an upgrade: the new version keeps the autostart entry. -->
+    <CustomAction Id="CleanUpRegistry" FileRef="RarNRushExe" ExeCommand="--uninstall"
+                  Execute="deferred" Impersonate="yes" Return="ignore" />
+    <InstallExecuteSequence>
+      <Custom Action="CleanUpRegistry" Before="RemoveFiles"
+              Condition="REMOVE~=&quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE" />
+    </InstallExecuteSequence>
+  </Package>
+</Wix>

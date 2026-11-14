@@ -10,9 +10,19 @@ use rar_n_rush::notify::WindowsNotifier;
 use rar_n_rush::secrets::ChunkedVault;
 use rar_n_rush::settings::Store;
 use rar_n_rush::ui::App;
+use rar_n_rush::uninstall;
 use std::sync::Arc;
 
 fn main() -> eframe::Result {
+    // Started by the installer package before it deletes the program: remove
+    // what this copy wrote in the registry, show nothing, and exit.
+    if uninstall::requested(std::env::args_os()) {
+        if let Ok(exe) = std::env::current_exe() {
+            let notifier = WindowsNotifier::new(Store::locate().dir());
+            let _ = uninstall::clean_up(&Autostart::current_user(&exe), &notifier);
+        }
+        return Ok(());
+    }
     // Archive passwords live in the Windows Credential Manager. If it cannot be
     // opened, they stay in the settings file, as before.
     let store = match ChunkedVault::windows() {

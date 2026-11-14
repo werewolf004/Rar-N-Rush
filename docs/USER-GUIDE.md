@@ -18,15 +18,17 @@ This guide walks through every screen of Rar N Rush. For the exact name, default
 
 ## 1. Install and first start
 
-1. Download `rar-n-rush-vX.Y.Z-windows-x64.zip` from the [Releases](https://github.com/werewolf004/Rar-N-Rush/releases) page and unzip it anywhere, for example in `C:\Tools\Rar N Rush`.
-2. Run `rar-n-rush.exe`. Nothing is installed: the settings are created next to it (or in `%APPDATA%\RarNRush` when that folder is read-only).
+1. From the [Releases](https://github.com/werewolf004/Rar-N-Rush/releases) page, download either:
+   - the **installer** `rar-n-rush-vX.Y.Z-windows-x64.msi` and run it. It installs for your account only (no administrator rights) and adds **Rar N Rush** to the Start menu. Settings go to `%APPDATA%\RarNRush`;
+   - or the **portable zip** `rar-n-rush-vX.Y.Z-windows-x64.zip`, and unzip it anywhere, for example in `C:\Tools\Rar N Rush`. Nothing is installed: settings are created next to `rar-n-rush.exe` (or in `%APPDATA%\RarNRush` when that folder is read-only).
+2. Start **Rar N Rush** from the Start menu, or run `rar-n-rush.exe`.
 3. The window asks for the folder where your downloads arrive:
 
 ![First start: choose the folder to watch](screenshots/onboarding-en.png)
 
 Click **Choose a folder…**, or type a path in the **Watched folder** field and press **Enter**. Monitoring starts at once.
 
-> Windows may show a SmartScreen warning the first time ("Windows protected your PC"), because the program is not signed with a paid certificate. Click **More info → Run anyway**. You can check that the zip really comes from this project with the `.sha256` file or `gh attestation verify` (see the [README](../README.md#installation)).
+> Windows may show a SmartScreen warning the first time ("Windows protected your PC"), because the program is not signed with a paid certificate. Click **More info → Run anyway**. You can check that the file really comes from this project with the `.sha256` file or `gh attestation verify` (see the [README](../README.md#installation)).
 
 ## 2. The main window
 
@@ -172,9 +174,9 @@ Click **OK** to hide it. The other cases are handled the same way, without losin
 
 ## 10. Files, privacy and removal
 
-Rar N Rush **never connects to the Internet**: no update check, no telemetry. To update, download a newer release when you want one and replace the files.
+Rar N Rush **never connects to the Internet**: no update check, no telemetry. To update, download a newer release when you want one: run the new installer (it replaces the installed version and keeps everything), or replace the files of the portable copy.
 
-Next to the settings (`rar-n-rush.exe`'s folder, or `%APPDATA%\RarNRush`):
+Next to the settings (`%APPDATA%\RarNRush` for the installed program; for the portable zip, `rar-n-rush.exe`'s folder, or `%APPDATA%\RarNRush`):
 
 | File | Content |
 |---|---|
@@ -184,7 +186,9 @@ Next to the settings (`rar-n-rush.exe`'s folder, or `%APPDATA%\RarNRush`):
 | `rar-n-rush.lock`, `rar-n-rush.show` | Used to keep a single instance running. |
 | `rar-n-rush.ico` | Icon of the Windows notifications, if enabled. |
 
-**To remove Rar N Rush completely:**
+**To remove the installed program:** quit it, then in Windows **Settings → Apps → Installed apps**, choose **Rar N Rush → Uninstall**. The program files, the Start menu shortcut, its "Start with Windows" entry and its notification identity are removed. Your settings (`%APPDATA%\RarNRush`) and the passwords in the Credential Manager are **kept**, so reinstalling finds everything again; to remove them too, follow steps 2 and 3 below first.
+
+**To remove the portable copy completely:**
 
 1. In **Settings → Window**, turn off **Start with Windows** and **Windows notifications**, then **Save**: this removes the two registry entries they use (both under your own account, `HKEY_CURRENT_USER`).
 2. In **Settings → Processing**, empty **Passwords to try**, then **Save**: this removes them from the Credential Manager.

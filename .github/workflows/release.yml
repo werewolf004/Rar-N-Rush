@@ -1,5 +1,6 @@
 # Release: on a `vX.Y.Z` tag, run the full checks, build the Windows binary and
-# publish a GitHub release whose notes are the matching CHANGELOG.md section.
+# publish a GitHub release (portable zip and Windows Installer package) whose
+# notes are the matching CHANGELOG.md section.
 name: Release
 
 on:
@@ -45,6 +46,13 @@ jobs:
       - name: Build
         run: cargo build --release --locked
 
+      # Same end-to-end check as CI, on the optimised binary that ships.
+      - name: Installer package (tested, then built for the release)
+        shell: pwsh
+        run: |
+          ./scripts/test-msi.ps1
+          ./scripts/build-msi.ps1
+
       - name: Package
         shell: pwsh
         run: |
@@ -58,6 +66,8 @@ jobs:
           Compress-Archive -Path $name -DestinationPath "$name.zip"
           # LF line ending so that `sha256sum -c` works too (Get-FileHash ignores it).
           [IO.File]::WriteAllText("$PWD/$name.zip.sha256", (Get-FileHash "$name.zip" -Algorithm SHA256).Hash.ToLower() + "  $name.zip`n")
+          Copy-Item "target/msi/$name.msi" .
+          [IO.File]::WriteAllText("$PWD/$name.msi.sha256", (Get-FileHash "$name.msi" -Algorithm SHA256).Hash.ToLower() + "  $name.msi`n")
 
       # Signed SLSA build provenance: anyone can check that the zip was built by
       # this workflow from this tag with `gh attestation verify`.
@@ -65,6 +75,7 @@ jobs:
         with:
           subject-path: |
             rar-n-rush-${{ github.ref_name }}-windows-x64.zip
+            rar-n-rush-${{ github.ref_name }}-windows-x64.msi
             target/release/rar-n-rush.exe
             target/par2/par2.exe
 
@@ -88,4 +99,6 @@ jobs:
           files: |
             rar-n-rush-${{ github.ref_name }}-windows-x64.zip
             rar-n-rush-${{ github.ref_name }}-windows-x64.zip.sha256
+            rar-n-rush-${{ github.ref_name }}-windows-x64.msi
+            rar-n-rush-${{ github.ref_name }}-windows-x64.msi.sha256
             target/par2/par2cmdline-turbo-*.tar.xz

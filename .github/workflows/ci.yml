@@ -56,6 +56,13 @@ jobs:
             tests/snapshots/*.new.png
             tests/snapshots/*.diff.png
           if-no-files-found: ignore
+      # Windows Installer package (WiX 5, pinned): silent install, upgrade and
+      # removal, checking the files, shortcut and registry left at each step.
+      - name: Installer package
+        shell: pwsh
+        run: |
+          cargo build --locked
+          ./scripts/test-msi.ps1 -BuildProfile debug
       - name: Doc tests
         run: cargo test --doc --locked
       - name: Documentation builds without warnings

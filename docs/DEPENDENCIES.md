@@ -55,3 +55,4 @@ Used by the tests only; not shipped in the binary.
 | `rustfmt`, `clippy` | Formatting and lints (`clippy::pedantic`, `unwrap_used`, `expect_used`, `panic` denied). |
 | [`cargo-deny`](https://github.com/EmbarkStudios/cargo-deny) | Licences, advisories, banned sources. |
 | WinRAR `Rar.exe` | Only to regenerate the test archives (`tests/fixtures/make-fixtures.ps1`). |
+| [WiX Toolset](https://github.com/wixtoolset/wix) 5.0.2 (MS-RL) | Builds the installer (`.msi`); not shipped. Version and SHA-256 are pinned in `scripts/fetch-wix.ps1`; it runs on an installed .NET runtime. WiX 5 is kept on purpose: WiX 6 and later ask projects that earn money for a maintenance fee. |

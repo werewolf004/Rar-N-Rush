@@ -13,6 +13,8 @@ Au démarrage, Rar N Rush cherche le fichier dans cet ordre et utilise **le prem
 
 Au tout premier démarrage (aucun fichier nulle part), il est créé à côté de `rar-n-rush.exe`, ou dans `%APPDATA%\RarNRush` si le dossier du programme est protégé en écriture (par exemple sous `Program Files`).
 
+Le programme posé par l'installateur (`.msi`) utilise toujours `%APPDATA%\RarNRush` : son dossier contient un fichier repère `rar-n-rush.installed` qui désactive le mode portable. Un fichier de réglages déjà présent à côté de ce `rar-n-rush.exe` resterait prioritaire, pour que rien ne soit laissé de côté.
+
 ## Si le fichier pose problème
 
 Tes réglages ne sont jamais perdus en silence :

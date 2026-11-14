@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- Windows Installer package (`rar-n-rush-vX.Y.Z-windows-x64.msi`), next to the portable zip. It installs for the current user only, in `%LOCALAPPDATA%\Programs\Rar N Rush`, without administrator rights, and adds a Start menu shortcut. A newer package replaces the installed version and keeps the settings, passwords and "Start with Windows". Removing it also removes its "Start with Windows" entry and its notification identity; settings and passwords are kept. It is published with its SHA-256 and covered by the build provenance attestation.
+
+### Changed
+
+- The installed program keeps its settings in `%APPDATA%\RarNRush` (marker file `rar-n-rush.installed` next to it). The portable zip is unchanged.
+
 ## [0.5.1] - 2026-11-14
 
 Fixes two ways settings or stored passwords could be lost, and adds the user guide. Recommended for everyone.

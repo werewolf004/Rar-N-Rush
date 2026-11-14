@@ -25,22 +25,28 @@ Written in Rust with an [egui](https://github.com/emilk/egui) interface. The con
 - **Data safety**: existing files are never overwritten by default (`name (1).ext` is used instead). Paths that would escape the destination folder are refused. Source files can be sent to the Recycle Bin, never deleted permanently.
 - **Interface**: English or French (follows Windows by default); light, dark or automatic theme following Windows live; optional icon in the notification area (minimise or close to tray); Windows notifications while the window is not in front; optional start with Windows; one instance at a time (starting it again brings the open window back); the list follows the set being processed.
 - **Tidy-up** (optional): the other files of a set (`.nfo`, samples…) follow it to the destination, and folders left empty go to the Recycle Bin.
-- **Reliable settings**: portable file next to the executable, found again even if you move it; invalid values are reset one by one (never the whole file) after a backup copy, and you are told about it.
+- **Installer or portable**: a per-user installer (no administrator rights) or a zip to run from anywhere.
+- **Reliable settings**: one file, found again even if you move the program; invalid values are reset one by one (never the whole file) after a backup copy, and you are told about it.
 - **Offline**: no update check, no telemetry, no network access at all. Updating is your choice: download a new release when you want one.
 
 ## Installation
 
-1. Download `rar-n-rush-vX.Y.Z-windows-x64.zip` from the [Releases](https://github.com/werewolf004/Rar-N-Rush/releases) page.
-2. Check the archive with the `.sha256` file published next to it:
+Each [release](https://github.com/werewolf004/Rar-N-Rush/releases) offers two downloads with the same program; pick one.
+
+- **Installer** (`rar-n-rush-vX.Y.Z-windows-x64.msi`, from v1.0.0): installs for your account only, in `%LOCALAPPDATA%\Programs\Rar N Rush`, without administrator rights. It adds a Start menu shortcut and an entry in **Settings → Apps** to remove it. Settings are kept in `%APPDATA%\RarNRush`. A newer installer replaces the installed version and keeps your settings, passwords and "Start with Windows".
+- **Portable zip** (`rar-n-rush-vX.Y.Z-windows-x64.zip`): nothing is installed. Unzip it anywhere and run `rar-n-rush.exe`; settings are kept next to it.
+
+1. Download the file you chose.
+2. Check it with the `.sha256` file published next to it:
    ```powershell
-   Get-FileHash .\rar-n-rush-vX.Y.Z-windows-x64.zip -Algorithm SHA256
+   Get-FileHash .\rar-n-rush-vX.Y.Z-windows-x64.msi -Algorithm SHA256
    ```
-   From v0.3.0, you can also check that the archive was built by this repository's release workflow (signed build provenance, requires the [GitHub CLI](https://cli.github.com/)):
+   You can also check that it was built by this repository's release workflow (signed build provenance, from v0.3.0 for the zip and v1.0.0 for the installer; requires the [GitHub CLI](https://cli.github.com/)):
    ```powershell
-   gh attestation verify .\rar-n-rush-vX.Y.Z-windows-x64.zip --repo werewolf004/Rar-N-Rush
+   gh attestation verify .\rar-n-rush-vX.Y.Z-windows-x64.msi --repo werewolf004/Rar-N-Rush
    ```
-3. Unzip it anywhere and run `rar-n-rush.exe`.
-4. PAR2 repair uses the `par2.exe` shipped in the zip. To use another build, set its path in the settings (or remove the bundled one and put yours in `PATH`). Rar N Rush never downloads anything.
+3. Run the installer, or unzip the zip and run `rar-n-rush.exe`. The program is not signed, so Windows SmartScreen may warn you the first time: **More info → Run anyway**.
+4. PAR2 repair uses the `par2.exe` shipped with it. To use another build, set its path in the settings (or remove the bundled one and put yours in `PATH`). Rar N Rush never downloads anything.
 
 Requirements: Windows 10 or 11 (64-bit).
 

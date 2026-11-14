@@ -56,6 +56,8 @@ cargo deny check
 | `src/tidy.rs` | Moving extra files, removing empty folders |
 | `src/tray.rs`, `src/icon.rs` | Notification-area icon, application icon |
 | `src/instance.rs`, `src/autostart.rs`, `src/notify.rs` | One instance at a time, start with Windows, Windows notifications |
+| `src/uninstall.rs` | Registry clean-up run by the installer on removal |
+| `installer/rar-n-rush.wxs`, `scripts/*-msi.ps1`, `scripts/fetch-wix.ps1` | Windows Installer package (WiX 5): source, build, end-to-end test |
 | `fuzz/` | Fuzz targets (`cargo fuzz`), outside the main build |
 | `tests/` | Integration and UI tests; `tests/fixtures/` holds real RAR archives |
 | `vendor/unrar/` | Patched `unrar` crate, see `PATCHES.md` |
@@ -72,6 +74,13 @@ cargo deny check
   ```
 
   Without `RAR_N_RUSH_PAR2` these tests are skipped locally, and fail in CI.
+- The installer is tested end to end by `scripts/test-msi.ps1` (CI runs it on every push): silent install, upgrade, removal, checking the files, the Start menu shortcut and the registry after each step. It needs a .NET runtime (6 or later) for WiX, which `scripts/fetch-wix.ps1` downloads (pinned, SHA-256 checked). It installs for the current user, so it refuses to run if Rar N Rush is already installed or registered on that account, and removes everything it created at the end:
+
+  ```powershell
+  pwsh scripts/fetch-par2.ps1
+  cargo build --release --locked
+  pwsh scripts/test-msi.ps1     # or: pwsh scripts/build-msi.ps1 -> target/msi/*.msi
+  ```
 - UI tests drive the real application through its accessibility tree with `egui_kittest`. No window is opened.
 - Tests never show a Windows notification and never touch the real autostart entry: notifications go through a fake `Notifier`, and the registry tests use throw-away keys under `HKEY_CURRENT_USER\Software\RarNRush-test-<pid>-…`, removed at the end. `tests/single_instance.rs` starts the real program while the lock is held and checks that it exits at once, without a window.
 - Pixel snapshot tests (`snapshots` in `tests/ui.rs`) compare the main screens with `tests/snapshots/*.png`: main window (English light and dark, French), the three settings pages, the welcome screen. They are rendered by Windows' software rasterizer (WARP), so they need no GPU and run in CI. Times are frozen so every run gives the same image; the demo lives in `C:\Users\Public\RarNRush-snapshots`. They also check that every widget has an accessible name. After an intended visual change, look at the `*.diff.png` files (CI uploads them as the `snapshot-diffs` artifact), then update the images and commit them:

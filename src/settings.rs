@@ -2,6 +2,8 @@
 //!
 //! Files are stored next to the executable (portable mode). When that folder is
 //! not writable (for example under `Program Files`), `%APPDATA%\RarNRush` is used.
+//! The copy installed by the Windows Installer package always uses
+//! `%APPDATA%\RarNRush` (see [`INSTALLED_MARKER`]).
 //! Every write is atomic: data goes to a temporary file which then replaces the
 //! target, so a crash never leaves a truncated settings file behind.
 
@@ -16,6 +18,10 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Settings file name.
 pub const SETTINGS_FILE: &str = "rar-n-rush.toml";
+/// File the Windows Installer package puts next to the executable: settings
+/// then go to `%APPDATA%\RarNRush` rather than to the program folder, so they
+/// do not depend on where the program is installed.
+pub const INSTALLED_MARKER: &str = "rar-n-rush.installed";
 /// File listing the keys of sets that were already processed.
 pub const PROCESSED_FILE: &str = "rar-n-rush-processed.txt";
 /// Log file (see [`Store::append_log`]).
@@ -300,6 +306,13 @@ impl Settings {
     }
 }
 
+/// `false` for the program folder of an installed copy ([`INSTALLED_MARKER`]),
+/// unless a settings file is already there: an existing file always wins, so
+/// nothing the user saved is left behind.
+pub fn portable_allowed(dir: &Path) -> bool {
+    !dir.join(INSTALLED_MARKER).is_file() || dir.join(SETTINGS_FILE).is_file()
+}
+
 fn non_empty_path(s: &str) -> Option<PathBuf> {
     let t = s.trim();
     (!t.is_empty()).then(|| PathBuf::from(t))
@@ -345,7 +358,8 @@ impl Store {
     pub fn locate() -> Self {
         let beside_exe = std::env::current_exe()
             .ok()
-            .and_then(|p| p.parent().map(Path::to_path_buf));
+            .and_then(|p| p.parent().map(Path::to_path_buf))
+            .filter(|dir| portable_allowed(dir));
         let appdata = std::env::var_os("APPDATA")
             .map_or_else(|| PathBuf::from("."), PathBuf::from)
             .join("RarNRush");
@@ -1134,6 +1148,19 @@ mod tests {
         // A file next to the executable wins over the fallback.
         fs::write(portable.join(SETTINGS_FILE), "").unwrap();
         assert_eq!(Store::locate_in(Some(portable.clone()), fallback).dir(), portable);
+    }
+
+    #[test]
+    fn installed_copy_keeps_its_settings_out_of_the_program_folder() {
+        let dir = tempfile::tempdir().unwrap();
+        assert!(portable_allowed(dir.path()), "zip copy: portable");
+
+        fs::write(dir.path().join(INSTALLED_MARKER), "").unwrap();
+        assert!(!portable_allowed(dir.path()), "installed copy: %APPDATA%");
+
+        // Settings already saved next to the program are never left behind.
+        fs::write(dir.path().join(SETTINGS_FILE), "").unwrap();
+        assert!(portable_allowed(dir.path()));
     }
 
     #[test]

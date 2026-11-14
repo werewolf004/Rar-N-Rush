@@ -45,6 +45,7 @@ Rar N Rush processes files downloaded from the Internet, which must be treated a
 - Settings and the processed-sets list are written atomically (temporary file then rename): a crash cannot leave a truncated file.
 - A set is recorded as processed **before** its status is shown, so a crash cannot cause it to be processed twice.
 - Registry writes are limited to the current user (`HKEY_CURRENT_USER`), need no administrator rights and are undone when the option is turned off: the `Rar N Rush` value under `...\CurrentVersion\Run` (start with Windows) and the `RarNRush.App` key under `Software\Classes\AppUserModelId` (name and icon of the Windows notifications).
+- The installer is per-user: it writes only under the user's profile and `HKEY_CURRENT_USER` (no administrator rights, no UAC prompt, no service, nothing for other accounts). On removal (not on upgrade) it starts `rar-n-rush.exe --uninstall`, which removes the autostart entry only if it starts that installed copy, and the notification identity. Settings and stored passwords are kept.
 - One instance per settings folder: a lock file held by the running program (released by Windows when it ends, even after a crash) prevents two copies from writing the same settings and lists at the same time.
 - Archive passwords are kept in the Windows Credential Manager (protected by your Windows account), not in `rar-n-rush.toml`. Writes are crash-safe: a new copy is written, then switched to, then the old one is deleted. If the Credential Manager is unavailable, the passwords stay in the settings file in plain text so none is lost, and the window says so.
 - **Known limitation**: backup copies of the settings file made by older versions (`rar-n-rush.toml.<date-time>.bak`) may still contain plain-text passwords; delete them if needed.
@@ -58,5 +59,6 @@ Rar N Rush processes files downloaded from the Internet, which must be treated a
 
 ### Releases
 
-- Each release archive is published with its SHA-256 checksum. Verify it before use (see the README).
-- From v0.3.0, the archive and the executable carry a signed SLSA build provenance (GitHub artifact attestation, Sigstore): `gh attestation verify` proves they were built by the release workflow of this repository from the tagged commit.
+- Each release archive and installer is published with its SHA-256 checksum. Verify it before use (see the README).
+- The installer is built with WiX Toolset 5.0.2, pinned by SHA-256 (`scripts/fetch-wix.ps1`); CI installs, upgrades and removes it silently on every push and checks what each step leaves behind.
+- From v0.3.0, the archive and the executable carry a signed SLSA build provenance (GitHub artifact attestation, Sigstore): From v1.0.0 the installer is covered too. `gh attestation verify` proves they were built by the release workflow of this repository from the tagged commit.

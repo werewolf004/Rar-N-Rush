@@ -16,6 +16,7 @@
 //! - [`instance`]: keeps a single instance running per settings folder.
 //! - [`notify`]: Windows notifications while the window is not in front.
 //! - [`autostart`]: optional start with Windows (current user's `Run` key).
+//! - [`uninstall`]: registry clean-up run by the installer package on removal.
 
 pub mod autostart;
 pub mod engine;
@@ -33,3 +34,4 @@ mod sync;
 pub mod tidy;
 pub mod tray;
 pub mod ui;
+pub mod uninstall;

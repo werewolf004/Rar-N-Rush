@@ -13,6 +13,8 @@ At start-up, Rar N Rush looks for the file in this order and uses the **first on
 
 On a first start (no file anywhere), it is created next to `rar-n-rush.exe`, or in `%APPDATA%\RarNRush` when the program folder is not writable (for example under `Program Files`).
 
+The program installed by the installer (`.msi`) always uses `%APPDATA%\RarNRush`: its folder holds a `rar-n-rush.installed` marker file that turns off the portable mode. A settings file already next to that `rar-n-rush.exe` would still win, so nothing is left behind.
+
 ## If the file has a problem
 
 Your settings are never silently lost:

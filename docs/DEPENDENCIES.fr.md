@@ -55,3 +55,4 @@ Utilisées par les tests uniquement ; absentes du binaire.
 | `rustfmt`, `clippy` | Formatage et lints (`clippy::pedantic` ; `unwrap_used`, `expect_used`, `panic` interdits). |
 | [`cargo-deny`](https://github.com/EmbarkStudios/cargo-deny) | Licences, failles connues, sources interdites. |
 | WinRAR `Rar.exe` | Uniquement pour régénérer les archives de test (`tests/fixtures/make-fixtures.ps1`). |
+| [WiX Toolset](https://github.com/wixtoolset/wix) 5.0.2 (MS-RL) | Construit l'installateur (`.msi`) ; non livré. Version et SHA-256 figés dans `scripts/fetch-wix.ps1` ; il tourne sur un runtime .NET installé. WiX 5 est gardé exprès : WiX 6 et suivants demandent une contribution aux projets qui génèrent des revenus. |

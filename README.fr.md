@@ -25,22 +25,28 @@ Rar N Rush surveille ton dossier de téléchargements. Pour chaque jeu de fichie
 - **Sécurité des données** : par défaut, un fichier existant n'est jamais écrasé (on utilise `nom (1).ext`). Les chemins qui sortiraient du dossier de destination sont refusés. Les fichiers sources peuvent être envoyés à la corbeille, jamais supprimés définitivement.
 - **Interface** : français ou anglais (suit Windows par défaut) ; thème clair, foncé ou automatique, qui suit Windows en direct ; icône facultative dans la zone de notification (réduire ou fermer vers cette zone) ; notifications Windows quand la fenêtre n'est pas au premier plan ; démarrage avec Windows en option ; une seule instance à la fois (la relancer ramène la fenêtre ouverte) ; la liste suit le jeu en cours de traitement.
 - **Rangement** (facultatif) : les autres fichiers d'un jeu (`.nfo`, extraits…) le suivent dans la destination, et les dossiers restés vides partent à la corbeille.
-- **Réglages fiables** : fichier portable à côté de l'exécutable, retrouvé même si tu le déplaces ; une valeur invalide est remise par défaut individuellement (jamais tout le fichier) après une copie de sauvegarde, et tu en es averti.
+- **Installateur ou portable** : un installateur pour ton compte (sans droits administrateur) ou un zip à lancer de n'importe où.
+- **Réglages fiables** : un seul fichier, retrouvé même si tu déplaces le programme ; une valeur invalide est remise par défaut individuellement (jamais tout le fichier) après une copie de sauvegarde, et tu en es averti.
 - **Hors ligne** : aucune vérification de mise à jour, aucune télémétrie, aucun accès réseau. La mise à jour reste ton choix : télécharge une nouvelle release quand tu le veux.
 
 ## Installation
 
-1. Télécharge `rar-n-rush-vX.Y.Z-windows-x64.zip` depuis la page [Releases](https://github.com/werewolf004/Rar-N-Rush/releases).
-2. Vérifie l'archive avec le fichier `.sha256` publié à côté :
+Chaque [release](https://github.com/werewolf004/Rar-N-Rush/releases) propose deux téléchargements avec le même programme ; choisis l'un des deux.
+
+- **Installateur** (`rar-n-rush-vX.Y.Z-windows-x64.msi`, à partir de la v1.0.0) : installe pour ton compte seulement, dans `%LOCALAPPDATA%\Programs\Rar N Rush`, sans droits administrateur. Il ajoute un raccourci dans le menu Démarrer et une entrée dans **Paramètres → Applications** pour le désinstaller. Les réglages sont gardés dans `%APPDATA%\RarNRush`. Un installateur plus récent remplace la version installée et garde tes réglages, tes mots de passe et « Démarrer avec Windows ».
+- **Zip portable** (`rar-n-rush-vX.Y.Z-windows-x64.zip`) : rien n'est installé. Décompresse-le où tu veux et lance `rar-n-rush.exe` ; les réglages sont gardés à côté.
+
+1. Télécharge le fichier choisi.
+2. Vérifie-le avec le fichier `.sha256` publié à côté :
    ```powershell
-   Get-FileHash .\rar-n-rush-vX.Y.Z-windows-x64.zip -Algorithm SHA256
+   Get-FileHash .\rar-n-rush-vX.Y.Z-windows-x64.msi -Algorithm SHA256
    ```
-   À partir de la v0.3.0, tu peux aussi vérifier que l'archive a bien été produite par le workflow de release de ce dépôt (provenance de build signée, nécessite la [GitHub CLI](https://cli.github.com/)) :
+   Tu peux aussi vérifier qu'il a bien été produit par le workflow de release de ce dépôt (provenance de build signée, depuis la v0.3.0 pour le zip et la v1.0.0 pour l'installateur ; nécessite la [GitHub CLI](https://cli.github.com/)) :
    ```powershell
-   gh attestation verify .\rar-n-rush-vX.Y.Z-windows-x64.zip --repo werewolf004/Rar-N-Rush
+   gh attestation verify .\rar-n-rush-vX.Y.Z-windows-x64.msi --repo werewolf004/Rar-N-Rush
    ```
-3. Décompresse-la où tu veux et lance `rar-n-rush.exe`.
-4. La réparation PAR2 utilise le `par2.exe` fourni dans le zip. Pour en utiliser un autre, indique son chemin dans les réglages (ou retire celui fourni et mets le tien dans le `PATH`). Rar N Rush ne télécharge jamais rien.
+3. Lance l'installateur, ou décompresse le zip et lance `rar-n-rush.exe`. Le programme n'est pas signé : Windows SmartScreen peut t'avertir la première fois, clique sur **Informations complémentaires → Exécuter quand même**.
+4. La réparation PAR2 utilise le `par2.exe` fourni avec. Pour en utiliser un autre, indique son chemin dans les réglages (ou retire celui fourni et mets le tien dans le `PATH`). Rar N Rush ne télécharge jamais rien.
 
 Configuration requise : Windows 10 ou 11 (64 bits).
 

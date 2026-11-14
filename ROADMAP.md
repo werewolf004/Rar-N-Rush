@@ -26,6 +26,7 @@ Notification-area icon (brought forward to v0.2.0); one instance per settings fo
 
 ## v1.0.0 — Distribution
 
-- Installer (MSI) and winget package.
+- ✅ Per-user installer (MSI): no administrator rights, Start menu shortcut, upgrades that keep the settings, removal that cleans the registry; tested end to end in CI.
+- winget package.
 - Code signing.
 - ✅ User guide with screenshots for every screen ([docs/USER-GUIDE.md](docs/USER-GUIDE.md)).

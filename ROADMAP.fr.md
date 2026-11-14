@@ -26,6 +26,7 @@ Icône dans la zone de notification (avancée en v0.2.0) ; une seule instance pa
 
 ## v1.0.0 — Distribution
 
-- Installateur (MSI) et paquet winget.
+- ✅ Installateur par utilisateur (MSI) : sans droits administrateur, raccourci dans le menu Démarrer, mises à jour qui gardent les réglages, désinstallation qui nettoie le registre ; testé de bout en bout en CI.
+- Paquet winget.
 - Signature du code.
 - ✅ Guide utilisateur avec une capture de chaque écran ([docs/USER-GUIDE.fr.md](docs/USER-GUIDE.fr.md)).

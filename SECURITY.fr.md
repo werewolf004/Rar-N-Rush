@@ -45,6 +45,7 @@ Rar N Rush traite des fichiers téléchargés depuis Internet, qu'il faut consid
 - Les réglages et la liste des jeux traités sont écrits de façon atomique (fichier temporaire puis renommage) : un plantage ne peut pas laisser un fichier tronqué.
 - Un jeu est enregistré comme traité **avant** que son statut ne s'affiche : un plantage ne peut pas provoquer un double traitement.
 - Les écritures dans le registre se limitent à l'utilisateur courant (`HKEY_CURRENT_USER`), ne demandent pas de droits administrateur et sont annulées quand l'option est désactivée : la valeur `Rar N Rush` sous `...\CurrentVersion\Run` (démarrage avec Windows) et la clé `RarNRush.App` sous `Software\Classes\AppUserModelId` (nom et icône des notifications Windows).
+- L'installateur est par utilisateur : il n'écrit que dans le profil de l'utilisateur et sous `HKEY_CURRENT_USER` (pas de droits administrateur, pas d'invite UAC, pas de service, rien pour les autres comptes). À la désinstallation (pas lors d'une mise à jour), il lance `rar-n-rush.exe --uninstall`, qui supprime l'entrée de démarrage seulement si elle lance cette copie installée, ainsi que l'identité de notification. Les réglages et les mots de passe enregistrés sont conservés.
 - Une seule instance par dossier de réglages : un fichier verrou tenu par le programme en cours (libéré par Windows quand il se termine, même après un plantage) empêche deux copies d'écrire en même temps les mêmes réglages et listes.
 - Les mots de passe d'archives sont conservés dans le Gestionnaire d'identifiants Windows (protégé par ton compte Windows), et non dans `rar-n-rush.toml`. L'écriture résiste aux plantages : une nouvelle copie est écrite, puis activée, puis l'ancienne est supprimée. Si le Gestionnaire d'identifiants est indisponible, les mots de passe restent en clair dans le fichier de réglages pour qu'aucun ne soit perdu, et la fenêtre l'indique.
 - **Limite connue** : les copies de sauvegarde du fichier de réglages faites par les versions précédentes (`rar-n-rush.toml.<date-heure>.bak`) peuvent encore contenir des mots de passe en clair ; supprime-les si besoin.
@@ -58,5 +59,6 @@ Rar N Rush traite des fichiers téléchargés depuis Internet, qu'il faut consid
 
 ### Releases
 
-- Chaque archive de release est publiée avec sa somme de contrôle SHA-256. Vérifie-la avant utilisation (voir le README).
-- À partir de la v0.3.0, l'archive et l'exécutable portent une provenance de build SLSA signée (attestation d'artefact GitHub, Sigstore) : `gh attestation verify` prouve qu'ils ont été produits par le workflow de release de ce dépôt à partir du commit tagué.
+- Chaque archive et chaque installateur de release sont publiés avec leur somme de contrôle SHA-256. Vérifie-la avant utilisation (voir le README).
+- L'installateur est construit avec WiX Toolset 5.0.2, figé par SHA-256 (`scripts/fetch-wix.ps1`) ; à chaque push, la CI l'installe, le met à jour et le désinstalle en silence, et vérifie ce que chaque étape laisse.
+- À partir de la v0.3.0, l'archive et l'exécutable portent une provenance de build SLSA signée (attestation d'artefact GitHub, Sigstore) : À partir de la v1.0.0, l'installateur l'est aussi. `gh attestation verify` prouve qu'ils ont été produits par le workflow de release de ce dépôt à partir du commit tagué.

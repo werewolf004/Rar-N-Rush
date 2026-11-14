@@ -18,15 +18,17 @@ Ce guide parcourt chaque écran de Rar N Rush. Pour le nom exact, la valeur par 
 
 ## 1. Installation et premier lancement
 
-1. Télécharge `rar-n-rush-vX.Y.Z-windows-x64.zip` depuis la page [Releases](https://github.com/werewolf004/Rar-N-Rush/releases) et décompresse-le où tu veux, par exemple dans `C:\Outils\Rar N Rush`.
-2. Lance `rar-n-rush.exe`. Rien n'est installé : les réglages sont créés à côté (ou dans `%APPDATA%\RarNRush` si ce dossier est en lecture seule).
+1. Depuis la page [Releases](https://github.com/werewolf004/Rar-N-Rush/releases), télécharge au choix :
+   - l'**installateur** `rar-n-rush-vX.Y.Z-windows-x64.msi` et lance-le. Il installe pour ton compte seulement (sans droits administrateur) et ajoute **Rar N Rush** au menu Démarrer. Les réglages vont dans `%APPDATA%\RarNRush` ;
+   - ou le **zip portable** `rar-n-rush-vX.Y.Z-windows-x64.zip`, et décompresse-le où tu veux, par exemple dans `C:\Outils\Rar N Rush`. Rien n'est installé : les réglages sont créés à côté de `rar-n-rush.exe` (ou dans `%APPDATA%\RarNRush` si ce dossier est en lecture seule).
+2. Lance **Rar N Rush** depuis le menu Démarrer, ou lance `rar-n-rush.exe`.
 3. La fenêtre demande le dossier où arrivent tes téléchargements :
 
 ![Premier lancement : choisir le dossier à surveiller](screenshots/onboarding-fr.png)
 
 Clique sur **Choisir un dossier…**, ou tape un chemin dans le champ **Dossier surveillé** et valide avec **Entrée**. La surveillance démarre aussitôt.
 
-> Au premier lancement, Windows peut afficher un avertissement SmartScreen (« Windows a protégé votre ordinateur »), car le programme n'est pas signé avec un certificat payant. Clique sur **Informations complémentaires → Exécuter quand même**. Tu peux vérifier que le zip vient bien de ce projet avec le fichier `.sha256` ou `gh attestation verify` (voir le [README](../README.fr.md#installation)).
+> Au premier lancement, Windows peut afficher un avertissement SmartScreen (« Windows a protégé votre ordinateur »), car le programme n'est pas signé avec un certificat payant. Clique sur **Informations complémentaires → Exécuter quand même**. Tu peux vérifier que le fichier vient bien de ce projet avec le fichier `.sha256` ou `gh attestation verify` (voir le [README](../README.fr.md#installation)).
 
 ## 2. La fenêtre principale
 
@@ -172,9 +174,9 @@ Clique sur **OK** pour le masquer. Les autres cas sont traités de la même faç
 
 ## 10. Fichiers, vie privée et désinstallation
 
-Rar N Rush **ne se connecte jamais à Internet** : aucune vérification de mise à jour, aucune télémétrie. Pour mettre à jour, télécharge une nouvelle release quand tu le veux et remplace les fichiers.
+Rar N Rush **ne se connecte jamais à Internet** : aucune vérification de mise à jour, aucune télémétrie. Pour mettre à jour, télécharge une nouvelle release quand tu le veux : lance le nouvel installateur (il remplace la version installée et garde tout), ou remplace les fichiers de la copie portable.
 
-À côté des réglages (dossier de `rar-n-rush.exe`, ou `%APPDATA%\RarNRush`) :
+À côté des réglages (`%APPDATA%\RarNRush` pour le programme installé ; pour le zip portable, dossier de `rar-n-rush.exe`, ou `%APPDATA%\RarNRush`) :
 
 | Fichier | Contenu |
 |---|---|
@@ -184,7 +186,9 @@ Rar N Rush **ne se connecte jamais à Internet** : aucune vérification de mise 
 | `rar-n-rush.lock`, `rar-n-rush.show` | Servent à garder une seule instance en marche. |
 | `rar-n-rush.ico` | Icône des notifications Windows, si elles sont activées. |
 
-**Pour retirer complètement Rar N Rush :**
+**Pour désinstaller le programme installé :** quitte-le, puis dans les **Paramètres** de Windows → **Applications → Applications installées**, choisis **Rar N Rush → Désinstaller**. Les fichiers du programme, le raccourci du menu Démarrer, son entrée « Démarrer avec Windows » et son identité de notification sont supprimés. Tes réglages (`%APPDATA%\RarNRush`) et les mots de passe du Gestionnaire d'identifiants sont **conservés** : une réinstallation retrouve tout ; pour les supprimer aussi, suis d'abord les étapes 2 et 3 ci-dessous.
+
+**Pour retirer complètement la copie portable :**
 
 1. Dans **Réglages → Fenêtre**, désactive **Démarrer avec Windows** et **Notifications Windows**, puis **Enregistrer** : cela supprime les deux entrées de registre qu'ils utilisent (toutes deux sous ton propre compte, `HKEY_CURRENT_USER`).
 2. Dans **Réglages → Traitement**, vide **Mots de passe à essayer**, puis **Enregistrer** : cela les supprime du Gestionnaire d'identifiants.
