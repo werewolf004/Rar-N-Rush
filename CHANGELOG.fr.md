@@ -15,6 +15,11 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 - **Garder visible le jeu en cours** (`follow_active`, activé par défaut) : la liste défile jusqu'à chaque nouveau jeu traité.
 - **Zone de notification** : réduire (`minimize_to_tray`) et/ou fermer (`close_to_tray`) dans une icône ; la surveillance continue, un clic fait revenir la fenêtre, **Quitter** dans son menu ferme l'application.
 - Icône de l'application pour la fenêtre, la barre des tâches et la zone de notification.
+- Raccourcis clavier : **F5** lance une analyse, **Ctrl+,** ouvre les réglages, **Échap** les ferme.
+- La fenêtre des réglages vérifie les valeurs avant d'enregistrer : **Enregistrer** est désactivé, avec la raison affichée, tant que le dossier surveillé n'existe pas, que la destination est un fichier ou en lecture seule, ou que `par2.exe` n'est pas au chemin indiqué.
+- Fermer la fenêtre des réglages avec des modifications non enregistrées demande d'abord **Abandonner tes modifications ?**.
+- La taille et la position de la fenêtre sont mémorisées (table `window` du fichier de réglages).
+- Test automatique : chaque couleur de statut atteint le contraste WCAG 2.2 AA (4,5:1) sur chaque fond, dans les deux thèmes.
 
 ### Modifié
 

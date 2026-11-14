@@ -348,6 +348,86 @@ fn recent_folder_is_picked_from_the_drop_down() {
     assert_eq!(saved.recent_watch_dirs[0], other.display().to_string());
 }
 
+#[test]
+fn ctrl_comma_opens_the_settings() {
+    let demo = Demo::new(false);
+    let mut h = harness(
+        demo.settings(LanguagePref::English, ThemePref::Light),
+        &demo.state_dir("shortcut"),
+        false,
+    );
+    frames(&mut h, 2);
+    assert!(h.query_by_label("General").is_none());
+    h.key_press_modifiers(egui::Modifiers::COMMAND, egui::Key::Comma);
+    frames(&mut h, 3);
+    h.get_by_label("General");
+    h.key_press(egui::Key::Escape);
+    frames(&mut h, 3);
+    assert!(
+        h.query_by_label("General").is_none(),
+        "Esc closes unchanged settings"
+    );
+}
+
+#[test]
+fn unsaved_changes_are_not_lost_by_accident() {
+    let demo = Demo::new(false);
+    let state = demo.state_dir("guard");
+    let mut h = harness(
+        demo.settings(LanguagePref::English, ThemePref::Light),
+        &state,
+        false,
+    );
+    frames(&mut h, 2);
+    h.get_by_label("⚙  Settings").click();
+    frames(&mut h, 3);
+    h.get_by_label("Dark").click(); // theme: a change
+    frames(&mut h, 2);
+    h.get_by_label("Cancel").click();
+    frames(&mut h, 3);
+    h.get_by_label("Discard your changes?");
+    h.get_by_label("Keep editing").click();
+    frames(&mut h, 3);
+    assert!(h.query_by_label("Discard your changes?").is_none());
+    h.get_by_label("General"); // still open, change kept
+    h.get_by_label("Cancel").click();
+    frames(&mut h, 3);
+    h.get_by_label("Discard").click();
+    frames(&mut h, 3);
+    assert!(h.query_by_label("General").is_none());
+    assert!(!state.join("rar-n-rush.toml").exists(), "nothing was saved");
+}
+
+#[test]
+fn invalid_folder_disables_save() {
+    let demo = Demo::new(false);
+    let state = demo.state_dir("invalid");
+    let mut h = harness(
+        demo.settings(LanguagePref::English, ThemePref::Light),
+        &state,
+        false,
+    );
+    frames(&mut h, 2);
+    h.get_by_label("⚙  Settings").click();
+    frames(&mut h, 3);
+    let field = h
+        .get_all_by_role(egui::accesskit::Role::TextInput)
+        .find(|n| n.value().is_some_and(|v| v.ends_with("Downloads")) && n.rect().min.y > 60.0)
+        .expect("watched folder field of the settings window");
+    field.focus();
+    frames(&mut h, 1);
+    h.get_all_by_role(egui::accesskit::Role::TextInput)
+        .find(egui_kittest::Node::is_focused)
+        .unwrap()
+        .set_text_value_accesskit(&demo.root.join("missing").display().to_string());
+    frames(&mut h, 3);
+    h.get_by_label("Watched folder: this folder does not exist.");
+    h.get_by_label("Save").click(); // disabled: nothing happens
+    frames(&mut h, 3);
+    h.get_by_label("General");
+    assert!(!state.join("rar-n-rush.toml").exists(), "nothing was saved");
+}
+
 /// Regenerates `docs/screenshots/*.png`. Run with:
 /// `UPDATE_SCREENSHOTS=1 cargo test --test ui screenshots -- --test-threads=1`
 #[test]

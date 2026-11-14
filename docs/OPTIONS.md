@@ -23,7 +23,10 @@ Your settings are never silently lost:
 - a byte-order mark added by Notepad is accepted;
 - whenever something is reset, the original file is first copied to `rar-n-rush.toml.<date-time>.bak`, and a banner at the top of the window says which keys were reset and where the copy is.
 
-The settings window has three pages: **General** (folders, timing, language, theme), **Processing** (behaviour, clean-up, passwords) and **Window**.
+The settings window has three pages: **General** (folders, timing, language, theme), **Processing** (behaviour, clean-up, passwords) and **Window**. It opens with **Settings** or **Ctrl+,**.
+
+- **Save** is disabled while a value is wrong; the problem is shown just above it (watched folder that does not exist, destination that is a file or cannot be written to, `par2.exe` path with no file). A destination that does not exist yet is fine: it is created at the first extraction.
+- **Cancel**, the window's ✕ and **Esc** close it; with unsaved changes they first ask **Discard your changes?** (**Discard** or **Keep editing**).
 
 ![Settings window, General page](screenshots/settings-en-light.png)
 
@@ -79,6 +82,7 @@ The settings window has three pages: **General** (folders, timing, language, the
 |---|---|---|---|---|
 | `follow_active` | Keep the set being processed in view | bool | `true` | Scrolls the list to each new set being processed, once, so you can still scroll freely in between. |
 | `minimize_to_tray` | Minimise to the notification area | bool | `false` | Minimising hides the window; an icon in the notification area brings it back (click, or **Show Rar N Rush** in its menu). |
+| `window` | *(none, saved automatically)* | table | *(none)* | Size and position of the main window, saved when the app exits and restored at the next start: `x`, `y`, `width`, `height` in pixels and `maximized`. Out-of-range values are clamped (minimum 720 × 420). Delete the table to return to the default size. |
 | `close_to_tray` | Close to the notification area | bool | `false` | The window's ✕ hides the window instead of quitting; monitoring goes on. Quit with **Quit** in the icon's menu. If the icon cannot be created, the window closes normally and the settings window shows the reason. |
 
 ## Appearance *(General page)*
@@ -109,6 +113,13 @@ delete_empty_dirs = false
 follow_active = true
 minimize_to_tray = false
 close_to_tray = false
+
+[window]
+x = 120
+y = 80
+width = 1100
+height = 680
+maximized = false
 language = "system"
 theme = "system"
 ```

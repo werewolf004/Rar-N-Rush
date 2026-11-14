@@ -10,12 +10,12 @@ Complete processing chain (scan, PAR2, SFV, RAR), typed errors, no `unsafe`/`unw
 
 ## v0.2.0 — UI/UX and accessibility
 
-- Settings as a modal dialog with inline validation (folder exists, destination writable, par2 found) and an "unsaved changes" guard.
-- Full keyboard navigation and visible focus; shortcuts (F5 scan, Ctrl+, settings, Del remove).
-- Screen-reader labels on every control (AccessKit), checked by tests.
-- Contrast checked against WCAG 2.2 AA in both themes by an automated test.
+- ✅ Settings with inline validation (folder exists, destination writable, par2 found) and an "unsaved changes" guard.
+- ✅ Shortcuts F5 (scan), Ctrl+, (settings), Esc. Still to do: full keyboard navigation of the list, Del to remove.
+- ✅ Screen-reader labels on every control (AccessKit), checked by the headless UI tests.
+- ✅ Contrast checked against WCAG 2.2 AA in both themes by an automated test.
 - Confirmation before destructive actions; non-blocking toasts for results.
-- Window size and position remembered; DPI scaling tested at 100–200 %.
+- ✅ Window size and position remembered. Still to do: DPI scaling tested at 100–200 %.
 - Snapshot tests of the main screens to catch visual regressions.
 
 ## v0.3.0 — Data and security

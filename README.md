@@ -66,6 +66,15 @@ Each set of files appears in the list with its status:
 
 Open **Settings** to change the folders, timings, language, theme and behaviour. Every option is described in [docs/OPTIONS.md](docs/OPTIONS.md).
 
+| Shortcut | Action |
+|---|---|
+| **F5** | Scan the watched folder now |
+| **Ctrl+,** | Open the settings |
+| **Esc** | Close the settings (asks first if something changed); in the watched-folder field, cancel the edit |
+| **Enter** | In the watched-folder field, watch the folder typed; in a password field, try the password |
+
+The window reopens at the size and position it had when you closed it.
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/settings-en-dark.png">
   <img alt="Settings window" src="docs/screenshots/settings-en-light.png">

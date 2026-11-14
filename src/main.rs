@@ -13,12 +13,21 @@ fn main() -> eframe::Result {
     // up, and the problem is shown to the user in a banner.
     let loaded = store.load();
 
+    let mut viewport = egui::ViewportBuilder::default()
+        .with_title("Rar N Rush")
+        .with_inner_size([1100.0, 680.0])
+        .with_min_inner_size([720.0, 420.0])
+        .with_icon(rar_n_rush::icon::window_icon());
+    // Values are clamped when the settings are loaded; Windows keeps the window
+    // reachable if the monitor it was on is gone.
+    if let Some(g) = loaded.settings.window {
+        viewport = viewport
+            .with_inner_size(g.size())
+            .with_position(g.position())
+            .with_maximized(g.maximized);
+    }
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_title("Rar N Rush")
-            .with_inner_size([1100.0, 680.0])
-            .with_min_inner_size([720.0, 420.0])
-            .with_icon(rar_n_rush::icon::window_icon()),
+        viewport,
         ..Default::default()
     };
     eframe::run_native(

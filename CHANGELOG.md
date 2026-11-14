@@ -15,6 +15,11 @@ All notable changes to this project are documented here. The format follows [Kee
 - **Keep the set being processed in view** (`follow_active`, on by default): the list scrolls to each new active set.
 - **Notification area**: minimise (`minimize_to_tray`) and/or close (`close_to_tray`) to an icon; monitoring goes on, a click brings the window back, **Quit** in its menu exits.
 - Application icon for the window, the taskbar and the notification area.
+- Keyboard shortcuts: **F5** scans now, **Ctrl+,** opens the settings, **Esc** closes them.
+- The settings window checks the values before saving: **Save** is disabled, with the reason shown, while the watched folder does not exist, the destination is a file or read-only, or `par2.exe` is not at the given path.
+- Closing the settings window with unsaved changes asks **Discard your changes?** first.
+- The window size and position are remembered (`window` table in the settings file).
+- Automated test: every status colour reaches the WCAG 2.2 AA contrast ratio (4.5:1) on every background, in both themes.
 
 ### Changed
 

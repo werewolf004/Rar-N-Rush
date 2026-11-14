@@ -97,6 +97,52 @@ pub struct Settings {
     pub language: LanguagePref,
     /// Colour theme.
     pub theme: ThemePref,
+    /// Last size and position of the main window (saved on exit).
+    pub window: Option<WindowGeometry>,
+}
+
+/// Size and position of the main window, in logical pixels.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub struct WindowGeometry {
+    /// Left edge of the window frame.
+    pub x: i32,
+    /// Top edge of the window frame.
+    pub y: i32,
+    /// Width of the window content.
+    pub width: i32,
+    /// Height of the window content.
+    pub height: i32,
+    /// The window was maximised.
+    pub maximized: bool,
+}
+
+impl WindowGeometry {
+    /// Smallest window size accepted.
+    pub const MIN_SIZE: (i32, i32) = (720, 420);
+    /// Largest coordinate or size accepted (guards against corrupted values).
+    pub const MAX_COORD: i32 = 16_384;
+
+    /// Content size, as egui expects it.
+    pub fn size(&self) -> [f32; 2] {
+        [lossless(self.width), lossless(self.height)]
+    }
+
+    /// Frame position, as egui expects it.
+    pub fn position(&self) -> [f32; 2] {
+        [lossless(self.x), lossless(self.y)]
+    }
+
+    /// Returns a copy with the size and position clamped to sane values.
+    #[must_use]
+    pub fn validated(self) -> Self {
+        Self {
+            x: self.x.clamp(-Self::MAX_COORD, Self::MAX_COORD),
+            y: self.y.clamp(-Self::MAX_COORD, Self::MAX_COORD),
+            width: self.width.clamp(Self::MIN_SIZE.0, Self::MAX_COORD),
+            height: self.height.clamp(Self::MIN_SIZE.1, Self::MAX_COORD),
+            maximized: self.maximized,
+        }
+    }
 }
 
 /// Interface language preference.
@@ -148,6 +194,7 @@ impl Default for Settings {
             close_to_tray: false,
             language: LanguagePref::System,
             theme: ThemePref::System,
+            window: None,
         }
     }
 }
@@ -165,6 +212,7 @@ impl Settings {
         self.par2_path = self.par2_path.trim().to_owned();
         self.passwords.retain(|p| !p.is_empty());
         self.passwords.dedup();
+        self.window = self.window.map(WindowGeometry::validated);
         self.recent_watch_dirs = dedup_paths(
             std::mem::take(&mut self.recent_watch_dirs)
                 .iter()
@@ -468,7 +516,15 @@ fn dedup_paths<'a>(dirs: impl Iterator<Item = &'a str>) -> Vec<String> {
         .collect()
 }
 
-fn is_writable(dir: &Path) -> bool {
+/// Converts a coordinate clamped to [`WindowGeometry::MAX_COORD`] (it fits in an
+/// `i16`, so the conversion to `f32` is exact).
+fn lossless(v: i32) -> f32 {
+    let clamped = v.clamp(-WindowGeometry::MAX_COORD, WindowGeometry::MAX_COORD);
+    f32::from(i16::try_from(clamped).unwrap_or(0))
+}
+
+/// `true` when a file can be created in `dir`.
+pub fn is_writable(dir: &Path) -> bool {
     let probe = dir.join(".rnr-write-test");
     let ok = fs::write(&probe, b"").is_ok();
     let _ = fs::remove_file(&probe);
@@ -525,6 +581,31 @@ mod tests {
         let s = s.validated();
         assert_eq!(s.recent_watch_dirs.len(), RECENT_WATCH_DIRS_MAX);
         assert_eq!(s.recent_watch_dirs[0], "D:\\in24");
+    }
+
+    #[test]
+    fn window_geometry_is_clamped() {
+        let s = Settings {
+            window: Some(WindowGeometry {
+                x: i32::MIN,
+                y: 99_999,
+                width: 10,
+                height: i32::MAX,
+                maximized: false,
+            }),
+            ..Settings::default()
+        }
+        .validated();
+        assert_eq!(
+            s.window,
+            Some(WindowGeometry {
+                x: -WindowGeometry::MAX_COORD,
+                y: WindowGeometry::MAX_COORD,
+                width: 720,
+                height: WindowGeometry::MAX_COORD,
+                maximized: false,
+            })
+        );
     }
 
     #[test]
@@ -668,6 +749,13 @@ mod tests {
             close_to_tray: true,
             language: LanguagePref::French,
             theme: ThemePref::Dark,
+            window: Some(WindowGeometry {
+                x: -8,
+                y: 30,
+                width: 1280,
+                height: 800,
+                maximized: true,
+            }),
         };
         for _ in 0..3 {
             store.save_settings(&s).unwrap(); // repeated saves replace the file in place

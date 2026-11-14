@@ -66,6 +66,15 @@ Chaque jeu de fichiers apparaît dans la liste avec son statut :
 
 Ouvre **Réglages** pour changer les dossiers, les délais, la langue, le thème et le comportement. Chaque option est décrite dans [docs/OPTIONS.fr.md](docs/OPTIONS.fr.md).
 
+| Raccourci | Action |
+|---|---|
+| **F5** | Analyser le dossier surveillé maintenant |
+| **Ctrl+,** | Ouvrir les réglages |
+| **Échap** | Fermer les réglages (demande d'abord si quelque chose a changé) ; dans le champ du dossier surveillé, annuler la saisie |
+| **Entrée** | Dans le champ du dossier surveillé, surveiller le dossier saisi ; dans un champ de mot de passe, essayer le mot de passe |
+
+La fenêtre se rouvre à la taille et à la position qu'elle avait à la fermeture.
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/settings-fr-dark.png">
   <img alt="Fenêtre des réglages" src="docs/screenshots/settings-fr-light.png">

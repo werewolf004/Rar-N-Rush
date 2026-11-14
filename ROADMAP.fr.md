@@ -10,12 +10,12 @@ Chaîne de traitement complète (analyse, PAR2, SFV, RAR), erreurs typées, ni `
 
 ## v0.2.0 — UI/UX et accessibilité
 
-- Réglages dans une fenêtre modale avec validation en direct (dossier existant, destination accessible en écriture, par2 trouvé) et alerte « modifications non enregistrées ».
-- Navigation complète au clavier et focus visible ; raccourcis (F5 analyser, Ctrl+, réglages, Suppr retirer).
-- Libellés lecteur d'écran sur chaque contrôle (AccessKit), vérifiés par des tests.
-- Contraste vérifié selon WCAG 2.2 AA dans les deux thèmes par un test automatique.
+- ✅ Réglages avec validation en direct (dossier existant, destination accessible en écriture, par2 trouvé) et alerte « modifications non enregistrées ».
+- ✅ Raccourcis F5 (analyser), Ctrl+, (réglages), Échap. Reste à faire : navigation complète de la liste au clavier, Suppr pour retirer.
+- ✅ Libellés lecteur d'écran sur chaque contrôle (AccessKit), vérifiés par les tests d'interface sans fenêtre.
+- ✅ Contraste vérifié selon WCAG 2.2 AA dans les deux thèmes par un test automatique.
 - Confirmation avant les actions destructrices ; notifications non bloquantes pour les résultats.
-- Taille et position de la fenêtre mémorisées ; mise à l'échelle DPI testée de 100 à 200 %.
+- ✅ Taille et position de la fenêtre mémorisées. Reste à faire : mise à l'échelle DPI testée de 100 à 200 %.
 - Tests de capture des écrans principaux pour détecter les régressions visuelles.
 
 ## v0.3.0 — Données et sécurité

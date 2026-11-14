@@ -3,7 +3,8 @@
 use crate::engine::{Command, Engine, EngineState, Job, LogLine, Status};
 use crate::i18n::{Lang, Localize, Texts};
 use crate::settings::{
-    LanguagePref, LoadIssue, SCAN_INTERVAL_RANGE, STABLE_RANGE, Settings, Store, ThemePref,
+    LanguagePref, LoadIssue, SCAN_INTERVAL_RANGE, STABLE_RANGE, Settings, Store, ThemePref, WindowGeometry,
+    is_writable,
 };
 use crate::tray::{self, Request, Tray, WindowAction, WindowInput};
 use eframe::egui::{self, Color32, RichText};
@@ -43,6 +44,13 @@ pub struct App {
     window: WindowState,
     /// Page shown in the settings window.
     settings_tab: SettingsTab,
+    /// Settings and password text as they were when the settings window opened,
+    /// to detect unsaved changes.
+    draft_original: Option<(Settings, String)>,
+    /// The user tried to close the settings window with unsaved changes.
+    confirm_discard: bool,
+    /// Last known size and position of the main window.
+    geometry: Option<WindowGeometry>,
 }
 
 /// Pages of the settings window.
@@ -143,6 +151,9 @@ impl App {
             tray_error: None,
             window: WindowState::Shown,
             settings_tab: SettingsTab::General,
+            draft_original: None,
+            confirm_discard: false,
+            geometry: settings.window,
         }
     }
 
@@ -156,8 +167,107 @@ impl App {
     }
 
     fn open_settings(&mut self, settings: &Settings) {
+        if self.draft.is_some() {
+            return; // already open: keep the edits in progress
+        }
         self.passwords_text = settings.passwords.join("\n");
         self.draft = Some(settings.clone());
+        self.draft_original = Some((settings.clone(), self.passwords_text.clone()));
+        self.settings_error = None;
+        self.confirm_discard = false;
+    }
+
+    /// `true` when the settings window holds changes that are not saved.
+    fn draft_is_dirty(&self, draft: &Settings) -> bool {
+        self.draft_original
+            .as_ref()
+            .is_some_and(|(settings, passwords)| settings != draft || *passwords != self.passwords_text)
+    }
+
+    /// Records the size and position of the main window (not while minimised,
+    /// hidden or maximised, so the normal size is kept).
+    fn track_geometry(&mut self, ctx: &egui::Context) {
+        if self.window != WindowState::Shown {
+            return;
+        }
+        let (outer, inner, maximized, minimized) = ctx.input(|i| {
+            let v = i.viewport();
+            (
+                v.outer_rect,
+                v.inner_rect,
+                v.maximized.unwrap_or(false),
+                v.minimized.unwrap_or(false),
+            )
+        });
+        if minimized {
+            return;
+        }
+        let previous = self.geometry;
+        self.geometry = match (outer, inner) {
+            (Some(outer), Some(inner)) if !maximized => Some(
+                WindowGeometry {
+                    x: round(outer.min.x),
+                    y: round(outer.min.y),
+                    width: round(inner.width()),
+                    height: round(inner.height()),
+                    maximized: false,
+                }
+                .validated(),
+            ),
+            _ => previous.map(|g| WindowGeometry { maximized, ..g }),
+        };
+    }
+
+    /// Saves the window geometry when it changed. Called when the app exits.
+    fn save_geometry(&self) {
+        let mut settings = self.engine.with_state(|s| s.settings.clone());
+        if settings.window == self.geometry || self.geometry.is_none() {
+            return;
+        }
+        settings.window = self.geometry;
+        // Best effort: the app is closing, there is no one left to show an error to,
+        // and every other setting was already saved when it was changed.
+        if self.store.save_settings(&settings).is_ok() {
+            self.engine.send(Command::UpdateSettings(settings));
+        }
+    }
+
+    /// Keyboard shortcuts of the main window.
+    fn shortcuts(&mut self, ctx: &egui::Context, snap: &Snapshot) {
+        let (scan, settings, escape) = ctx.input_mut(|i| {
+            (
+                i.consume_key(egui::Modifiers::NONE, egui::Key::F5),
+                i.consume_shortcut(&egui::KeyboardShortcut::new(
+                    egui::Modifiers::COMMAND,
+                    egui::Key::Comma,
+                )),
+                i.key_pressed(egui::Key::Escape),
+            )
+        });
+        if scan && snap.running {
+            self.engine.send(Command::ScanNow);
+        }
+        if settings {
+            self.open_settings(&snap.settings);
+        }
+        // Esc closes the settings window, unless a text field uses it to cancel editing.
+        if escape && self.draft.is_some() && ctx.memory(|m| m.focused().is_none()) {
+            self.request_close_settings();
+        }
+    }
+
+    /// Closes the settings window, or asks first when there are unsaved changes.
+    fn request_close_settings(&mut self) {
+        match &self.draft {
+            Some(draft) if self.draft_is_dirty(draft) => self.confirm_discard = true,
+            _ => self.close_settings(),
+        }
+    }
+
+    fn close_settings(&mut self) {
+        self.draft = None;
+        self.draft_original = None;
+        self.confirm_discard = false;
         self.settings_error = None;
     }
 
@@ -244,7 +354,7 @@ impl App {
             {
                 self.engine.send(Command::ScanNow);
             }
-            if ui.button(t.settings).clicked() {
+            if ui.button(t.settings).on_hover_text(t.settings_hint).clicked() {
                 self.open_settings(&snap.settings);
             }
             ui.separator();
@@ -483,7 +593,8 @@ impl App {
         let t = self.texts();
         let lang = self.lang;
         let mut open = true;
-        let (mut save, mut cancel) = (false, false);
+        let (mut save, mut cancel, mut discard, mut keep) = (false, false, false, false);
+        let problems = draft_problems(&draft, t);
         egui::Window::new(t.settings_title)
             .open(&mut open)
             .collapsible(false)
@@ -518,33 +629,87 @@ impl App {
                     SettingsTab::Window => window_toggles(ui, &mut draft, t),
                 }
                 ui.separator();
+                let error = status_color(Status::Failed, dark);
+                for problem in &problems {
+                    ui.colored_label(error, *problem);
+                }
                 if let Some(e) = &self.tray_error {
                     ui.colored_label(status_color(Status::NeedPassword, dark), e);
                 }
                 if let Some(e) = &self.settings_error {
-                    ui.colored_label(status_color(Status::Failed, dark), e);
+                    ui.colored_label(error, e);
                 }
                 ui.add_space(8.0);
-                ui.horizontal(|ui| {
-                    save = ui.button(t.save).clicked();
-                    cancel = ui.button(t.cancel).clicked();
-                });
+                if self.confirm_discard {
+                    ui.horizontal(|ui| {
+                        ui.colored_label(status_color(Status::NeedPassword, dark), t.discard_question);
+                        discard = ui.button(t.discard).clicked();
+                        keep = ui.button(t.keep_editing).clicked();
+                    });
+                } else {
+                    ui.horizontal(|ui| {
+                        save = ui
+                            .add_enabled(problems.is_empty(), egui::Button::new(t.save))
+                            .clicked();
+                        cancel = ui.button(t.cancel).clicked();
+                    });
+                }
             });
-        if save {
-            draft.passwords = self
-                .passwords_text
-                .lines()
-                .map(str::trim)
-                .map(str::to_owned)
-                .collect();
-            if let Err(e) = self.apply_settings(ctx, draft.clone()) {
-                self.settings_error = Some(e);
-                self.draft = Some(draft);
-            }
-        } else if open && !cancel {
-            self.draft = Some(draft);
+        self.draft = Some(draft);
+        if keep {
+            self.confirm_discard = false;
+        } else if discard {
+            self.close_settings();
+        } else if save {
+            self.save_draft(ctx);
+        } else if cancel || !open {
+            self.request_close_settings();
         }
     }
+
+    /// Saves the settings window; it stays open with the error when saving fails.
+    fn save_draft(&mut self, ctx: &egui::Context) {
+        let Some(mut draft) = self.draft.clone() else {
+            return;
+        };
+        draft.passwords = self
+            .passwords_text
+            .lines()
+            .map(str::trim)
+            .map(str::to_owned)
+            .collect();
+        match self.apply_settings(ctx, draft) {
+            Ok(()) => self.close_settings(),
+            Err(e) => self.settings_error = Some(e),
+        }
+    }
+}
+
+/// Problems that prevent saving the settings, shown above the Save button.
+fn draft_problems(draft: &Settings, t: &Texts) -> Vec<&'static str> {
+    let mut problems = Vec::new();
+    if draft.watch_path().is_some_and(|dir| !dir.is_dir()) {
+        problems.push(t.problem_watch_dir);
+    }
+    if let Some(dest) = draft.extract_path().filter(|d| d.exists()) {
+        if !dest.is_dir() {
+            problems.push(t.problem_dest_not_dir);
+        } else if !is_writable(&dest) {
+            problems.push(t.problem_dest_read_only);
+        }
+    }
+    if !draft.par2_path.trim().is_empty() && !Path::new(draft.par2_path.trim()).is_file() {
+        problems.push(t.problem_par2);
+    }
+    problems
+}
+
+/// Rounds a logical coordinate to whole pixels, saturating.
+fn round(x: f32) -> i32 {
+    // Clamped first, so the conversion cannot truncate.
+    #[allow(clippy::cast_possible_truncation)]
+    let value = x.round().clamp(-1.0e9, 1.0e9) as i32;
+    value
 }
 
 /// Two-column part of the settings window: folders, timings, language and theme.
@@ -723,11 +888,13 @@ impl eframe::App for App {
             match request {
                 Request::Show => self.show_window(ctx),
                 Request::Quit => {
+                    self.save_geometry();
                     self.window = WindowState::Quitting;
                     ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                 }
             }
         }
+        self.track_geometry(ctx);
         if self.tray.is_none() && self.window == WindowState::Hidden {
             self.show_window(ctx); // never leave the window hidden without an icon
         }
@@ -745,6 +912,9 @@ impl eframe::App for App {
             quitting: self.window == WindowState::Quitting,
         });
         match action {
+            WindowAction::None if close_requested && self.window != WindowState::Quitting => {
+                self.save_geometry();
+            }
             WindowAction::None => {}
             WindowAction::HideInsteadOfClosing => {
                 ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
@@ -759,6 +929,7 @@ impl eframe::App for App {
         let snap = self.engine.with_state(Snapshot::take);
         let dark = ctx.global_style().visuals.dark_mode;
         ctx.request_repaint_after(Duration::from_secs(1));
+        self.shortcuts(&ctx, &snap);
 
         egui::Panel::top("toolbar").show(root, |ui| self.toolbar(ui, &snap));
         if self.load_issue.is_some() {
@@ -800,5 +971,106 @@ impl eframe::App for App {
             }
         });
         self.settings_window(&ctx, dark);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Relative luminance (WCAG 2.2).
+    fn luminance(c: Color32) -> f64 {
+        let channel = |v: u8| {
+            let v = f64::from(v) / 255.0;
+            if v <= 0.040_45 {
+                v / 12.92
+            } else {
+                ((v + 0.055) / 1.055).powf(2.4)
+            }
+        };
+        0.2126 * channel(c.r()) + 0.7152 * channel(c.g()) + 0.0722 * channel(c.b())
+    }
+
+    /// Premultiplied "source over destination" compositing.
+    fn over(src: Color32, dst: Color32) -> Color32 {
+        let keep = 255 - u16::from(src.a());
+        let mix = |s: u8, d: u8| {
+            let v = u16::from(s) + u16::from(d) * keep / 255;
+            u8::try_from(v.min(255)).unwrap()
+        };
+        Color32::from_rgb(
+            mix(src.r(), dst.r()),
+            mix(src.g(), dst.g()),
+            mix(src.b(), dst.b()),
+        )
+    }
+
+    fn contrast(a: Color32, b: Color32) -> f64 {
+        let (la, lb) = (luminance(a), luminance(b));
+        (la.max(lb) + 0.05) / (la.min(lb) + 0.05)
+    }
+
+    const ALL: [Status; 10] = [
+        Status::Waiting,
+        Status::Queued,
+        Status::Verifying,
+        Status::Repairing,
+        Status::Extracting,
+        Status::NeedPassword,
+        Status::RepairImpossible,
+        Status::Done,
+        Status::Failed,
+        Status::Skipped,
+    ];
+
+    /// Every status colour (also used for errors and warnings) reaches the WCAG 2.2
+    /// AA ratio for normal text, 4.5:1, on every background it is drawn on.
+    #[test]
+    fn status_colours_meet_wcag_aa_in_both_themes() {
+        for (visuals, dark) in [(egui::Visuals::light(), false), (egui::Visuals::dark(), true)] {
+            // Striped rows draw `faint_bg_color` (premultiplied, possibly additive) over the panel.
+            let stripe = over(visuals.faint_bg_color, visuals.panel_fill);
+            let backgrounds = [visuals.panel_fill, visuals.window_fill, stripe];
+            for status in ALL {
+                for bg in backgrounds {
+                    let ratio = contrast(status_color(status, dark), bg);
+                    assert!(
+                        ratio >= 4.5,
+                        "{status:?} (dark: {dark}) on {bg:?}: contrast {ratio:.2} < 4.5"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn contrast_formula_matches_known_values() {
+        assert!((contrast(Color32::BLACK, Color32::WHITE) - 21.0).abs() < 1e-9);
+        assert!((contrast(Color32::WHITE, Color32::WHITE) - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn draft_problems_block_saving() {
+        let t = Lang::En.texts();
+        let dir = tempfile::tempdir().unwrap();
+        let ok = Settings {
+            watch_dir: dir.path().display().to_string(),
+            extract_dir: dir.path().join("new").display().to_string(), // created later
+            ..Settings::default()
+        };
+        assert_eq!(draft_problems(&ok, t), Vec::<&str>::new());
+
+        let file = dir.path().join("file.txt");
+        std::fs::write(&file, b"x").unwrap();
+        let bad = Settings {
+            watch_dir: dir.path().join("missing").display().to_string(),
+            extract_dir: file.display().to_string(),
+            par2_path: dir.path().join("nope.exe").display().to_string(),
+            ..Settings::default()
+        };
+        assert_eq!(
+            draft_problems(&bad, t),
+            vec![t.problem_watch_dir, t.problem_dest_not_dir, t.problem_par2]
+        );
     }
 }
