@@ -183,15 +183,19 @@ fn le_u64(bytes: &[u8]) -> Option<u64> {
 ///
 /// Unknown or damaged data simply ends the parsing: a partial list is returned.
 pub fn par2_target_names(path: &Path) -> Vec<String> {
+    match File::open(path) {
+        Ok(file) => par2_target_names_from(BufReader::new(file)),
+        Err(_) => Vec::new(),
+    }
+}
+
+/// [`par2_target_names`] on any seekable reader (used by tests and fuzzing).
+pub fn par2_target_names_from(mut reader: impl Read + Seek) -> Vec<String> {
     const MAGIC: &[u8] = b"PAR2\0PKT";
     const FILEDESC: &[u8] = b"PAR 2.0\0FileDesc";
     /// File id (16) + MD5 (16) + MD5 of first 16 KiB (16) + length (8).
     const FILEDESC_FIXED: usize = 56;
 
-    let Ok(file) = File::open(path) else {
-        return Vec::new();
-    };
-    let mut reader = BufReader::new(file);
     let mut names = Vec::new();
     let mut seen = HashSet::new();
     let mut header = [0u8; 64];

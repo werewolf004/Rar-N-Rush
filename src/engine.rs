@@ -893,7 +893,10 @@ pub fn sanitize_folder_name(name: &str) -> String {
     if cleaned.is_empty() || cleaned == "." || cleaned == ".." {
         return "extracted".into();
     }
-    if RESERVED.iter().any(|r| cleaned.eq_ignore_ascii_case(r)) {
+    // Windows also reserves these names followed by an extension (`CON.txt`),
+    // and ignores spaces before the dot (`CON .txt`).
+    let stem = cleaned.split('.').next().unwrap_or_default().trim_end();
+    if RESERVED.iter().any(|r| stem.eq_ignore_ascii_case(r)) {
         return format!("_{cleaned}");
     }
     cleaned
@@ -911,6 +914,9 @@ mod tests {
         assert_eq!(sanitize_folder_name(".."), "extracted");
         assert_eq!(sanitize_folder_name(""), "extracted");
         assert_eq!(sanitize_folder_name("con"), "_con");
+        assert_eq!(sanitize_folder_name("Con.a"), "_Con.a");
+        assert_eq!(sanitize_folder_name("NUL .tar"), "_NUL .tar");
+        assert_eq!(sanitize_folder_name("Console.2026"), "Console.2026");
         assert_eq!(sanitize_folder_name("Vacances.2026"), "Vacances.2026");
     }
 }

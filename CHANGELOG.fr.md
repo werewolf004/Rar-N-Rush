@@ -13,8 +13,11 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 - **Fichier journal** : le journal est aussi écrit dans `rar-n-rush.log` (`log_to_file`, activé par défaut), avec rotation à 1 Mo et trois anciens fichiers conservés. **Exporter…** dans le journal enregistre les lignes affichées dans un fichier texte. Un test vérifie qu'aucun mot de passe n'arrive jamais dans le journal.
 - Les archives et exécutables des releases portent une provenance de build signée (attestation d'artefact GitHub) ; `gh attestation verify` la vérifie.
 
+- Tests de propriétés (`proptest`) et cibles de fuzzing (`cargo fuzz`, workflow hebdomadaire **Fuzz**) pour les parseurs de données non fiables : PAR2, SFV, noms RAR, chemins des entrées d'archive, noms de dossiers.
+
 ### Corrigé
 
+- Un jeu nommé comme un périphérique réservé de Windows suivi d'une extension (`CON.txt`, `nul.tar`) donnait un dossier d'extraction que Windows ne peut pas créer ; il est désormais préfixé par `_`. Trouvé par les nouveaux tests de propriétés.
 - Une extraction en échec ou annulée ne laisse plus de fichiers derrière elle : tout ce qu'elle a créé est supprimé (les fichiers déjà présents sont conservés), donc **Réessayer** repart de zéro au lieu de produire des doublons `nom (1).ext`.
 
 ## [0.2.0] - 2026-11-14

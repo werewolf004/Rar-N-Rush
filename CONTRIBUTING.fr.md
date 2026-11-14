@@ -52,6 +52,10 @@ cargo deny check
 | `src/settings.rs` | Réglages et état persistant (écritures atomiques) |
 | `src/i18n.rs` | Tous les textes visibles, en anglais et en français |
 | `src/ui.rs` | Interface egui |
+| `src/secrets.rs` | Mots de passe d'archives dans le Gestionnaire d'identifiants Windows |
+| `src/tidy.rs` | Déplacement des fichiers annexes, suppression des dossiers vides |
+| `src/tray.rs`, `src/icon.rs` | Icône de la zone de notification, icône de l'application |
+| `fuzz/` | Cibles de fuzzing (`cargo fuzz`), hors du build principal |
 | `tests/` | Tests d'intégration et d'interface ; `tests/fixtures/` contient de vraies archives RAR |
 | `vendor/unrar/` | Crate `unrar` corrigé, voir `PATCHES.md` |
 
@@ -60,6 +64,22 @@ cargo deny check
 - `tests/fixtures/*.rar` sont de vraies archives créées avec WinRAR par `tests/fixtures/make-fixtures.ps1`. Elles sont versionnées : la CI n'a pas besoin de WinRAR.
 - Le comportement PAR2 est testé avec de petits scripts batch qui imitent la sortie et les codes de retour de `par2` (`tests/common/mod.rs`).
 - Les tests d'interface pilotent la vraie application via son arbre d'accessibilité avec `egui_kittest`. Aucune fenêtre n'est ouverte.
+
+- `tests/properties.rs` vérifie des propriétés des parseurs de données non fiables (PAR2, SFV, noms RAR, chemins d'entrées, noms de dossiers) sur des milliers d'entrées générées avec `proptest`.
+- Un test écrit dans le vrai Gestionnaire d'identifiants Windows, sous un préfixe unique `test-<pid>-`, puis supprime ce qu'il a écrit.
+
+### Fuzzing
+
+Les mêmes parseurs sont soumis au fuzzing avec `cargo fuzz` (nightly). Sous Windows, libFuzzer a besoin d'AddressSanitizer, dont la DLL est fournie avec les outils de build MSVC :
+
+```powershell
+rustup toolchain install nightly --profile minimal
+cargo install cargo-fuzz --locked
+$env:PATH = "<VS>\VC\Tools\MSVC\<version>\bin\Hostx64\x64;$env:PATH"   # clang_rt.asan_dynamic-x86_64.dll
+cargo +nightly fuzz run par2_names -- -max_total_time=60
+```
+
+Cibles : `par2_names`, `sfv_text`, `names`. Le workflow **Fuzz** les lance chacune toutes les semaines et à la demande.
 
 ### Captures d'écran
 

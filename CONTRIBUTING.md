@@ -52,6 +52,10 @@ cargo deny check
 | `src/settings.rs` | Settings and persistent state (atomic writes) |
 | `src/i18n.rs` | Every user-facing text, English and French |
 | `src/ui.rs` | egui interface |
+| `src/secrets.rs` | Archive passwords in the Windows Credential Manager |
+| `src/tidy.rs` | Moving extra files, removing empty folders |
+| `src/tray.rs`, `src/icon.rs` | Notification-area icon, application icon |
+| `fuzz/` | Fuzz targets (`cargo fuzz`), outside the main build |
 | `tests/` | Integration and UI tests; `tests/fixtures/` holds real RAR archives |
 | `vendor/unrar/` | Patched `unrar` crate, see `PATCHES.md` |
 
@@ -60,6 +64,22 @@ cargo deny check
 - `tests/fixtures/*.rar` are real archives made with WinRAR by `tests/fixtures/make-fixtures.ps1`. They are committed, so CI does not need WinRAR.
 - PAR2 behaviour is tested with small batch scripts that mimic `par2` output and exit codes (`tests/common/mod.rs`).
 - UI tests drive the real application through its accessibility tree with `egui_kittest`. No window is opened.
+
+- `tests/properties.rs` checks properties of the parsers of untrusted input (PAR2, SFV, RAR names, entry paths, folder names) on thousands of generated inputs with `proptest`.
+- One test writes to the real Windows Credential Manager, under a unique `test-<pid>-` prefix, and removes what it wrote.
+
+### Fuzzing
+
+The same parsers are fuzzed with `cargo fuzz` (nightly). On Windows, libFuzzer needs AddressSanitizer, whose DLL ships with the MSVC build tools:
+
+```powershell
+rustup toolchain install nightly --profile minimal
+cargo install cargo-fuzz --locked
+$env:PATH = "<VS>\VC\Tools\MSVC\<version>\bin\Hostx64\x64;$env:PATH"   # clang_rt.asan_dynamic-x86_64.dll
+cargo +nightly fuzz run par2_names -- -max_total_time=60
+```
+
+Targets: `par2_names`, `sfv_text`, `names`. The **Fuzz** workflow runs each of them every week and on demand.
 
 ### Screenshots
 

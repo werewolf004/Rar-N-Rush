@@ -1,0 +1,38 @@
+[package]
+name = "rar-n-rush-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+rar-n-rush = { path = ".." }
+
+# Kept out of the main crate's build: run with `cargo +nightly fuzz run <target>`.
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "par2_names"
+path = "fuzz_targets/par2_names.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sfv_text"
+path = "fuzz_targets/sfv_text.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "names"
+path = "fuzz_targets/names.rs"
+test = false
+doc = false
+bench = false

@@ -13,8 +13,11 @@ All notable changes to this project are documented here. The format follows [Kee
 - **Log file**: the log is also written to `rar-n-rush.log` (`log_to_file`, on by default), rotated at 1 MB with three old files kept. **Export…** in the log panel saves the lines shown to a text file. A test checks that no password ever reaches the log.
 - Release archives and executables carry a signed build provenance (GitHub artifact attestation); `gh attestation verify` checks it.
 
+- Property tests (`proptest`) and fuzz targets (`cargo fuzz`, weekly **Fuzz** workflow) for the parsers of untrusted input: PAR2, SFV, RAR names, archive entry paths, folder names.
+
 ### Fixed
 
+- A set named like a reserved Windows device followed by an extension (`CON.txt`, `nul.tar`) produced an extraction folder Windows cannot create; it is now prefixed with `_`. Found by the new property tests.
 - A failed or cancelled extraction no longer leaves files behind: everything it created is removed (files that existed before are kept), so **Retry** starts clean instead of producing `name (1).ext` duplicates.
 
 ## [0.2.0] - 2026-11-14
