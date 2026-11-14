@@ -108,6 +108,8 @@ pub struct Settings {
     pub minimize_to_tray: bool,
     /// Hide the window in the notification area when it is closed; quit from the tray menu.
     pub close_to_tray: bool,
+    /// Start with Windows (current user's `Run` registry key), minimised.
+    pub start_with_windows: bool,
     /// Interface language.
     pub language: LanguagePref,
     /// Colour theme.
@@ -116,6 +118,8 @@ pub struct Settings {
     pub log_to_file: bool,
     /// Show a short notice in the window when a set finishes, fails or needs a password.
     pub show_toasts: bool,
+    /// Show a Windows notification for the same events while the window is not in front.
+    pub system_notifications: bool,
     /// Last size and position of the main window (saved on exit).
     pub window: Option<WindowGeometry>,
 }
@@ -211,10 +215,12 @@ impl Default for Settings {
             follow_active: true,
             minimize_to_tray: false,
             close_to_tray: false,
+            start_with_windows: false,
             language: LanguagePref::System,
             theme: ThemePref::System,
             log_to_file: true,
             show_toasts: true,
+            system_notifications: true,
             window: None,
         }
     }
@@ -995,10 +1001,12 @@ mod tests {
             follow_active: false,
             minimize_to_tray: true,
             close_to_tray: true,
+            start_with_windows: true,
             language: LanguagePref::French,
             theme: ThemePref::Dark,
             log_to_file: false,
             show_toasts: false,
+            system_notifications: false,
             window: Some(WindowGeometry {
                 x: -8,
                 y: 30,

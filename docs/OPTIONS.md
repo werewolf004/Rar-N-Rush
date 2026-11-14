@@ -85,9 +85,11 @@ The settings window has three pages: **General** (folders, timing, language, the
 | `follow_active` | Keep the set being processed in view | bool | `true` | Scrolls the list to each new set being processed, once, so you can still scroll freely in between. |
 | `log_to_file` | Also write the log to rar-n-rush.log | bool | `true` | Writes every log line, with its date, to `rar-n-rush.log` next to the settings file. The file is rotated at 1 MB; the three previous ones are kept (`rar-n-rush.log.1` … `.3`). Lines are in English, to be attached to a bug report. Passwords never appear in it. |
 | `show_toasts` | Show a short notice when a set finishes, fails or needs a password | bool | `true` | Notices appear in the bottom-right corner for 6 seconds (4 at most) and never take the focus. |
+| `system_notifications` | Windows notifications when the window is not in front | bool | `true` | Same events (set finished, failed, password needed), as Windows notifications, but only while the window is hidden, minimised or behind another window. Clicking one brings the window back. They follow the Windows settings (Do not disturb, per-app switch in Settings → System → Notifications). To be shown, Windows needs a name and an icon for the program: they are registered for your account under `HKEY_CURRENT_USER\Software\Classes\AppUserModelId\RarNRush.App`, with `rar-n-rush.ico` next to the settings. Turning the option off removes both. |
 | `minimize_to_tray` | Minimise to the notification area | bool | `false` | Minimising hides the window; an icon in the notification area brings it back (click, or **Show Rar N Rush** in its menu). |
 | `window` | *(none, saved automatically)* | table | *(none)* | Size and position of the main window, saved when the app exits and restored at the next start: `x`, `y`, `width`, `height` in pixels and `maximized`. Out-of-range values are clamped (minimum 720 × 420). Delete the table to return to the default size. |
 | `close_to_tray` | Close to the notification area | bool | `false` | The window's ✕ hides the window instead of quitting; monitoring goes on. Quit with **Quit** in the icon's menu. If the icon cannot be created, the window closes normally and the settings window shows the reason. |
+| `start_with_windows` | Start with Windows (minimised) | bool | `false` | Adds `"<path>\rar-n-rush.exe" --autostart` under `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run` (value `Rar N Rush`; no administrator rights needed). The program then starts minimised at sign-in, or only as an icon in the notification area when `minimize_to_tray` is on. The entry is checked at every start: if you move the program, it is updated; turning the option off removes it. Two copies of the program with separate settings share this one entry. |
 
 ## Appearance *(General page)*
 
@@ -117,8 +119,10 @@ delete_empty_dirs = false
 follow_active = true
 minimize_to_tray = false
 close_to_tray = false
+start_with_windows = false
 log_to_file = true
 show_toasts = true
+system_notifications = true
 
 [window]
 x = 120
@@ -135,4 +139,6 @@ theme = "system"
 | File | Content |
 |---|---|
 | `rar-n-rush-processed.txt` | One line per set already processed or skipped, so it is not processed again after a restart. Delete a line (or the file) to process a set again. |
+| `rar-n-rush.lock` | Held by the running program, so that a second start shows the open window instead of running twice with the same settings. Released automatically when the program ends, even after a crash. `rar-n-rush.show` is the short-lived request a second start leaves for it. |
+| `rar-n-rush.ico` | Icon of the Windows notifications (see `system_notifications`); removed when the option is off. |
 | `rar-n-rush.log`, `rar-n-rush.log.1` … `.3` | Log file and its rotated copies (see `log_to_file`). The log panel's **Export…** button saves the lines shown, in the interface language, to a text file of your choice. |

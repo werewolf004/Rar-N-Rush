@@ -23,7 +23,7 @@ Written in Rust with an [egui](https://github.com/emilk/egui) interface. The con
 - **SFV**: native CRC32 verification.
 - **RAR**: extraction with the official UnRAR library. Supports multi-volume archives (`.partN.rar`, `.rar` + `.r00`), passwords (a list tried automatically, or typed in the window), encrypted headers and archives nested inside archives.
 - **Data safety**: existing files are never overwritten by default (`name (1).ext` is used instead). Paths that would escape the destination folder are refused. Source files can be sent to the Recycle Bin, never deleted permanently.
-- **Interface**: English or French (follows Windows by default); light, dark or automatic theme following Windows live; optional icon in the notification area (minimise or close to tray); the list follows the set being processed.
+- **Interface**: English or French (follows Windows by default); light, dark or automatic theme following Windows live; optional icon in the notification area (minimise or close to tray); Windows notifications while the window is not in front; optional start with Windows; one instance at a time (starting it again brings the open window back); the list follows the set being processed.
 - **Tidy-up** (optional): the other files of a set (`.nfo`, samples…) follow it to the destination, and folders left empty go to the Recycle Bin.
 - **Reliable settings**: portable file next to the executable, found again even if you move it; invalid values are reset one by one (never the whole file) after a backup copy, and you are told about it.
 - **Offline**: no update check, no telemetry, no network access at all. Updating is your choice: download a new release when you want one.

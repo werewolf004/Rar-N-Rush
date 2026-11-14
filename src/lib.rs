@@ -13,11 +13,17 @@
 //! - [`settings`]: user settings and persistent state.
 //! - [`i18n`]: user-facing messages in English and French.
 //! - [`ui`]: the egui desktop interface.
+//! - [`instance`]: keeps a single instance running per settings folder.
+//! - [`notify`]: Windows notifications while the window is not in front.
+//! - [`autostart`]: optional start with Windows (current user's `Run` key).
 
+pub mod autostart;
 pub mod engine;
 pub mod extract;
 pub mod i18n;
 pub mod icon;
+pub mod instance;
+pub mod notify;
 pub mod par2;
 pub mod scan;
 pub mod secrets;

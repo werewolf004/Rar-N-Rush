@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- **One instance at a time**: starting Rar N Rush again brings the open window to the front (even from the notification area) instead of running a second copy on the same settings.
+- **Start with Windows** (`start_with_windows`, off by default): starts minimised at sign-in, or only as an icon when *Minimise to the notification area* is on. The entry is updated if the program is moved, and removed when the option is turned off.
+- **Windows notifications** (`system_notifications`, on by default) when a set finishes, fails or needs a password while the window is hidden, minimised or behind another window. Clicking one brings the window back.
+
+### Changed
+
+- The documentation screenshots show a fixed time, so regenerating them only changes the images that really changed.
+
 ## [0.4.0] - 2026-11-14
 
 Complete PAR2: par2cmdline-turbo ships in the zip, end-to-end tests with the real par2, and pixel snapshot tests of the main screens.

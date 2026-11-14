@@ -23,8 +23,8 @@ par2cmdline-turbo shipped in the release zip (pinned version and SHA-256, licenc
 ## v0.5.0 — Windows integration
 
 - ~~Icon in the notification area, minimise/close to tray.~~ Brought forward to v0.2.0.
-- Windows notifications when a set finishes or needs a password.
-- Start with Windows (optional), single running instance.
+- ✅ Windows notifications when a set finishes, fails or needs a password (only while the window is not in front).
+- ✅ Start with Windows (optional), single running instance.
 
 ## v1.0.0 — Distribution
 

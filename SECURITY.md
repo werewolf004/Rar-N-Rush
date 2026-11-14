@@ -44,6 +44,8 @@ Rar N Rush processes files downloaded from the Internet, which must be treated a
 - An existing settings file is always found again, next to the executable or in `%APPDATA%\RarNRush`, even after the executable is moved.
 - Settings and the processed-sets list are written atomically (temporary file then rename): a crash cannot leave a truncated file.
 - A set is recorded as processed **before** its status is shown, so a crash cannot cause it to be processed twice.
+- Registry writes are limited to the current user (`HKEY_CURRENT_USER`), need no administrator rights and are undone when the option is turned off: the `Rar N Rush` value under `...\CurrentVersion\Run` (start with Windows) and the `RarNRush.App` key under `Software\Classes\AppUserModelId` (name and icon of the Windows notifications).
+- One instance per settings folder: a lock file held by the running program (released by Windows when it ends, even after a crash) prevents two copies from writing the same settings and lists at the same time.
 - Archive passwords are kept in the Windows Credential Manager (protected by your Windows account), not in `rar-n-rush.toml`. Writes are crash-safe: a new copy is written, then switched to, then the old one is deleted. If the Credential Manager is unavailable, the passwords stay in the settings file in plain text so none is lost, and the window says so.
 - **Known limitation**: backup copies of the settings file made by older versions (`rar-n-rush.toml.<date-time>.bak`) may still contain plain-text passwords; delete them if needed.
 

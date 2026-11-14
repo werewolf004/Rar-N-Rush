@@ -6,6 +6,16 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+### Ajouté
+
+- **Une seule instance à la fois** : relancer Rar N Rush ramène la fenêtre ouverte au premier plan (même depuis la zone de notification) au lieu de lancer une deuxième copie sur les mêmes réglages.
+- **Démarrage avec Windows** (`start_with_windows`, désactivé par défaut) : démarre réduit à l'ouverture de session, ou seulement en icône si *Réduire dans la zone de notification* est activé. L'entrée est mise à jour si le programme est déplacé, et supprimée quand l'option est désactivée.
+- **Notifications Windows** (`system_notifications`, activées par défaut) quand un jeu se termine, échoue ou demande un mot de passe alors que la fenêtre est cachée, réduite ou derrière une autre fenêtre. Un clic ramène la fenêtre.
+
+### Modifié
+
+- Les captures de la documentation affichent une heure fixe : les regénérer ne modifie que les images qui ont vraiment changé.
+
 ## [0.4.0] - 2026-11-14
 
 PAR2 complet : par2cmdline-turbo fourni dans le zip, tests de bout en bout avec le vrai par2, et tests de capture pixel par pixel des écrans principaux.

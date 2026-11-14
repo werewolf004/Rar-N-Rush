@@ -2,7 +2,7 @@
 
 [English](DEPENDENCIES.md) · **Français**
 
-Chaque dépendance directe est listée ci-dessous avec la raison de sa présence. La liste complète des 226 crates compilés dans le binaire, avec leurs licences, est générée dans [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) (`python scripts/third-party.py`).
+Chaque dépendance directe est listée ci-dessous avec la raison de sa présence. La liste complète des 229 crates compilés dans le binaire, avec leurs licences, est générée dans [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) (`python scripts/third-party.py`).
 
 Règles appliquées aux dépendances :
 
@@ -30,6 +30,8 @@ Règles appliquées aux dépendances :
 | [`tray-icon`](https://crates.io/crates/tray-icon) | 0.26 | MIT OR Apache-2.0 | Icône et menu dans la zone de notification (créés seulement si une option de zone de notification est activée). Fonctionnalités par défaut désactivées : sous Windows, n'ajoute que `muda` (menu), `windows-sys` et `crossbeam-channel`. |
 | [`fs4`](https://crates.io/crates/fs4) | 0.13 | MIT OR Apache-2.0 | Espace libre du disque de destination, vérifié avant chaque extraction. Seule la fonctionnalité `sync` est activée. |
 | [`keyring-core`](https://crates.io/crates/keyring-core) et [`windows-native-keyring-store`](https://crates.io/crates/windows-native-keyring-store) | 1 | MIT OR Apache-2.0 | Mots de passe d'archives dans le Gestionnaire d'identifiants Windows. Fonctionnalités par défaut du magasin désactivées (pas de `regex`). |
+| [`windows-registry`](https://crates.io/crates/windows-registry) | 0.6 | MIT OR Apache-2.0 | Accès sûr au registre de l'utilisateur courant : démarrage avec Windows (clé `Run`) et identité des notifications Windows. Partage la famille `windows-*` 0.62 déjà tirée par d'autres dépendances. |
+| [`tauri-winrt-notification`](https://crates.io/crates/tauri-winrt-notification) | 0.8 | MIT OR Apache-2.0 | Notifications Windows (toasts WinRT). Utilise le crate `windows` 0.62 déjà présent ; n'ajoute que `windows-version`. |
 
 ## Dépendances de développement
 

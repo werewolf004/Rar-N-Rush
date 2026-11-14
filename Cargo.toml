@@ -30,12 +30,14 @@ keyring-core = "1.0.1"
 rfd = "0.18"
 serde = { version = "1", features = ["derive"] }
 sys-locale = "0.3"
+tauri-winrt-notification = "0.8"
 thiserror = "2"
 toml = "1"
 trash = "5"
 tray-icon = { version = "0.26", default-features = false }
 unrar = "0.5"
 windows-native-keyring-store = { version = "1.1.0", default-features = false }
+windows-registry = "0.6"
 
 [dev-dependencies]
 egui_kittest = { version = "0.37", features = ["wgpu", "snapshot", "eframe"] }
@@ -72,3 +74,4 @@ codegen-units = 1
 # See SECURITY.md and vendor/unrar/PATCHES.md.
 [patch.crates-io]
 unrar = { path = "vendor/unrar" }
+

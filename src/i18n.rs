@@ -63,6 +63,23 @@ impl Lang {
     }
 
     /// Warning shown when the passwords had to stay in the settings file.
+    /// A Windows notification could not be shown or set up.
+    pub fn notify_failed(self, error: &str) -> String {
+        match self {
+            Self::En => format!("Windows notification failed ({error})."),
+            Self::Fr => format!("Échec de la notification Windows ({error})."),
+        }
+    }
+
+    /// The start-with-Windows entry could not be written or removed.
+    pub fn autostart_failed(self, error: &str) -> String {
+        match self {
+            Self::En => format!("Could not update the start with Windows ({error})."),
+            Self::Fr => format!("Impossible de mettre à jour le démarrage avec Windows ({error})."),
+        }
+    }
+
+    /// `"Settings saved, but…"` when the passwords stayed in the settings file.
     pub fn passwords_in_file(self, error: &str) -> String {
         match self {
             Self::En => format!(
@@ -182,6 +199,10 @@ pub struct Texts {
     pub minimize_to_tray: &'static str,
     pub close_to_tray: &'static str,
     pub close_to_tray_hint: &'static str,
+    pub start_with_windows: &'static str,
+    pub start_with_windows_hint: &'static str,
+    pub system_notifications: &'static str,
+    pub system_notifications_hint: &'static str,
     pub tray_show: &'static str,
     pub tray_quit: &'static str,
     pub tray_failed: &'static str,
@@ -281,6 +302,10 @@ static EN: Texts = Texts {
     minimize_to_tray: "Minimise to the notification area",
     close_to_tray: "Close to the notification area",
     close_to_tray_hint: "Quit from the icon menu in the notification area.",
+    start_with_windows: "Start with Windows (minimised)",
+    start_with_windows_hint: "Starts when you sign in to Windows. With \u{201c}Minimise to the notification area\u{201d}, only the icon appears.",
+    system_notifications: "Windows notifications when the window is not in front",
+    system_notifications_hint: "When a set finishes, fails or needs a password. They follow the Windows settings (Do not disturb, Focus).",
     tray_show: "Show Rar N Rush",
     tray_quit: "Quit",
     tray_failed: "The notification area icon could not be created:",
@@ -380,6 +405,10 @@ static FR: Texts = Texts {
     minimize_to_tray: "Réduire dans la zone de notification",
     close_to_tray: "Fermer dans la zone de notification",
     close_to_tray_hint: "Pour quitter, utilise le menu de l'icône dans la zone de notification.",
+    start_with_windows: "Démarrer avec Windows (réduit)",
+    start_with_windows_hint: "Démarre à l'ouverture de ta session Windows. Avec « Réduire dans la zone de notification », seule l'icône apparaît.",
+    system_notifications: "Notifications Windows quand la fenêtre n'est pas au premier plan",
+    system_notifications_hint: "Quand un jeu se termine, échoue ou demande un mot de passe. Elles suivent les réglages de Windows (Ne pas déranger, Concentration).",
     tray_show: "Afficher Rar N Rush",
     tray_quit: "Quitter",
     tray_failed: "Impossible de créer l'icône de la zone de notification :",

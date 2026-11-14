@@ -547,6 +547,7 @@ fn screenshots() {
             let demo = Demo::new(true);
             let tag = format!("{lang_tag}-{theme_tag}");
             let mut h = harness(demo.settings(lang, theme), &demo.state_dir(&tag), true);
+            h.state_mut().freeze_clock();
             settle(&mut h, 4);
             save(&mut h, &format!("main-{tag}"));
             let settings_label = if lang == LanguagePref::English {
@@ -578,6 +579,7 @@ fn screenshots() {
             ..Settings::default()
         };
         let mut h = harness(settings, state.path(), true);
+        h.state_mut().freeze_clock();
         for _ in 0..3 {
             h.step();
         }
@@ -645,4 +647,75 @@ fn snapshots() {
         frames(&mut h, 3);
         results.add(h.try_snapshot(format!("onboarding-{tag}")));
     }
+}
+
+/// Records notifications instead of showing them.
+#[derive(Clone, Default)]
+struct FakeNotifier {
+    shown: std::sync::Arc<std::sync::Mutex<Vec<(String, String)>>>,
+    enabled: std::sync::Arc<std::sync::Mutex<Vec<bool>>>,
+}
+
+impl rar_n_rush::notify::Notifier for FakeNotifier {
+    fn notify(&self, title: &str, body: &str) -> Result<(), rar_n_rush::notify::NotifyError> {
+        self.shown
+            .lock()
+            .unwrap()
+            .push((title.to_owned(), body.to_owned()));
+        Ok(())
+    }
+    fn set_enabled(&self, enabled: bool) -> Result<(), rar_n_rush::notify::NotifyError> {
+        self.enabled.lock().unwrap().push(enabled);
+        Ok(())
+    }
+}
+
+fn notifier_harness(system_notifications: bool) -> (Demo, Harness<'static, App>, FakeNotifier) {
+    let demo = Demo::new(false);
+    let store = Store::at(demo.state_dir("notify"));
+    let settings = Settings {
+        system_notifications,
+        ..demo.settings(LanguagePref::English, ThemePref::Light)
+    };
+    let fake = FakeNotifier::default();
+    let for_app = fake.clone();
+    // The test window never has the keyboard focus: it counts as not in front.
+    let h = Harness::builder()
+        .with_size(SIZE)
+        .with_render_cursor(false)
+        .build_eframe(move |cc| {
+            let ctx = cc.egui_ctx.clone();
+            let engine = Engine::start(settings, store.clone(), move || ctx.request_repaint()).unwrap();
+            App::new(&cc.egui_ctx, engine, store, None).with_notifier(for_app)
+        });
+    (demo, h, fake)
+}
+
+#[test]
+fn windows_notifications_when_the_window_is_not_in_front() {
+    let (_demo, mut h, fake) = notifier_harness(true);
+    settle(&mut h, 4);
+    assert_eq!(*fake.enabled.lock().unwrap(), vec![true], "registered at start");
+    let shown = fake.shown.lock().unwrap().clone();
+    assert!(
+        shown.contains(&("Private.Documents".into(), "Password required".into())),
+        "{shown:?}"
+    );
+    assert!(shown.contains(&("Photos".into(), "Done".into())), "{shown:?}");
+    assert!(
+        shown.iter().any(|(t, b)| t == "Damaged.Archive" && b == "Error"),
+        "{shown:?}"
+    );
+    // One notification per change, not one per frame.
+    let count = shown.len();
+    frames(&mut h, 10);
+    assert_eq!(fake.shown.lock().unwrap().len(), count);
+}
+
+#[test]
+fn no_windows_notification_when_turned_off() {
+    let (_demo, mut h, fake) = notifier_harness(false);
+    settle(&mut h, 4);
+    assert_eq!(*fake.enabled.lock().unwrap(), vec![false], "registration removed");
+    assert!(fake.shown.lock().unwrap().is_empty());
 }

@@ -38,6 +38,44 @@ pub fn window_icon() -> egui::IconData {
     }
 }
 
+/// The icon as a Windows `.ico` file (one 32-bit image, `size` ≤ 255), for
+/// the notifications, which take an icon by file path.
+pub fn ico(size: u32) -> Vec<u8> {
+    let size = size.clamp(1, 255);
+    let px = rgba(size);
+    // Rows of the AND mask are padded to 4 bytes; it stays empty (alpha is used).
+    let mask_row = size.div_ceil(32) * 4;
+    let image_len = 40 + size * size * 4 + mask_row * size;
+    let mut out = Vec::with_capacity(22 + image_len as usize);
+    // ICONDIR: reserved, type 1 (icon), one image.
+    for v in [0u16, 1, 1] {
+        out.extend_from_slice(&v.to_le_bytes());
+    }
+    // ICONDIRENTRY: width, height, no palette, reserved, 1 plane, 32 bits,
+    // image length, image offset (6 + 16).
+    let width = u8::try_from(size).unwrap_or(0);
+    out.extend_from_slice(&[width, width, 0, 0]);
+    out.extend_from_slice(&1u16.to_le_bytes());
+    out.extend_from_slice(&32u16.to_le_bytes());
+    out.extend_from_slice(&image_len.to_le_bytes());
+    out.extend_from_slice(&22u32.to_le_bytes());
+    // BITMAPINFOHEADER: the height counts the colour image and the mask.
+    out.extend_from_slice(&40u32.to_le_bytes());
+    out.extend_from_slice(&size.to_le_bytes());
+    out.extend_from_slice(&(size * 2).to_le_bytes());
+    out.extend_from_slice(&1u16.to_le_bytes());
+    out.extend_from_slice(&32u16.to_le_bytes());
+    out.extend_from_slice(&[0; 24]); // no compression, sizes and palette unused
+    // Pixels bottom-up, BGRA.
+    for row in px.chunks_exact(size as usize * 4).rev() {
+        for &[r, g, b, a] in row.as_chunks::<4>().0 {
+            out.extend_from_slice(&[b, g, r, a]);
+        }
+    }
+    out.resize(out.len() + (mask_row * size) as usize, 0);
+    out
+}
+
 /// Coverage (0–1) of the rounded square background.
 fn rounded_square(u: f64, v: f64) -> f64 {
     let (half, radius) = (0.46, 0.2);
@@ -104,6 +142,35 @@ mod tests {
             let centre = ((size / 2 * size + size / 2) * 4) as usize;
             assert_eq!(px[centre + 3], 255, "centre is opaque");
         }
+    }
+
+    #[test]
+    fn ico_file_is_well_formed() {
+        let data = ico(64);
+        let u16_at = |i: usize| u16::from_le_bytes([data[i], data[i + 1]]);
+        let u32_at = |i: usize| u32::from_le_bytes([data[i], data[i + 1], data[i + 2], data[i + 3]]);
+        assert_eq!((u16_at(0), u16_at(2), u16_at(4)), (0, 1, 1), "icon header");
+        assert_eq!((data[6], data[7]), (64, 64));
+        assert_eq!(u16_at(12), 32, "32 bits per pixel");
+        let (len, offset) = (u32_at(14) as usize, u32_at(18) as usize);
+        assert_eq!(offset, 22);
+        assert_eq!(data.len(), offset + len, "length matches the directory");
+        assert_eq!(u32_at(22), 40, "bitmap header");
+        assert_eq!(u32_at(30), 128, "colour image plus mask");
+        // Rows are stored bottom-up in BGRA: the bottom row (below the rounded
+        // square) is transparent, the centre is opaque, and every stored pixel
+        // matches the RGBA image flipped vertically.
+        let first = 22 + 40;
+        assert!(data[first..first + 64 * 4].chunks(4).all(|p| p[3] == 0));
+        let px = rgba(64);
+        for (stored_row, row) in px.chunks(64 * 4).rev().enumerate() {
+            for (x, p) in row.chunks(4).enumerate() {
+                let at = first + (stored_row * 64 + x) * 4;
+                assert_eq!(&data[at..at + 4], &[p[2], p[1], p[0], p[3]]);
+            }
+        }
+        let centre = first + (32 * 64 + 32) * 4;
+        assert_eq!(data[centre + 3], 255);
     }
 
     #[test]

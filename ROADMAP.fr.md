@@ -23,8 +23,8 @@ par2cmdline-turbo fourni dans le zip de release (version et SHA-256 figés, lice
 ## v0.5.0 — Intégration Windows
 
 - ~~Icône dans la zone de notification, réduction et fermeture vers cette zone.~~ Avancé en v0.2.0.
-- Notifications Windows quand un jeu est terminé ou demande un mot de passe.
-- Démarrage avec Windows (optionnel), une seule instance à la fois.
+- ✅ Notifications Windows quand un jeu est terminé, échoue ou demande un mot de passe (seulement quand la fenêtre n'est pas au premier plan).
+- ✅ Démarrage avec Windows (optionnel), une seule instance à la fois.
 
 ## v1.0.0 — Distribution
 

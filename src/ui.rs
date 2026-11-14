@@ -1,7 +1,10 @@
 //! Desktop interface (egui).
 
+use crate::autostart::Autostart;
 use crate::engine::{Command, Engine, EngineState, Job, LogLine, Status};
 use crate::i18n::{Lang, Localize, Texts};
+use crate::instance::ShowRequests;
+use crate::notify::Notifier;
 use crate::settings::{
     LanguagePref, LoadIssue, SCAN_INTERVAL_RANGE, STABLE_RANGE, Settings, SettingsError, Store, ThemePref,
     WindowGeometry, is_writable,
@@ -62,6 +65,12 @@ pub struct App {
     toasts: Vec<Toast>,
     /// Last known size and position of the main window.
     geometry: Option<WindowGeometry>,
+    /// Windows notifications; `None` until [`App::with_notifier`].
+    notifier: Option<Box<dyn Notifier>>,
+    /// Start-with-Windows registry entry; `None` in tests, which never touch it.
+    autostart: Option<Autostart>,
+    /// Requests from a second start to show this window (single instance).
+    show_requests: Option<ShowRequests>,
     /// Fixed times for snapshot tests (see [`App::freeze_clock`]).
     frozen_clock: Option<&'static str>,
 }
@@ -112,6 +121,9 @@ enum WindowState {
     Hidden,
     /// **Quit** was chosen in the tray menu: the next close is real.
     Quitting,
+    /// Started by Windows at sign-in, still invisible: the first frame hides it
+    /// in the notification area or shows it minimised.
+    Starting,
 }
 
 /// Snapshot of the engine state taken once per frame, so the lock is held briefly.
@@ -209,7 +221,51 @@ impl App {
             toasts: Vec::new(),
             geometry: settings.window,
             frozen_clock: None,
+            show_requests: None,
+            autostart: None,
+            notifier: None,
         }
+    }
+
+    /// Shows Windows notifications through `notifier` when the option is on.
+    /// Turning the option off also removes what was registered for them.
+    #[must_use]
+    pub fn with_notifier(mut self, notifier: impl Notifier + 'static) -> Self {
+        let enabled = self.engine.with_state(|s| s.settings.system_notifications);
+        if let Err(e) = notifier.set_enabled(enabled) {
+            self.warning = Some(self.lang.notify_failed(&e.to_string()));
+        }
+        self.notifier = Some(Box::new(notifier));
+        self
+    }
+
+    /// For a window created invisible at sign-in: on the first frame it goes to
+    /// the notification area when "minimise to the notification area" is on,
+    /// otherwise it appears minimised in the taskbar.
+    #[must_use]
+    pub fn started_in_background(mut self) -> Self {
+        self.window = WindowState::Starting;
+        self
+    }
+
+    /// Keeps the start-with-Windows registry entry in line with the settings,
+    /// now (the program may have been moved) and whenever they are saved.
+    #[must_use]
+    pub fn with_autostart(mut self, autostart: Autostart) -> Self {
+        let enabled = self.engine.with_state(|s| s.settings.start_with_windows);
+        if let Err(e) = autostart.apply(enabled) {
+            self.warning = Some(self.lang.autostart_failed(&e.to_string()));
+        }
+        self.autostart = Some(autostart);
+        self
+    }
+
+    /// Brings the window to the front whenever another start of the program
+    /// asks for it (see [`crate::instance`]).
+    #[must_use]
+    pub fn with_show_requests(mut self, requests: ShowRequests) -> Self {
+        self.show_requests = Some(requests);
+        self
     }
 
     /// Shows a fixed time (`12:00:00`, "scanned 0 s ago") instead of the real
@@ -369,23 +425,45 @@ impl App {
     }
 
     /// Adds a notice for each set that just finished, failed or needs a password.
-    fn collect_toasts(&mut self, snap: &Snapshot) {
+    /// Turns status changes into notices in the window and, while the window is
+    /// not in front, Windows notifications. Runs from `logic`, so it also works
+    /// while the window is hidden in the notification area.
+    fn collect_events(&mut self, ctx: &egui::Context) {
         let lang = self.lang;
-        for job in &snap.jobs {
-            let previous = self.seen.insert(job.id, job.status);
-            let worth_telling = matches!(
-                job.status,
-                Status::Done | Status::Failed | Status::NeedPassword | Status::RepairImpossible
-            );
-            if snap.settings.show_toasts && worth_telling && previous.is_some_and(|p| p != job.status) {
+        let in_front = self.window == WindowState::Shown && ctx.input(|i| i.viewport().focused == Some(true));
+        let seen = &mut self.seen;
+        let (changes, show_toasts, system) = self.engine.with_state(|s| {
+            let mut changes = Vec::new();
+            for job in &s.jobs {
+                let previous = seen.insert(job.id, job.status);
+                let worth_telling = matches!(
+                    job.status,
+                    Status::Done | Status::Failed | Status::NeedPassword | Status::RepairImpossible
+                );
+                if worth_telling && previous.is_some_and(|p| p != job.status) {
+                    changes.push((job.set.name.clone(), job.status));
+                }
+            }
+            seen.retain(|id, _| s.jobs.iter().any(|j| j.id == *id));
+            (changes, s.settings.show_toasts, s.settings.system_notifications)
+        });
+        for (name, status) in changes {
+            let status_text = status.localize(lang);
+            if system
+                && !in_front
+                && let Some(notifier) = &self.notifier
+                && let Err(e) = notifier.notify(&name, &status_text)
+            {
+                self.warning = Some(lang.notify_failed(&e.to_string()));
+            }
+            if show_toasts {
                 self.toasts.push(Toast {
-                    text: format!("{} — {}", job.set.name, job.status.localize(lang)),
-                    status: job.status,
+                    text: format!("{name} — {status_text}"),
+                    status,
                     shown_at: Instant::now(),
                 });
             }
         }
-        self.seen.retain(|id, _| snap.jobs.iter().any(|j| j.id == *id));
         self.toasts.retain(|t| t.shown_at.elapsed() < TOAST_DURATION);
         let excess = self.toasts.len().saturating_sub(TOAST_MAX);
         self.toasts.drain(..excess);
@@ -442,6 +520,18 @@ impl App {
             Err(e) => return Err(self.lang.save_failed(&e.to_string())),
         }
         self.lang = Lang::resolve(settings.language);
+        if let Some(autostart) = &self.autostart
+            && let Err(e) = autostart.apply(settings.start_with_windows)
+        {
+            self.warning = Some(self.lang.autostart_failed(&e.to_string()));
+        }
+        let notifications_were_on = self.engine.with_state(|s| s.settings.system_notifications);
+        if let Some(notifier) = &self.notifier
+            && notifications_were_on != settings.system_notifications
+            && let Err(e) = notifier.set_enabled(settings.system_notifications)
+        {
+            self.warning = Some(self.lang.notify_failed(&e.to_string()));
+        }
         if self.theme != settings.theme {
             self.theme = settings.theme;
             ctx.set_theme(theme_preference(settings.theme));
@@ -1088,9 +1178,13 @@ fn window_toggles(ui: &mut egui::Ui, draft: &mut Settings, t: &Texts) {
     ui.checkbox(&mut draft.follow_active, t.follow_active);
     ui.checkbox(&mut draft.log_to_file, t.log_to_file);
     ui.checkbox(&mut draft.show_toasts, t.show_toasts);
+    ui.checkbox(&mut draft.system_notifications, t.system_notifications)
+        .on_hover_text(t.system_notifications_hint);
     ui.checkbox(&mut draft.minimize_to_tray, t.minimize_to_tray);
     ui.checkbox(&mut draft.close_to_tray, t.close_to_tray)
         .on_hover_text(t.close_to_tray_hint);
+    ui.checkbox(&mut draft.start_with_windows, t.start_with_windows)
+        .on_hover_text(t.start_with_windows_hint);
 }
 
 fn folder_row(ui: &mut egui::Ui, label: &str, value: &mut String, hint: &str, browse: &str) {
@@ -1151,6 +1245,19 @@ impl eframe::App for App {
             .engine
             .with_state(|s| (s.settings.minimize_to_tray, s.settings.close_to_tray));
         self.sync_tray(ctx, minimize_to_tray || close_to_tray);
+        self.collect_events(ctx);
+        if self.window == WindowState::Starting {
+            if self.tray.is_some() && minimize_to_tray {
+                self.hide_window(ctx);
+            } else {
+                self.window = WindowState::Shown;
+                ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+                ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
+            }
+        }
+        if self.show_requests.as_ref().is_some_and(ShowRequests::take) {
+            self.show_window(ctx);
+        }
         while let Some(request) = self.tray.as_ref().and_then(|(icon, _)| icon.poll()) {
             match request {
                 Request::Show => self.show_window(ctx),
@@ -1197,7 +1304,6 @@ impl eframe::App for App {
         let dark = ctx.global_style().visuals.dark_mode;
         ctx.request_repaint_after(Duration::from_secs(1));
         self.shortcuts(&ctx, &snap);
-        self.collect_toasts(&snap);
 
         egui::Panel::top("toolbar").show(root, |ui| self.toolbar(ui, &snap));
         if self.load_issue.is_some() || self.warning.is_some() {
