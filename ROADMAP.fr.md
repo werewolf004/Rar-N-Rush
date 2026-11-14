@@ -8,18 +8,13 @@ Chaque bloc se termine par une release taguée avec son entrée dans le journal.
 
 Chaîne de traitement complète (analyse, PAR2, SFV, RAR), erreurs typées, ni `unsafe` ni `unwrap`, tests unitaires, d'intégration et d'interface sans fenêtre, CI/CD, documentation bilingue, licence.
 
-## v0.2.0 — UI/UX et accessibilité
+## ✅ v0.2.0 — UI/UX et accessibilité
 
-- ✅ Réglages avec validation en direct (dossier existant, destination accessible en écriture, par2 trouvé) et alerte « modifications non enregistrées ».
-- ✅ Raccourcis F5 (analyser), Ctrl+, (réglages), Échap. Reste à faire : navigation complète de la liste au clavier, Suppr pour retirer.
-- ✅ Libellés lecteur d'écran sur chaque contrôle (AccessKit), vérifiés par les tests d'interface sans fenêtre.
-- ✅ Contraste vérifié selon WCAG 2.2 AA dans les deux thèmes par un test automatique.
-- Confirmation avant les actions destructrices ; notifications non bloquantes pour les résultats.
-- ✅ Taille et position de la fenêtre mémorisées. Reste à faire : mise à l'échelle DPI testée de 100 à 200 %.
-- Tests de capture des écrans principaux pour détecter les régressions visuelles.
+Dossier surveillé modifiable dans la fenêtre principale avec les dossiers récents ; options de Par-N-Rar (déplacement des fichiers annexes, suppression des dossiers vides, suivi du jeu en cours, zone de notification) ; réglages en trois pages avec validation et alerte « modifications non enregistrées » ; raccourcis F5, Ctrl+, et Échap ; taille et position de la fenêtre mémorisées ; test de contraste WCAG 2.2 AA ; libellés AccessKit vérifiés par les tests d'interface.
 
 ## v0.3.0 — Données et sécurité
 
+- Reporté de la v0.2.0 : navigation complète de la liste au clavier et Suppr pour retirer ; confirmation avant les actions destructrices et notifications non bloquantes ; mise à l'échelle DPI testée de 100 à 200 % ; tests de capture des écrans principaux.
 - Mots de passe d'archives stockés dans le Gestionnaire d'identifiants Windows au lieu du fichier de réglages.
 - Vérification de l'espace libre avant extraction ; nettoyage des fichiers partiels en cas d'échec.
 - Fuzzing des parseurs PAR2 et SFV (`cargo fuzz`), tests de propriétés pour le regroupement des noms.

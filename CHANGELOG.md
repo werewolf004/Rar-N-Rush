@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-14
+
+User experience: the watched folder in the main window, the Par-N-Rar options (tidy-up, notification area), keyboard shortcuts and safer settings.
+
 ### Added
 
 - **Watched folder** bar in the main window: the watched folder can be changed at any time, even during processing, without opening the settings. Type a path and press Enter (Esc cancels), pick one of the last 10 folders under **Recent folders**, or use **Browse…**. A folder that does not exist is refused with a message, and the current settings are kept.
@@ -55,5 +59,6 @@ First public version: the complete processing chain, a quality foundation and th
 
 - `#![forbid(unsafe_code)]` on the whole crate; `unwrap`, `expect` and `panic` are denied outside tests.
 
-[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/werewolf004/Rar-N-Rush/releases/tag/v0.1.0

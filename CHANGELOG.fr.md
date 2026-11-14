@@ -6,6 +6,10 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+## [0.2.0] - 2026-11-14
+
+Expérience utilisateur : le dossier surveillé dans la fenêtre principale, les options de Par-N-Rar (rangement, zone de notification), les raccourcis clavier et des réglages plus sûrs.
+
 ### Ajouté
 
 - Barre **Dossier surveillé** dans la fenêtre principale : le dossier surveillé se change à tout moment, même pendant un traitement, sans ouvrir les réglages. Saisis un chemin et valide avec Entrée (Échap annule), choisis l'un des 10 derniers dossiers dans **Dossiers récents**, ou utilise **Parcourir…**. Un dossier inexistant est refusé avec un message, et les réglages en cours sont conservés.
@@ -55,5 +59,6 @@ Première version publique : toute la chaîne de traitement, des fondations qual
 
 - `#![forbid(unsafe_code)]` sur tout le crate ; `unwrap`, `expect` et `panic` sont interdits hors des tests.
 
-[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.1.0...HEAD
+[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/werewolf004/Rar-N-Rush/releases/tag/v0.1.0

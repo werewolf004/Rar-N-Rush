@@ -8,18 +8,13 @@ Each block ends with a tagged release and its changelog entry. Order and content
 
 Complete processing chain (scan, PAR2, SFV, RAR), typed errors, no `unsafe`/`unwrap`, unit, integration and headless UI tests, CI/CD, bilingual documentation, licence.
 
-## v0.2.0 — UI/UX and accessibility
+## ✅ v0.2.0 — UI/UX and accessibility
 
-- ✅ Settings with inline validation (folder exists, destination writable, par2 found) and an "unsaved changes" guard.
-- ✅ Shortcuts F5 (scan), Ctrl+, (settings), Esc. Still to do: full keyboard navigation of the list, Del to remove.
-- ✅ Screen-reader labels on every control (AccessKit), checked by the headless UI tests.
-- ✅ Contrast checked against WCAG 2.2 AA in both themes by an automated test.
-- Confirmation before destructive actions; non-blocking toasts for results.
-- ✅ Window size and position remembered. Still to do: DPI scaling tested at 100–200 %.
-- Snapshot tests of the main screens to catch visual regressions.
+Watched folder editable in the main window with recent folders; Par-N-Rar options (move extra files, delete empty folders, follow the active set, notification area); settings in three pages with validation and an unsaved-changes guard; shortcuts F5, Ctrl+, and Esc; window size and position remembered; WCAG 2.2 AA contrast test; AccessKit labels checked by the UI tests.
 
 ## v0.3.0 — Data and security
 
+- Carried over from v0.2.0: full keyboard navigation of the list and Del to remove; confirmation before destructive actions and non-blocking toasts; DPI scaling tested at 100–200 %; snapshot tests of the main screens.
 - Archive passwords stored in the Windows Credential Manager instead of the settings file.
 - Free-space check before extraction; clean-up of partial files on failure.
 - Fuzzing of the PAR2 and SFV parsers (`cargo fuzz`), property tests for name grouping.
