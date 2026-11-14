@@ -32,4 +32,4 @@ Icône dans la zone de notification (avancée en v0.2.0) ; une seule instance pa
 
 ## Après la v1.0.0
 
-- Paquet winget (`winget install`), qui pointe vers l'installateur publié : les manifestes de la v1.0.0 sont prêts et validés dans [packaging/winget](packaging/winget/) ; la pull request vers microsoft/winget-pkgs n'est pas encore ouverte.
+- Paquet winget (`winget install`), qui pointe vers l'installateur publié : les manifestes de la v1.0.0 sont prêts et validés dans [packaging/winget](packaging/winget/) ; en cours de validation dans [microsoft/winget-pkgs#480402](https://github.com/microsoft/winget-pkgs/pull/480402).

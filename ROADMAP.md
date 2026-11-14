@@ -32,4 +32,4 @@ Notification-area icon (brought forward to v0.2.0); one instance per settings fo
 
 ## After v1.0.0
 
-- winget package (`winget install`), pointing to the published installer: manifests for v1.0.0 are ready and validated in [packaging/winget](packaging/winget/); the pull request to microsoft/winget-pkgs is not opened yet.
+- winget package (`winget install`), pointing to the published installer: manifests for v1.0.0 are ready and validated in [packaging/winget](packaging/winget/); under review in [microsoft/winget-pkgs#480402](https://github.com/microsoft/winget-pkgs/pull/480402).
