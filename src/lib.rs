@@ -17,9 +17,12 @@
 pub mod engine;
 pub mod extract;
 pub mod i18n;
+pub mod icon;
 pub mod par2;
 pub mod scan;
 pub mod settings;
 pub mod sfv;
 mod sync;
+pub mod tidy;
+pub mod tray;
 pub mod ui;

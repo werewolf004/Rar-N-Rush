@@ -5,6 +5,7 @@ use crate::i18n::{Lang, Localize, Texts};
 use crate::settings::{
     LanguagePref, LoadIssue, SCAN_INTERVAL_RANGE, STABLE_RANGE, Settings, Store, ThemePref,
 };
+use crate::tray::{self, Request, Tray, WindowAction, WindowInput};
 use eframe::egui::{self, Color32, RichText};
 use egui_extras::{Column, TableBuilder};
 use std::collections::HashMap;
@@ -31,6 +32,39 @@ pub struct App {
     watch_error: Option<String>,
     /// Problem found in the settings file at start-up, shown until dismissed.
     load_issue: Option<LoadIssue>,
+    /// Last set scrolled into view, so the list follows each new active set once
+    /// and the user stays free to scroll in between.
+    followed: Option<u64>,
+    /// Notification-area icon, present while a tray option is enabled.
+    tray: Option<(Tray, Lang)>,
+    /// Why the tray icon could not be created (shown in the settings window).
+    tray_error: Option<String>,
+    /// Whether the window is shown, hidden in the tray, or closing for real.
+    window: WindowState,
+    /// Page shown in the settings window.
+    settings_tab: SettingsTab,
+}
+
+/// Pages of the settings window.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SettingsTab {
+    /// Folders, par2.exe, timings, language and theme.
+    General,
+    /// Processing options, clean-up and passwords.
+    Processing,
+    /// Window and notification area.
+    Window,
+}
+
+/// State of the main window with respect to the notification area.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum WindowState {
+    /// Normal window.
+    Shown,
+    /// Hidden in the notification area.
+    Hidden,
+    /// **Quit** was chosen in the tray menu: the next close is real.
+    Quitting,
 }
 
 /// Snapshot of the engine state taken once per frame, so the lock is held briefly.
@@ -104,6 +138,11 @@ impl App {
             watch_dirty: false,
             watch_error: None,
             load_issue,
+            followed: None,
+            tray: None,
+            tray_error: None,
+            window: WindowState::Shown,
+            settings_tab: SettingsTab::General,
         }
     }
 
@@ -330,7 +369,15 @@ impl App {
         let t = self.texts();
         let lang = self.lang;
         let mut actions: Vec<Command> = Vec::new();
-        TableBuilder::new(ui)
+        let mut table = TableBuilder::new(ui);
+        if snap.settings.follow_active
+            && let Some((row, job)) = snap.jobs.iter().enumerate().find(|(_, j)| j.status.is_active())
+            && self.followed != Some(job.id)
+        {
+            self.followed = Some(job.id);
+            table = table.scroll_to_row(row, Some(egui::Align::Center));
+        }
+        table
             .striped(true)
             .resizable(true)
             .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
@@ -443,20 +490,37 @@ impl App {
             .resizable(true)
             .default_width(560.0)
             .show(ctx, |ui| {
-                egui::Grid::new("settings_grid")
-                    .num_columns(2)
-                    .spacing([12.0, 8.0])
-                    .show(ui, |ui| settings_grid(ui, &mut draft, t, lang, dark));
-                ui.add_space(6.0);
-                settings_toggles(ui, &mut draft, t);
-                ui.add_space(6.0);
-                ui.label(t.passwords);
-                ui.add(
-                    egui::TextEdit::multiline(&mut self.passwords_text)
-                        .desired_rows(3)
-                        .desired_width(f32::INFINITY),
-                );
-                ui.weak(t.passwords_hint);
+                ui.horizontal(|ui| {
+                    let tab = &mut self.settings_tab;
+                    ui.selectable_value(tab, SettingsTab::General, t.tab_general);
+                    ui.selectable_value(tab, SettingsTab::Processing, t.group_processing);
+                    ui.selectable_value(tab, SettingsTab::Window, t.group_window);
+                });
+                ui.separator();
+                match self.settings_tab {
+                    SettingsTab::General => {
+                        egui::Grid::new("settings_grid")
+                            .num_columns(2)
+                            .spacing([12.0, 8.0])
+                            .show(ui, |ui| settings_grid(ui, &mut draft, t, lang, dark));
+                    }
+                    SettingsTab::Processing => {
+                        processing_toggles(ui, &mut draft, t);
+                        ui.add_space(6.0);
+                        ui.strong(t.passwords);
+                        ui.add(
+                            egui::TextEdit::multiline(&mut self.passwords_text)
+                                .desired_rows(3)
+                                .desired_width(f32::INFINITY),
+                        );
+                        ui.weak(t.passwords_hint);
+                    }
+                    SettingsTab::Window => window_toggles(ui, &mut draft, t),
+                }
+                ui.separator();
+                if let Some(e) = &self.tray_error {
+                    ui.colored_label(status_color(Status::NeedPassword, dark), e);
+                }
                 if let Some(e) = &self.settings_error {
                     ui.colored_label(status_color(Status::Failed, dark), e);
                 }
@@ -575,14 +639,27 @@ fn recent_folders_menu(ui: &mut egui::Ui, settings: &Settings, t: &Texts) -> Opt
     picked
 }
 
-/// Check boxes of the settings window.
-fn settings_toggles(ui: &mut egui::Ui, draft: &mut Settings, t: &Texts) {
+/// Check boxes of the Processing page.
+fn processing_toggles(ui: &mut egui::Ui, draft: &mut Settings, t: &Texts) {
     ui.checkbox(&mut draft.recursive, t.recursive);
     ui.checkbox(&mut draft.create_subfolder, t.subfolder);
     ui.checkbox(&mut draft.extract_nested, t.nested);
     ui.checkbox(&mut draft.overwrite_existing, t.overwrite);
-    ui.checkbox(&mut draft.delete_after_success, t.trash_after);
     ui.checkbox(&mut draft.autostart, t.autostart);
+    ui.add_space(6.0);
+    ui.strong(t.group_cleanup);
+    ui.checkbox(&mut draft.move_extra_files, t.move_extra_files)
+        .on_hover_text(t.move_extra_files_hint);
+    ui.checkbox(&mut draft.delete_after_success, t.trash_after);
+    ui.checkbox(&mut draft.delete_empty_dirs, t.delete_empty_dirs);
+}
+
+/// Check boxes of the Window page.
+fn window_toggles(ui: &mut egui::Ui, draft: &mut Settings, t: &Texts) {
+    ui.checkbox(&mut draft.follow_active, t.follow_active);
+    ui.checkbox(&mut draft.minimize_to_tray, t.minimize_to_tray);
+    ui.checkbox(&mut draft.close_to_tray, t.close_to_tray)
+        .on_hover_text(t.close_to_tray_hint);
 }
 
 fn folder_row(ui: &mut egui::Ui, label: &str, value: &mut String, hint: &str, browse: &str) {
@@ -602,7 +679,81 @@ fn folder_row(ui: &mut egui::Ui, label: &str, value: &mut String, hint: &str, br
     ui.end_row();
 }
 
+impl App {
+    /// Creates or removes the tray icon to match the settings (and the language).
+    fn sync_tray(&mut self, ctx: &egui::Context, wanted: bool) {
+        let current_lang = self.tray.as_ref().map(|(_, lang)| *lang);
+        if !wanted {
+            self.tray = None;
+            self.tray_error = None;
+            return;
+        }
+        if current_lang == Some(self.lang) || self.tray_error.is_some() {
+            return;
+        }
+        self.tray = None; // the old icon must go before the new one appears
+        let wake = ctx.clone();
+        match Tray::new(self.texts(), move || wake.request_repaint()) {
+            Ok(icon) => self.tray = Some((icon, self.lang)),
+            Err(e) => self.tray_error = Some(format!("{} {e}", self.texts().tray_failed)),
+        }
+    }
+
+    fn show_window(&mut self, ctx: &egui::Context) {
+        self.window = WindowState::Shown;
+        ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+        ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
+        ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+    }
+
+    fn hide_window(&mut self, ctx: &egui::Context) {
+        self.window = WindowState::Hidden;
+        ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+    }
+}
+
 impl eframe::App for App {
+    /// Runs every frame, and also while the window is hidden in the tray.
+    fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        let (minimize_to_tray, close_to_tray) = self
+            .engine
+            .with_state(|s| (s.settings.minimize_to_tray, s.settings.close_to_tray));
+        self.sync_tray(ctx, minimize_to_tray || close_to_tray);
+        while let Some(request) = self.tray.as_ref().and_then(|(icon, _)| icon.poll()) {
+            match request {
+                Request::Show => self.show_window(ctx),
+                Request::Quit => {
+                    self.window = WindowState::Quitting;
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                }
+            }
+        }
+        if self.tray.is_none() && self.window == WindowState::Hidden {
+            self.show_window(ctx); // never leave the window hidden without an icon
+        }
+        let (close_requested, minimized) = ctx.input(|i| {
+            let viewport = i.viewport();
+            (viewport.close_requested(), viewport.minimized.unwrap_or(false))
+        });
+        let action = tray::window_action(WindowInput {
+            tray: self.tray.is_some(),
+            minimize_to_tray,
+            close_to_tray,
+            close_requested,
+            minimized,
+            hidden: self.window == WindowState::Hidden,
+            quitting: self.window == WindowState::Quitting,
+        });
+        match action {
+            WindowAction::None => {}
+            WindowAction::HideInsteadOfClosing => {
+                ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+                self.hide_window(ctx);
+            }
+            WindowAction::HideMinimized => self.hide_window(ctx),
+        }
+    }
+
     fn ui(&mut self, root: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = root.ctx().clone();
         let snap = self.engine.with_state(Snapshot::take);

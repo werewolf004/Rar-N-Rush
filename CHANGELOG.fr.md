@@ -10,10 +10,16 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 - Barre **Dossier surveillé** dans la fenêtre principale : le dossier surveillé se change à tout moment, même pendant un traitement, sans ouvrir les réglages. Saisis un chemin et valide avec Entrée (Échap annule), choisis l'un des 10 derniers dossiers dans **Dossiers récents**, ou utilise **Parcourir…**. Un dossier inexistant est refusé avec un message, et les réglages en cours sont conservés.
 - Nouveau réglage `recent_watch_dirs` (liste des dossiers surveillés récemment).
+- **Déplacement des fichiers annexes** (`move_extra_files`) : après l'extraction, les autres fichiers du jeu (`.nfo`, extraits…) vont dans la destination. Uniquement pour un jeu seul dans son propre sous-dossier : les autres téléchargements ne sont jamais touchés.
+- **Suppression des dossiers vides** (`delete_empty_dirs`) : un dossier de jeu resté vide après un traitement réussi part à la corbeille, puis ses parents vides ; jamais le dossier surveillé lui-même.
+- **Garder visible le jeu en cours** (`follow_active`, activé par défaut) : la liste défile jusqu'à chaque nouveau jeu traité.
+- **Zone de notification** : réduire (`minimize_to_tray`) et/ou fermer (`close_to_tray`) dans une icône ; la surveillance continue, un clic fait revenir la fenêtre, **Quitter** dans son menu ferme l'application.
+- Icône de l'application pour la fenêtre, la barre des tâches et la zone de notification.
 
 ### Modifié
 
 - L'état de la surveillance (active / en pause, heure de la dernière analyse) est passé dans la barre d'outils.
+- La fenêtre des réglages est découpée en trois pages (Général, Traitement, Fenêtre) : Enregistrer et Annuler restent toujours visibles.
 
 ## [0.1.0] - 2026-11-13
 

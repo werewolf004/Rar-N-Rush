@@ -10,10 +10,16 @@ All notable changes to this project are documented here. The format follows [Kee
 
 - **Watched folder** bar in the main window: the watched folder can be changed at any time, even during processing, without opening the settings. Type a path and press Enter (Esc cancels), pick one of the last 10 folders under **Recent folders**, or use **Browse…**. A folder that does not exist is refused with a message, and the current settings are kept.
 - New setting `recent_watch_dirs` (list of recently watched folders).
+- **Move extra files** (`move_extra_files`): after extraction, the other files of the set (`.nfo`, samples…) go to the destination. Only for a set alone in its own sub-folder, so other downloads are never touched.
+- **Delete empty folders** (`delete_empty_dirs`): a set folder left empty after a successful run goes to the Recycle Bin, then its empty parents; never the watched folder itself.
+- **Keep the set being processed in view** (`follow_active`, on by default): the list scrolls to each new active set.
+- **Notification area**: minimise (`minimize_to_tray`) and/or close (`close_to_tray`) to an icon; monitoring goes on, a click brings the window back, **Quit** in its menu exits.
+- Application icon for the window, the taskbar and the notification area.
 
 ### Changed
 
 - The monitoring state (Watching / Paused, time of the last scan) moved to the toolbar.
+- The settings window is split into three pages (General, Processing, Window) so Save and Cancel always stay visible.
 
 ## [0.1.0] - 2026-11-13
 

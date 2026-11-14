@@ -9,6 +9,7 @@ use crate::extract::{ArchiveProblem, ExtractError};
 use crate::par2::Par2Error;
 use crate::settings::{LanguagePref, LoadIssue};
 use crate::sfv::{Problem, SfvError};
+use crate::tidy::{NotMoved, TidyError};
 
 /// Interface language actually used.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -118,6 +119,7 @@ pub struct Texts {
     pub open_folder: &'static str,
     pub remove: &'static str,
     pub settings_title: &'static str,
+    pub tab_general: &'static str,
     pub watch_dir: &'static str,
     pub destination: &'static str,
     pub destination_hint: &'static str,
@@ -135,6 +137,19 @@ pub struct Texts {
     pub overwrite: &'static str,
     pub trash_after: &'static str,
     pub autostart: &'static str,
+    pub group_processing: &'static str,
+    pub group_cleanup: &'static str,
+    pub group_window: &'static str,
+    pub delete_empty_dirs: &'static str,
+    pub move_extra_files: &'static str,
+    pub move_extra_files_hint: &'static str,
+    pub follow_active: &'static str,
+    pub minimize_to_tray: &'static str,
+    pub close_to_tray: &'static str,
+    pub close_to_tray_hint: &'static str,
+    pub tray_show: &'static str,
+    pub tray_quit: &'static str,
+    pub tray_failed: &'static str,
     pub passwords: &'static str,
     pub passwords_hint: &'static str,
     pub language: &'static str,
@@ -187,6 +202,7 @@ static EN: Texts = Texts {
     open_folder: "Open the folder in File Explorer",
     remove: "Remove from list",
     settings_title: "Settings",
+    tab_general: "General",
     watch_dir: "Watched folder",
     destination: "Destination",
     destination_hint: "same folder as the files",
@@ -204,6 +220,19 @@ static EN: Texts = Texts {
     overwrite: "Overwrite existing files (otherwise use “name (1).ext”)",
     trash_after: "Move PAR2/SFV/RAR files to the Recycle Bin after success",
     autostart: "Start monitoring when the app starts",
+    group_processing: "Processing",
+    group_cleanup: "After a successful run",
+    group_window: "Window",
+    delete_empty_dirs: "Move folders left empty to the Recycle Bin",
+    move_extra_files: "Move the other files of the set (.nfo, samples…) to the destination",
+    move_extra_files_hint: "Only when the set is alone in its own sub-folder.",
+    follow_active: "Keep the set being processed in view",
+    minimize_to_tray: "Minimise to the notification area",
+    close_to_tray: "Close to the notification area",
+    close_to_tray_hint: "Quit from the icon menu in the notification area.",
+    tray_show: "Show Rar N Rush",
+    tray_quit: "Quit",
+    tray_failed: "The notification area icon could not be created:",
     passwords: "Passwords to try (one per line)",
     passwords_hint: "Stored in plain text in the settings file.",
     language: "Language",
@@ -256,6 +285,7 @@ static FR: Texts = Texts {
     open_folder: "Ouvrir le dossier dans l'Explorateur",
     remove: "Retirer de la liste",
     settings_title: "Réglages",
+    tab_general: "Général",
     watch_dir: "Dossier surveillé",
     destination: "Destination",
     destination_hint: "même dossier que les fichiers",
@@ -273,6 +303,19 @@ static FR: Texts = Texts {
     overwrite: "Écraser les fichiers existants (sinon « nom (1).ext »)",
     trash_after: "Envoyer les fichiers PAR2/SFV/RAR à la corbeille après succès",
     autostart: "Démarrer la surveillance au lancement",
+    group_processing: "Traitement",
+    group_cleanup: "Après un traitement réussi",
+    group_window: "Fenêtre",
+    delete_empty_dirs: "Envoyer les dossiers restés vides à la corbeille",
+    move_extra_files: "Déplacer les autres fichiers du jeu (.nfo, extraits…) vers la destination",
+    move_extra_files_hint: "Uniquement si le jeu est seul dans son propre sous-dossier.",
+    follow_active: "Garder visible le jeu en cours de traitement",
+    minimize_to_tray: "Réduire dans la zone de notification",
+    close_to_tray: "Fermer dans la zone de notification",
+    close_to_tray_hint: "Pour quitter, utilise le menu de l'icône dans la zone de notification.",
+    tray_show: "Afficher Rar N Rush",
+    tray_quit: "Quitter",
+    tray_failed: "Impossible de créer l'icône de la zone de notification :",
     passwords: "Mots de passe à essayer (un par ligne)",
     passwords_hint: "Stockés en clair dans le fichier de réglages.",
     language: "Langue",
@@ -542,6 +585,20 @@ impl Localize for Notice {
             }
             (Self::TrashFailed(e), En) => format!("Could not move source files to the Recycle Bin: {e}"),
             (Self::TrashFailed(e), Fr) => format!("Impossible d'envoyer les sources à la corbeille : {e}"),
+            (Self::ExtraFilesMoved { count, dest }, En) => {
+                format!("{count} extra file(s) moved to {}.", dest.display())
+            }
+            (Self::ExtraFilesMoved { count, dest }, Fr) => {
+                format!("{count} fichier(s) annexe(s) déplacé(s) vers {}.", dest.display())
+            }
+            (Self::ExtraFilesKept { name, reason }, _) => extra_files_kept(*reason, name, lang),
+            (Self::EmptyFoldersTrashed { count }, En) => {
+                format!("{count} empty folder(s) moved to the Recycle Bin.")
+            }
+            (Self::EmptyFoldersTrashed { count }, Fr) => {
+                format!("{count} dossier(s) vide(s) envoyé(s) à la corbeille.")
+            }
+            (Self::TidyFailed(e), _) => e.localize(lang),
             (Self::Finished { name }, En) => format!("“{name}” done."),
             (Self::Finished { name }, Fr) => format!("« {name} » terminé."),
             (Self::Failed { name, error }, En) => format!("“{name}” failed: {}", error.localize(lang)),
@@ -550,6 +607,62 @@ impl Localize for Notice {
             (Self::Cancelled { name }, Fr) => format!("« {name} » annulé."),
             (Self::StateError(e), En) => format!("Could not save state: {e}"),
             (Self::StateError(e), Fr) => format!("Impossible d'enregistrer l'état : {e}"),
+        }
+    }
+}
+
+impl Localize for TidyError {
+    fn localize(&self, lang: Lang) -> String {
+        use Lang::{En, Fr};
+        match (self, lang) {
+            (TidyError::ReadDir { path, source }, En) => format!("Cannot read {}: {source}", path.display()),
+            (TidyError::ReadDir { path, source }, Fr) => {
+                format!("Lecture de {} impossible : {source}", path.display())
+            }
+            (TidyError::Move { from, to, source }, En) => {
+                format!("Cannot move {} to {}: {source}", from.display(), to.display())
+            }
+            (TidyError::Move { from, to, source }, Fr) => {
+                format!(
+                    "Impossible de déplacer {} vers {} : {source}",
+                    from.display(),
+                    to.display()
+                )
+            }
+            (TidyError::Trash { path, message }, En) => {
+                format!("Cannot send {} to the Recycle Bin: {message}", path.display())
+            }
+            (TidyError::Trash { path, message }, Fr) => {
+                format!(
+                    "Impossible d'envoyer {} à la corbeille : {message}",
+                    path.display()
+                )
+            }
+        }
+    }
+}
+
+/// Message explaining why the extra files of set `name` were kept in place.
+fn extra_files_kept(reason: NotMoved, name: &str, lang: Lang) -> String {
+    use Lang::{En, Fr};
+    match (reason, lang) {
+        (NotMoved::InWatchedFolder, En) => {
+            format!("“{name}”: extra files kept in place (set not in a folder of its own).")
+        }
+        (NotMoved::InWatchedFolder, Fr) => {
+            format!("« {name} » : fichiers annexes laissés en place (jeu sans dossier à lui).")
+        }
+        (NotMoved::SharedFolder, En) => {
+            format!("“{name}”: extra files kept in place (folder shared with other sets).")
+        }
+        (NotMoved::SharedFolder, Fr) => {
+            format!("« {name} » : fichiers annexes laissés en place (dossier partagé avec d'autres jeux).")
+        }
+        (NotMoved::SameFolder, En) => {
+            format!("“{name}”: extra files kept in place (extracted into the same folder).")
+        }
+        (NotMoved::SameFolder, Fr) => {
+            format!("« {name} » : fichiers annexes laissés en place (extraction dans le même dossier).")
         }
     }
 }

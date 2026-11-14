@@ -33,7 +33,7 @@ Chaîne de traitement complète (analyse, PAR2, SFV, RAR), erreurs typées, ni `
 
 ## v0.5.0 — Intégration Windows
 
-- Icône dans la zone de notification, réduction et fermeture vers cette zone.
+- ~~Icône dans la zone de notification, réduction et fermeture vers cette zone.~~ Avancé en v0.2.0.
 - Notifications Windows quand un jeu est terminé ou demande un mot de passe.
 - Démarrage avec Windows (optionnel), une seule instance à la fois.
 

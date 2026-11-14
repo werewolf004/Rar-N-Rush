@@ -267,3 +267,40 @@ fn skip_marks_the_set_and_remembers_it() {
         "hello"
     );
 }
+
+#[test]
+fn extra_files_follow_the_extracted_set() {
+    let root = tempfile::tempdir().unwrap();
+    let (watch, out, state) = (
+        root.path().join("watch"),
+        root.path().join("out"),
+        root.path().join("state"),
+    );
+    let release = watch.join("Release");
+    for d in [&release, &out, &state] {
+        fs::create_dir_all(d).unwrap();
+    }
+    common::copy_fixtures(&release, &["plain.rar"]);
+    fs::write(release.join("info.nfo"), b"release notes").unwrap();
+    // A loose file next to other downloads must never be moved.
+    fs::write(watch.join("unrelated.txt"), b"keep me").unwrap();
+
+    let s = Settings {
+        move_extra_files: true,
+        delete_empty_dirs: true, // the folder still holds the archive: it must stay
+        ..settings(&watch, &out)
+    };
+    let engine = Engine::start(s, Store::at(&state), || {}).unwrap();
+    wait_until(&engine, |e| status_of(e, "plain") == Some(Status::Done));
+
+    assert_eq!(
+        fs::read(out.join("plain").join("info.nfo")).unwrap(),
+        b"release notes"
+    );
+    assert!(!release.join("info.nfo").exists());
+    assert!(
+        release.join("plain.rar").is_file(),
+        "sources stay unless deletion is enabled"
+    );
+    assert!(watch.join("unrelated.txt").is_file());
+}

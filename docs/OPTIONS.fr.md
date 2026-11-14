@@ -23,9 +23,11 @@ Tes réglages ne sont jamais perdus en silence :
 - le marqueur d'ordre des octets (BOM) ajouté par le Bloc-notes est accepté ;
 - dès qu'une valeur est remise par défaut, le fichier d'origine est d'abord copié sous `rar-n-rush.toml.<date-heure>.bak`, et un bandeau en haut de la fenêtre indique les clés concernées et l'emplacement de la copie.
 
-![Fenêtre des réglages](screenshots/settings-fr-light.png)
+La fenêtre des réglages a trois pages : **Général** (dossiers, délais, langue, thème), **Traitement** (comportement, nettoyage, mots de passe) et **Fenêtre**.
 
-## Dossiers
+![Fenêtre des réglages, page Général](screenshots/settings-fr-light.png)
+
+## Dossiers *(page Général)*
 
 | Clé | Libellé dans la fenêtre | Type | Défaut | Effet |
 |---|---|---|---|---|
@@ -34,14 +36,16 @@ Tes réglages ne sont jamais perdus en silence :
 | `extract_dir` | Destination | chemin | *(vide)* | Dossier d'extraction. Vide : à côté des fichiers sources. S'il se trouve dans le dossier surveillé, il est exclu des analyses. |
 | `par2_path` | par2.exe | chemin | *(vide)* | Chemin de `par2.exe`. Vide : recherche automatique, d'abord à côté de `rar-n-rush.exe`, puis dans le `PATH`. La fenêtre affiche le chemin trouvé, ou un avertissement. |
 
-## Délais
+## Délais *(page Général)*
 
 | Clé | Libellé dans la fenêtre | Type | Défaut | Plage | Effet |
 |---|---|---|---|---|---|
 | `scan_interval_secs` | Analyser toutes les | secondes | `15` | 2–3600 | Délai entre deux analyses du dossier surveillé. Le bouton **Analyser** force une analyse immédiate. |
 | `stable_secs` | Attendre la fin des fichiers | secondes | `10` | 0–3600 | Un jeu n'est traité qu'une fois ses fichiers (nombre, taille, date de modification) inchangés pendant cette durée. |
 
-## Comportement
+## Comportement *(page Traitement)*
+
+![Page Traitement](screenshots/settings-processing-fr.png)
 
 | Clé | Libellé dans la fenêtre | Type | Défaut | Effet |
 |---|---|---|---|---|
@@ -52,7 +56,7 @@ Tes réglages ne sont jamais perdus en silence :
 | `delete_after_success` | Envoyer les fichiers PAR2/SFV/RAR à la corbeille après succès | booléen | `false` | Après un traitement réussi, envoie à la corbeille les fichiers PAR2, le SFV, les volumes RAR et les sauvegardes de par2 (`fichier.1`). Les fichiers vérifiés qui ne sont pas des RAR sont toujours conservés. |
 | `autostart` | Démarrer la surveillance au lancement | booléen | `true` | Démarre la surveillance au lancement si un dossier surveillé est défini. |
 
-## Mots de passe
+## Mots de passe *(page Traitement)*
 
 | Clé | Libellé dans la fenêtre | Type | Défaut | Effet |
 |---|---|---|---|---|
@@ -60,7 +64,24 @@ Tes réglages ne sont jamais perdus en silence :
 
 > **Attention** : dans cette version, les mots de passe sont stockés en clair dans `rar-n-rush.toml`. Leur passage dans le Gestionnaire d'identifiants Windows est prévu en v0.3.0 (voir [ROADMAP.fr.md](../ROADMAP.fr.md)).
 
-## Apparence
+## Après un traitement réussi *(page Traitement)*
+
+| Clé | Libellé dans la fenêtre | Type | Défaut | Effet |
+|---|---|---|---|---|
+| `move_extra_files` | Déplacer les autres fichiers du jeu (.nfo, extraits…) vers la destination | booléen | `false` | Après l'extraction, déplace vers la destination les fichiers du dossier du jeu qui ne sont pas des sources PAR2/SFV/RAR (`.nfo`, `.jpg`, fichiers vérifiés qui ne sont pas des RAR…). **Uniquement si le jeu est seul dans son propre sous-dossier** du dossier surveillé : un jeu posé directement dans le dossier surveillé, ou qui partage son dossier avec d'autres jeux, garde ses fichiers (le journal indique pourquoi). Rien n'est déplacé si la destination est le dossier du jeu lui-même. Un fichier existant est conservé (`nom (1).ext`) sauf si l'écrasement est activé. |
+| `delete_empty_dirs` | Envoyer les dossiers restés vides à la corbeille | booléen | `false` | Après un traitement réussi, envoie le dossier du jeu à la corbeille s'il est entièrement vide, puis ses dossiers parents tant qu'ils sont vides. Le dossier surveillé lui-même n'est jamais supprimé. À combiner avec les deux options ci-dessus pour ne rien laisser derrière. |
+
+## Fenêtre *(page Fenêtre)*
+
+![Page Fenêtre](screenshots/settings-window-fr.png)
+
+| Clé | Libellé dans la fenêtre | Type | Défaut | Effet |
+|---|---|---|---|---|
+| `follow_active` | Garder visible le jeu en cours de traitement | booléen | `true` | Fait défiler la liste jusqu'à chaque nouveau jeu en cours de traitement, une seule fois : tu restes libre de faire défiler entre-temps. |
+| `minimize_to_tray` | Réduire dans la zone de notification | booléen | `false` | Réduire la fenêtre la masque ; une icône dans la zone de notification la fait revenir (clic, ou **Afficher Rar N Rush** dans son menu). |
+| `close_to_tray` | Fermer dans la zone de notification | booléen | `false` | Le ✕ de la fenêtre la masque au lieu de quitter ; la surveillance continue. Pour quitter, choisis **Quitter** dans le menu de l'icône. Si l'icône ne peut pas être créée, la fenêtre se ferme normalement et la fenêtre des réglages en donne la raison. |
+
+## Apparence *(page Général)*
 
 | Clé | Libellé dans la fenêtre | Valeurs | Défaut | Effet |
 |---|---|---|---|---|
@@ -83,6 +104,11 @@ scan_interval_secs = 15
 stable_secs = 10
 passwords = []
 autostart = true
+move_extra_files = false
+delete_empty_dirs = false
+follow_active = true
+minimize_to_tray = false
+close_to_tray = false
 language = "system"
 theme = "system"
 ```

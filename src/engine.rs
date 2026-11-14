@@ -10,6 +10,7 @@ use crate::scan::{self, FileSet, ScanError, SetKind, Signature};
 use crate::settings::{Settings, SettingsError, Store};
 use crate::sfv::{self, SfvError};
 use crate::sync::lock;
+use crate::tidy::{self, NotMoved, TidyError};
 use std::collections::HashSet;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -175,6 +176,27 @@ pub enum Notice {
     },
     /// Source files could not be moved to the recycle bin.
     TrashFailed(String),
+    /// Extra files of a set were moved to the destination.
+    ExtraFilesMoved {
+        /// Number of files.
+        count: usize,
+        /// Destination folder.
+        dest: PathBuf,
+    },
+    /// Extra files were left in place.
+    ExtraFilesKept {
+        /// Set name.
+        name: String,
+        /// Why they were not moved.
+        reason: NotMoved,
+    },
+    /// Empty folders were moved to the recycle bin.
+    EmptyFoldersTrashed {
+        /// Number of folders.
+        count: usize,
+    },
+    /// Moving extra files or removing empty folders failed.
+    TidyFailed(Arc<TidyError>),
     /// A set finished successfully.
     Finished {
         /// Set name.
@@ -206,6 +228,7 @@ impl Notice {
                 | Self::RepairImpossible { .. }
                 | Self::PasswordRequired { .. }
                 | Self::TrashFailed(_)
+                | Self::TidyFailed(_)
                 | Self::Failed { .. }
                 | Self::StateError(_)
         )
@@ -733,24 +756,25 @@ impl Worker {
 
     fn finish(&mut self, job: &Job, detail: Detail, settings: &Settings) {
         let set = &job.set;
+        let root = settings.watch_path();
+        if let (true, Some(root), Detail::Extracted { dest, .. }) =
+            (settings.move_extra_files, &root, &detail)
+        {
+            self.move_extra_files(set, root, dest, settings.overwrite_existing);
+        }
         if settings.delete_after_success {
-            let mut sources: Vec<PathBuf> = set.par2_files.clone();
-            sources.extend(set.sfv.clone());
-            for group in &set.rar_groups {
-                sources.extend(scan::rar_volumes_on_disk(&set.dir, group));
-            }
-            for target in &set.targets {
-                for n in 1..10 {
-                    sources.push(set.dir.join(format!("{target}.{n}"))); // par2 backups
-                }
-            }
             // Verified non-RAR files (the useful content) are always kept.
-            sources.retain(|p| p.is_file());
-            sources.sort();
-            sources.dedup();
+            let sources = tidy::source_files(set);
             match trash::delete_all(&sources) {
                 Ok(()) => self.notice(Notice::SourcesTrashed { count: sources.len() }),
                 Err(e) => self.notice(Notice::TrashFailed(e.to_string())),
+            }
+        }
+        if let (true, Some(root)) = (settings.delete_empty_dirs, &root) {
+            match tidy::remove_empty_dirs(&set.dir, root) {
+                Ok(removed) if removed.is_empty() => {}
+                Ok(removed) => self.notice(Notice::EmptyFoldersTrashed { count: removed.len() }),
+                Err(e) => self.notice(Notice::TidyFailed(Arc::new(e))),
             }
         }
         // Persist first: if the app stops right after, the set must not be redone.
@@ -763,6 +787,35 @@ impl Worker {
             j.progress = 1.0;
             j.detail = detail;
         });
+    }
+
+    /// Moves the files of the set's folder that are not sources (`.nfo`, samples…)
+    /// to the destination. Stops at the first failure and reports it.
+    fn move_extra_files(&self, set: &FileSet, root: &Path, dest: &Path, overwrite: bool) {
+        let extras = match tidy::extra_files(set, root, dest) {
+            Ok(Ok(extras)) => extras,
+            Ok(Err(reason)) => {
+                return self.notice(Notice::ExtraFilesKept {
+                    name: set.name.clone(),
+                    reason,
+                });
+            }
+            Err(e) => return self.notice(Notice::TidyFailed(Arc::new(e))),
+        };
+        let mut count = 0;
+        for file in &extras {
+            if let Err(e) = tidy::move_file(file, dest, overwrite) {
+                self.notice(Notice::TidyFailed(Arc::new(e)));
+                break;
+            }
+            count += 1;
+        }
+        if count > 0 {
+            self.notice(Notice::ExtraFilesMoved {
+                count,
+                dest: dest.to_path_buf(),
+            });
+        }
     }
 
     fn stop(&self, job: &Job, stop: Stop) {

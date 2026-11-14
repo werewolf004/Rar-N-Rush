@@ -81,6 +81,18 @@ pub struct Settings {
     pub passwords: Vec<String>,
     /// Start monitoring when the application starts.
     pub autostart: bool,
+    /// After a successful run, send the set's folder to the recycle bin when it is empty
+    /// (then its empty parents, never the watched folder itself).
+    pub delete_empty_dirs: bool,
+    /// After extraction, move the other files of the set's folder (`.nfo`, samples…)
+    /// to the destination. Only for a set alone in its own sub-folder.
+    pub move_extra_files: bool,
+    /// Scroll the list to the set being processed.
+    pub follow_active: bool,
+    /// Hide the window in the notification area when it is minimised.
+    pub minimize_to_tray: bool,
+    /// Hide the window in the notification area when it is closed; quit from the tray menu.
+    pub close_to_tray: bool,
     /// Interface language.
     pub language: LanguagePref,
     /// Colour theme.
@@ -129,6 +141,11 @@ impl Default for Settings {
             stable_secs: 10,
             passwords: Vec::new(),
             autostart: true,
+            delete_empty_dirs: false,
+            move_extra_files: false,
+            follow_active: true,
+            minimize_to_tray: false,
+            close_to_tray: false,
             language: LanguagePref::System,
             theme: ThemePref::System,
         }
@@ -644,6 +661,11 @@ mod tests {
             stable_secs: 7,
             passwords: vec!["p1".into(), "p é 2".into()],
             autostart: false,
+            delete_empty_dirs: true,
+            move_extra_files: true,
+            follow_active: false,
+            minimize_to_tray: true,
+            close_to_tray: true,
             language: LanguagePref::French,
             theme: ThemePref::Dark,
         };

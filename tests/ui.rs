@@ -203,7 +203,25 @@ fn settings_window_opens_and_closes() {
     frames(&mut h, 3);
     h.get_by_label("Destination");
     h.get_by_label("Follow Windows");
-    h.get_by_label("Overwrite existing files (otherwise use “name (1).ext”)");
+    h.get_by_label("Processing").click();
+    frames(&mut h, 2);
+    for label in [
+        "Overwrite existing files (otherwise use “name (1).ext”)",
+        "Move the other files of the set (.nfo, samples…) to the destination",
+        "Move folders left empty to the Recycle Bin",
+        "Passwords to try (one per line)",
+    ] {
+        h.get_by_label(label);
+    }
+    h.get_by_label("Window").click();
+    frames(&mut h, 2);
+    for label in [
+        "Keep the set being processed in view",
+        "Minimise to the notification area",
+        "Close to the notification area",
+    ] {
+        h.get_by_label(label);
+    }
     h.get_by_label("Cancel").click();
     frames(&mut h, 3);
     assert!(
@@ -352,6 +370,18 @@ fn screenshots() {
             h.get_by_label(settings_label).click();
             frames(&mut h, 3);
             save(&mut h, &format!("settings-{tag}"));
+            if theme == ThemePref::Light {
+                let tabs = if lang == LanguagePref::English {
+                    [("Processing", "processing"), ("Window", "window")]
+                } else {
+                    [("Traitement", "processing"), ("Fenêtre", "window")]
+                };
+                for (label, page) in tabs {
+                    h.get_by_label(label).click();
+                    frames(&mut h, 3);
+                    save(&mut h, &format!("settings-{page}-{lang_tag}"));
+                }
+            }
             drop(h);
         }
         let state = tempfile::tempdir().unwrap();

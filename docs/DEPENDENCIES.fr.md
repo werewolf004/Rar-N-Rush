@@ -2,7 +2,7 @@
 
 [English](DEPENDENCIES.md) · **Français**
 
-Chaque dépendance directe est listée ci-dessous avec la raison de sa présence. La liste complète des 215 crates compilés dans le binaire, avec leurs licences, est générée dans [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) (`python scripts/third-party.py`).
+Chaque dépendance directe est listée ci-dessous avec la raison de sa présence. La liste complète des 220 crates compilés dans le binaire, avec leurs licences, est générée dans [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) (`python scripts/third-party.py`).
 
 Règles appliquées aux dépendances :
 
@@ -27,6 +27,7 @@ Règles appliquées aux dépendances :
 | [`thiserror`](https://crates.io/crates/thiserror) | 2 | MIT OR Apache-2.0 | Énumérations d'erreurs typées. |
 | [`chrono`](https://crates.io/crates/chrono) | 0.4 | MIT OR Apache-2.0 | Heure locale des lignes du journal. Seule la fonctionnalité `clock` est activée. |
 | [`sys-locale`](https://crates.io/crates/sys-locale) | 0.3 | MIT OR Apache-2.0 | Lit la langue d'affichage de Windows pour choisir français ou anglais. |
+| [`tray-icon`](https://crates.io/crates/tray-icon) | 0.26 | MIT OR Apache-2.0 | Icône et menu dans la zone de notification (créés seulement si une option de zone de notification est activée). Fonctionnalités par défaut désactivées : sous Windows, n'ajoute que `muda` (menu), `windows-sys` et `crossbeam-channel`. |
 
 ## Dépendances de développement
 

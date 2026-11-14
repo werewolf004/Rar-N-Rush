@@ -17,7 +17,8 @@ fn main() -> eframe::Result {
         viewport: egui::ViewportBuilder::default()
             .with_title("Rar N Rush")
             .with_inner_size([1100.0, 680.0])
-            .with_min_inner_size([720.0, 420.0]),
+            .with_min_inner_size([720.0, 420.0])
+            .with_icon(rar_n_rush::icon::window_icon()),
         ..Default::default()
     };
     eframe::run_native(

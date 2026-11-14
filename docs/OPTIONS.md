@@ -23,9 +23,11 @@ Your settings are never silently lost:
 - a byte-order mark added by Notepad is accepted;
 - whenever something is reset, the original file is first copied to `rar-n-rush.toml.<date-time>.bak`, and a banner at the top of the window says which keys were reset and where the copy is.
 
-![Settings window](screenshots/settings-en-light.png)
+The settings window has three pages: **General** (folders, timing, language, theme), **Processing** (behaviour, clean-up, passwords) and **Window**.
 
-## Folders
+![Settings window, General page](screenshots/settings-en-light.png)
+
+## Folders *(General page)*
 
 | Key | Window label | Type | Default | Effect |
 |---|---|---|---|---|
@@ -34,14 +36,16 @@ Your settings are never silently lost:
 | `extract_dir` | Destination | path | *(empty)* | Where archives are extracted. Empty means "next to the source files". When it is inside the watched folder, it is excluded from scans. |
 | `par2_path` | par2.exe | path | *(empty)* | Path to `par2.exe`. Empty means automatic lookup: next to `rar-n-rush.exe`, then in `PATH`. The window shows the resolved path, or a warning if none is found. |
 
-## Timing
+## Timing *(General page)*
 
 | Key | Window label | Type | Default | Range | Effect |
 |---|---|---|---|---|---|
 | `scan_interval_secs` | Scan every | seconds | `15` | 2–3600 | Delay between two scans of the watched folder. **Scan** in the toolbar forces a scan. |
 | `stable_secs` | Wait for files to settle | seconds | `10` | 0–3600 | A set is processed only after its files (count, size, modification time) have not changed for this long. |
 
-## Behaviour
+## Behaviour *(Processing page)*
+
+![Processing page](screenshots/settings-processing-en.png)
 
 | Key | Window label | Type | Default | Effect |
 |---|---|---|---|---|
@@ -52,7 +56,7 @@ Your settings are never silently lost:
 | `delete_after_success` | Move PAR2/SFV/RAR files to the Recycle Bin after success | bool | `false` | After a successful run, sends the PAR2 files, the SFV, the RAR volumes and par2 backups (`file.1`) to the Recycle Bin. Verified non-RAR files are always kept. |
 | `autostart` | Start monitoring when the app starts | bool | `true` | Starts monitoring on launch when a watched folder is set. |
 
-## Passwords
+## Passwords *(Processing page)*
 
 | Key | Window label | Type | Default | Effect |
 |---|---|---|---|---|
@@ -60,7 +64,24 @@ Your settings are never silently lost:
 
 > **Warning**: in this version, passwords are stored in plain text in `rar-n-rush.toml`. Moving them to the Windows Credential Manager is planned for v0.3.0 (see [ROADMAP.md](../ROADMAP.md)).
 
-## Appearance
+## After a successful run *(Processing page)*
+
+| Key | Window label | Type | Default | Effect |
+|---|---|---|---|---|
+| `move_extra_files` | Move the other files of the set (.nfo, samples…) to the destination | bool | `false` | After extraction, moves the files of the set's folder that are not PAR2/SFV/RAR sources (`.nfo`, `.jpg`, verified non-RAR files…) to the destination. **Only when the set is alone in its own sub-folder** of the watched folder: a set lying directly in the watched folder, or sharing its folder with other sets, keeps its files (the log says why). Nothing is moved when the destination is the set's own folder. An existing file is kept (`name (1).ext`) unless overwriting is enabled. |
+| `delete_empty_dirs` | Move folders left empty to the Recycle Bin | bool | `false` | After a successful run, sends the set's folder to the Recycle Bin if it is completely empty, then its parents while they are empty. The watched folder itself is never removed. Combine with the two options above to leave nothing behind. |
+
+## Window *(Window page)*
+
+![Window page](screenshots/settings-window-en.png)
+
+| Key | Window label | Type | Default | Effect |
+|---|---|---|---|---|
+| `follow_active` | Keep the set being processed in view | bool | `true` | Scrolls the list to each new set being processed, once, so you can still scroll freely in between. |
+| `minimize_to_tray` | Minimise to the notification area | bool | `false` | Minimising hides the window; an icon in the notification area brings it back (click, or **Show Rar N Rush** in its menu). |
+| `close_to_tray` | Close to the notification area | bool | `false` | The window's ✕ hides the window instead of quitting; monitoring goes on. Quit with **Quit** in the icon's menu. If the icon cannot be created, the window closes normally and the settings window shows the reason. |
+
+## Appearance *(General page)*
 
 | Key | Window label | Values | Default | Effect |
 |---|---|---|---|---|
@@ -83,6 +104,11 @@ scan_interval_secs = 15
 stable_secs = 10
 passwords = []
 autostart = true
+move_extra_files = false
+delete_empty_dirs = false
+follow_active = true
+minimize_to_tray = false
+close_to_tray = false
 language = "system"
 theme = "system"
 ```

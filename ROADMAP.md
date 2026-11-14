@@ -33,7 +33,7 @@ Complete processing chain (scan, PAR2, SFV, RAR), typed errors, no `unsafe`/`unw
 
 ## v0.5.0 — Windows integration
 
-- Icon in the notification area, minimise/close to tray.
+- ~~Icon in the notification area, minimise/close to tray.~~ Brought forward to v0.2.0.
 - Windows notifications when a set finishes or needs a password.
 - Start with Windows (optional), single running instance.
 
