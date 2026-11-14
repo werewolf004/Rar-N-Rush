@@ -58,6 +58,7 @@ cargo deny check
 | `src/instance.rs`, `src/autostart.rs`, `src/notify.rs` | One instance at a time, start with Windows, Windows notifications |
 | `src/uninstall.rs` | Registry clean-up run by the installer on removal |
 | `installer/rar-n-rush.wxs`, `scripts/*-msi.ps1`, `scripts/fetch-wix.ps1` | Windows Installer package (WiX 5): source, build, end-to-end test |
+| `packaging/winget/`, `scripts/winget-manifest.ps1` | winget manifests of each release, and their generator |
 | `fuzz/` | Fuzz targets (`cargo fuzz`), outside the main build |
 | `tests/` | Integration and UI tests; `tests/fixtures/` holds real RAR archives |
 | `vendor/unrar/` | Patched `unrar` crate, see `PATCHES.md` |
@@ -126,7 +127,14 @@ They are written to `docs/screenshots/`. The demo data lives under `C:\Users\Pub
 1. Move the `[Unreleased]` entries to a new `## [X.Y.Z] - YYYY-MM-DD` section in both changelogs and update the links at the bottom.
 2. Set `version = "X.Y.Z"` in `Cargo.toml`, run `cargo build` to update `Cargo.lock`.
 3. Commit, then tag: `git tag -a vX.Y.Z -m "vX.Y.Z"` and push the tag.
-4. The **Release** workflow checks that the tag matches `Cargo.toml`, runs the tests, builds the binary and publishes the release with the changelog section as notes.
+4. The **Release** workflow checks that the tag matches `Cargo.toml`, runs the tests, builds the binary, tests and builds the installer, and publishes the zip, the installer, their SHA-256 files and the provenance attestation, with the changelog section as notes.
+5. winget: download the published installer, write the manifests, check them, and open a pull request to [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs) with the new folder (same path under `manifests/`):
+
+   ```powershell
+   gh release download vX.Y.Z -p "*.msi" -D target/winget-dl
+   powershell -File scripts/winget-manifest.ps1 -Version X.Y.Z -Msi target/winget-dl/rar-n-rush-vX.Y.Z-windows-x64.msi
+   winget validate --manifest packaging/winget/manifests/w/werewolf004/RarNRush/X.Y.Z
+   ```
 
 ## Code of conduct
 

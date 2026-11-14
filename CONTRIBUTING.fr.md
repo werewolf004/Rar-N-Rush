@@ -58,6 +58,7 @@ cargo deny check
 | `src/instance.rs`, `src/autostart.rs`, `src/notify.rs` | Une seule instance, démarrage avec Windows, notifications Windows |
 | `src/uninstall.rs` | Nettoyage du registre lancé par l'installateur à la désinstallation |
 | `installer/rar-n-rush.wxs`, `scripts/*-msi.ps1`, `scripts/fetch-wix.ps1` | Paquet Windows Installer (WiX 5) : source, construction, test de bout en bout |
+| `packaging/winget/`, `scripts/winget-manifest.ps1` | Manifestes winget de chaque release, et leur générateur |
 | `fuzz/` | Cibles de fuzzing (`cargo fuzz`), hors du build principal |
 | `tests/` | Tests d'intégration et d'interface ; `tests/fixtures/` contient de vraies archives RAR |
 | `vendor/unrar/` | Crate `unrar` corrigé, voir `PATCHES.md` |
@@ -126,7 +127,14 @@ Elles sont écrites dans `docs/screenshots/`. Les données de démo sont placée
 1. Déplace les entrées `[Unreleased]` / `[Non publié]` dans une nouvelle section `## [X.Y.Z] - AAAA-MM-JJ` des deux journaux et mets à jour les liens en bas de page.
 2. Mets `version = "X.Y.Z"` dans `Cargo.toml`, lance `cargo build` pour mettre à jour `Cargo.lock`.
 3. Commite, puis tague : `git tag -a vX.Y.Z -m "vX.Y.Z"` et pousse le tag.
-4. Le workflow **Release** vérifie que le tag correspond à `Cargo.toml`, lance les tests, compile le binaire et publie la release avec la section du journal comme notes.
+4. Le workflow **Release** vérifie que le tag correspond à `Cargo.toml`, lance les tests, compile le binaire, teste et construit l'installateur, puis publie le zip, l'installateur, leurs fichiers SHA-256 et l'attestation de provenance, avec la section du journal comme notes.
+5. winget : télécharge l'installateur publié, écris les manifestes, vérifie-les et ouvre une pull request vers [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs) avec le nouveau dossier (même chemin sous `manifests/`) :
+
+   ```powershell
+   gh release download vX.Y.Z -p "*.msi" -D target/winget-dl
+   powershell -File scripts/winget-manifest.ps1 -Version X.Y.Z -Msi target/winget-dl/rar-n-rush-vX.Y.Z-windows-x64.msi
+   winget validate --manifest packaging/winget/manifests/w/werewolf004/RarNRush/X.Y.Z
+   ```
 
 ## Code de conduite
 
