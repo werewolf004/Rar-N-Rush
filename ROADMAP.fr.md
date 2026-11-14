@@ -18,8 +18,8 @@ Dossier surveillé modifiable dans la fenêtre principale avec les dossiers réc
 - ✅ Mots de passe d'archives stockés dans le Gestionnaire d'identifiants Windows au lieu du fichier de réglages.
 - ✅ Vérification de l'espace libre avant extraction ; nettoyage des fichiers partiels en cas d'échec.
 - Fuzzing des parseurs PAR2 et SFV (`cargo fuzz`), tests de propriétés pour le regroupement des noms.
-- Export et rotation du journal ; aucun secret jamais écrit dans le journal.
-- Sommes de contrôle des releases signées (Sigstore / attestations d'artefacts GitHub).
+- ✅ Export et rotation du journal ; aucun secret jamais écrit dans le journal.
+- ✅ Provenance de build signée pour les releases (Sigstore / attestations d'artefacts GitHub).
 
 ## v0.4.0 — PAR2 complet
 

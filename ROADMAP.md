@@ -18,8 +18,8 @@ Watched folder editable in the main window with recent folders; Par-N-Rar option
 - ✅ Archive passwords stored in the Windows Credential Manager instead of the settings file.
 - ✅ Free-space check before extraction; clean-up of partial files on failure.
 - Fuzzing of the PAR2 and SFV parsers (`cargo fuzz`), property tests for name grouping.
-- Log export and rotation; no secret ever written to the log.
-- Signed release checksums (Sigstore / GitHub artifact attestations).
+- ✅ Log export and rotation; no secret ever written to the log.
+- ✅ Signed build provenance for releases (Sigstore / GitHub artifact attestations).
 
 ## v0.4.0 — Complete PAR2
 

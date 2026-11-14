@@ -5,6 +5,7 @@
 //! [`Command`]s; the worker never blocks the UI thread.
 
 use crate::extract::{self, ExtractError};
+use crate::i18n::{Lang, Localize};
 use crate::par2::{self, Par2Error};
 use crate::scan::{self, FileSet, ScanError, SetKind, Signature};
 use crate::settings::{Settings, SettingsError, Store};
@@ -379,14 +380,29 @@ enum Stop {
 
 impl Worker {
     fn notice(&self, notice: Notice) {
+        let now = chrono::Local::now();
+        // The file gets English text: it is meant to be attached to bug reports.
+        // Notices never carry a password, so none can reach the file.
+        let file_line = lock(&self.state).settings.log_to_file.then(|| {
+            format!(
+                "{}  {}",
+                now.format("%Y-%m-%d %H:%M:%S"),
+                notice.localize(Lang::En)
+            )
+        });
         let mut state = lock(&self.state);
         state.log.push(LogLine {
-            time: chrono::Local::now().format("%H:%M:%S").to_string(),
+            time: now.format("%H:%M:%S").to_string(),
             notice,
         });
         let excess = state.log.len().saturating_sub(LOG_CAPACITY);
         state.log.drain(..excess);
         drop(state);
+        if let Some(line) = file_line {
+            // A log that cannot be written must not stop the processing, nor log
+            // about itself in a loop.
+            let _ = self.store.append_log(&line);
+        }
         (self.repaint)();
     }
 

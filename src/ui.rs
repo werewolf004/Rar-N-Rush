@@ -469,6 +469,13 @@ impl App {
         ui.horizontal(|ui| {
             ui.strong(t.log);
             ui.checkbox(&mut self.errors_only, t.errors_only);
+            if ui
+                .add_enabled(!snap.log.is_empty(), egui::Button::new(t.export_log))
+                .on_hover_text(t.export_log_hint)
+                .clicked()
+            {
+                self.export_log(snap);
+            }
         });
         egui::ScrollArea::vertical()
             .stick_to_bottom(true)
@@ -488,6 +495,37 @@ impl App {
                     });
                 }
             });
+    }
+
+    /// Text of the log lines shown (same filter and language as the window).
+    fn visible_log(&self, snap: &Snapshot) -> String {
+        use std::fmt::Write as _;
+        snap.log
+            .iter()
+            .filter(|l| !self.errors_only || l.notice.is_error())
+            .fold(String::new(), |mut text, l| {
+                // Writing to a String cannot fail.
+                let _ = write!(text, "{}  {}\r\n", l.time, l.notice.localize(self.lang));
+                text
+            })
+    }
+
+    fn export_log(&mut self, snap: &Snapshot) {
+        let t = self.texts();
+        let name = format!(
+            "rar-n-rush-log-{}.txt",
+            chrono::Local::now().format("%Y%m%d-%H%M%S")
+        );
+        let Some(path) = rfd::FileDialog::new()
+            .set_file_name(name)
+            .add_filter(t.text_filter, &["txt"])
+            .save_file()
+        else {
+            return;
+        };
+        if let Err(e) = std::fs::write(&path, self.visible_log(snap)) {
+            self.warning = Some(self.lang.export_failed(&e.to_string()));
+        }
     }
 
     fn jobs_table(&mut self, ui: &mut egui::Ui, snap: &Snapshot, dark: bool) {
@@ -841,6 +879,7 @@ fn processing_toggles(ui: &mut egui::Ui, draft: &mut Settings, t: &Texts) {
 /// Check boxes of the Window page.
 fn window_toggles(ui: &mut egui::Ui, draft: &mut Settings, t: &Texts) {
     ui.checkbox(&mut draft.follow_active, t.follow_active);
+    ui.checkbox(&mut draft.log_to_file, t.log_to_file);
     ui.checkbox(&mut draft.minimize_to_tray, t.minimize_to_tray);
     ui.checkbox(&mut draft.close_to_tray, t.close_to_tray)
         .on_hover_text(t.close_to_tray_hint);

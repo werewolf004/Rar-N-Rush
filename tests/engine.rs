@@ -130,7 +130,7 @@ fn password_typed_by_the_user() {
         status_of(e, "password") == Some(Status::NeedPassword)
     });
     let id = engine.with_state(|s| s.jobs[0].id);
-    engine.send(Command::Password(id, "nope".into()));
+    engine.send(Command::Password(id, "Wr0ng-P4ss!".into()));
     wait_until(&engine, |e| {
         e.with_state(|s| matches!(s.jobs[0].detail, rar_n_rush::engine::Detail::WrongPassword))
     });
@@ -140,6 +140,10 @@ fn password_typed_by_the_user() {
         fs::read_to_string(out.join("password").join("secret.txt")).unwrap(),
         "secret"
     );
+    // The log file tells the story, but never shows a password.
+    let log = fs::read_to_string(root.path().join("rar-n-rush.log")).unwrap();
+    assert!(log.contains("password required"), "{log}");
+    assert!(!log.contains("Wr0ng-P4ss!"), "{log}");
 }
 
 #[cfg(windows)]

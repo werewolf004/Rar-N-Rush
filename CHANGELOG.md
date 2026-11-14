@@ -10,6 +10,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 - The free space of the destination drive is checked before extracting: when the archive content plus a 64 MB reserve does not fit, the set fails with a clear message (needed and available sizes) instead of a half-written extraction.
 - **Archive passwords are kept in the Windows Credential Manager**, no longer in plain text in `rar-n-rush.toml`. Passwords from an older settings file are moved there at start-up. If the Credential Manager is unavailable, they stay in the file so none is lost, and the window says so.
+- **Log file**: the log is also written to `rar-n-rush.log` (`log_to_file`, on by default), rotated at 1 MB with three old files kept. **Export…** in the log panel saves the lines shown to a text file. A test checks that no password ever reaches the log.
 - Release archives and executables carry a signed build provenance (GitHub artifact attestation); `gh attestation verify` checks it.
 
 ### Fixed

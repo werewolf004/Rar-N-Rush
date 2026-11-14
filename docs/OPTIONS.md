@@ -83,6 +83,7 @@ The settings window has three pages: **General** (folders, timing, language, the
 | Key | Window label | Type | Default | Effect |
 |---|---|---|---|---|
 | `follow_active` | Keep the set being processed in view | bool | `true` | Scrolls the list to each new set being processed, once, so you can still scroll freely in between. |
+| `log_to_file` | Also write the log to rar-n-rush.log | bool | `true` | Writes every log line, with its date, to `rar-n-rush.log` next to the settings file. The file is rotated at 1 MB; the three previous ones are kept (`rar-n-rush.log.1` … `.3`). Lines are in English, to be attached to a bug report. Passwords never appear in it. |
 | `minimize_to_tray` | Minimise to the notification area | bool | `false` | Minimising hides the window; an icon in the notification area brings it back (click, or **Show Rar N Rush** in its menu). |
 | `window` | *(none, saved automatically)* | table | *(none)* | Size and position of the main window, saved when the app exits and restored at the next start: `x`, `y`, `width`, `height` in pixels and `maximized`. Out-of-range values are clamped (minimum 720 × 420). Delete the table to return to the default size. |
 | `close_to_tray` | Close to the notification area | bool | `false` | The window's ✕ hides the window instead of quitting; monitoring goes on. Quit with **Quit** in the icon's menu. If the icon cannot be created, the window closes normally and the settings window shows the reason. |
@@ -115,6 +116,7 @@ delete_empty_dirs = false
 follow_active = true
 minimize_to_tray = false
 close_to_tray = false
+log_to_file = true
 
 [window]
 x = 120
@@ -131,3 +133,4 @@ theme = "system"
 | File | Content |
 |---|---|
 | `rar-n-rush-processed.txt` | One line per set already processed or skipped, so it is not processed again after a restart. Delete a line (or the file) to process a set again. |
+| `rar-n-rush.log`, `rar-n-rush.log.1` … `.3` | Log file and its rotated copies (see `log_to_file`). The log panel's **Export…** button saves the lines shown, in the interface language, to a text file of your choice. |

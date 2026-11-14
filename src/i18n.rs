@@ -74,6 +74,14 @@ impl Lang {
         }
     }
 
+    /// Log export failure.
+    pub fn export_failed(self, error: &str) -> String {
+        match self {
+            Self::En => format!("Could not export the log: {error}"),
+            Self::Fr => format!("Impossible d'exporter le journal : {error}"),
+        }
+    }
+
     /// Settings save failure.
     pub fn save_failed(self, error: &str) -> String {
         match self {
@@ -112,6 +120,10 @@ pub struct Texts {
     pub folder_missing: &'static str,
     pub log: &'static str,
     pub errors_only: &'static str,
+    pub export_log: &'static str,
+    pub export_log_hint: &'static str,
+    pub text_filter: &'static str,
+    pub log_to_file: &'static str,
     pub onboarding_title: &'static str,
     pub onboarding_body: &'static str,
     pub choose_folder: &'static str,
@@ -204,6 +216,10 @@ static EN: Texts = Texts {
     folder_missing: "This folder does not exist.",
     log: "Log",
     errors_only: "Errors only",
+    export_log: "Export…",
+    export_log_hint: "Save the lines shown to a text file",
+    text_filter: "Text file",
+    log_to_file: "Also write the log to rar-n-rush.log (next to the settings)",
     onboarding_title: "Choose the folder where your downloads arrive",
     onboarding_body: "Rar N Rush checks PAR2/SFV files, repairs when needed and extracts RAR archives automatically.",
     choose_folder: "Choose a folder…",
@@ -296,6 +312,10 @@ static FR: Texts = Texts {
     folder_missing: "Ce dossier n'existe pas.",
     log: "Journal",
     errors_only: "Erreurs seulement",
+    export_log: "Exporter…",
+    export_log_hint: "Enregistrer les lignes affichées dans un fichier texte",
+    text_filter: "Fichier texte",
+    log_to_file: "Écrire aussi le journal dans rar-n-rush.log (à côté des réglages)",
     onboarding_title: "Choisis le dossier où arrivent tes téléchargements",
     onboarding_body: "Rar N Rush vérifie les PAR2/SFV, répare si besoin et extrait les RAR automatiquement.",
     choose_folder: "Choisir un dossier…",

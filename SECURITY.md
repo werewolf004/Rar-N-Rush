@@ -27,6 +27,7 @@ Rar N Rush processes files downloaded from the Internet, which must be treated a
 - Files written with a wrong password are removed before the next password is tried.
 - The scan does not follow symbolic links, so a link cannot pull files from outside the watched tree.
 - Folder names derived from archive names are sanitised (characters forbidden by Windows, reserved names such as `CON` or `NUL`).
+- The log file (`rar-n-rush.log`) never contains a password: log entries are typed events that carry no secret, and a test checks it.
 - The free space of the destination drive is checked before extracting (archive size plus a 64 MB reserve).
 - A failed or cancelled extraction removes the files it created; files that existed before are never removed.
 - Source files are sent to the **Recycle Bin**, never deleted permanently, and only after a fully successful run.

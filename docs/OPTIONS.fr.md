@@ -83,6 +83,7 @@ La fenêtre des réglages a trois pages : **Général** (dossiers, délais, lang
 | Clé | Libellé dans la fenêtre | Type | Défaut | Effet |
 |---|---|---|---|---|
 | `follow_active` | Garder visible le jeu en cours de traitement | booléen | `true` | Fait défiler la liste jusqu'à chaque nouveau jeu en cours de traitement, une seule fois : tu restes libre de faire défiler entre-temps. |
+| `log_to_file` | Écrire aussi le journal dans rar-n-rush.log | booléen | `true` | Écrit chaque ligne du journal, avec sa date, dans `rar-n-rush.log` à côté du fichier de réglages. Le fichier tourne à 1 Mo ; les trois précédents sont conservés (`rar-n-rush.log.1` … `.3`). Les lignes sont en anglais, pour être jointes à un rapport de bug. Les mots de passe n'y apparaissent jamais. |
 | `minimize_to_tray` | Réduire dans la zone de notification | booléen | `false` | Réduire la fenêtre la masque ; une icône dans la zone de notification la fait revenir (clic, ou **Afficher Rar N Rush** dans son menu). |
 | `window` | *(aucun, enregistré automatiquement)* | table | *(aucune)* | Taille et position de la fenêtre principale, enregistrées à la fermeture et restaurées au lancement suivant : `x`, `y`, `width`, `height` en pixels et `maximized`. Les valeurs hors limites sont corrigées (minimum 720 × 420). Supprime la table pour revenir à la taille par défaut. |
 | `close_to_tray` | Fermer dans la zone de notification | booléen | `false` | Le ✕ de la fenêtre la masque au lieu de quitter ; la surveillance continue. Pour quitter, choisis **Quitter** dans le menu de l'icône. Si l'icône ne peut pas être créée, la fenêtre se ferme normalement et la fenêtre des réglages en donne la raison. |
@@ -115,6 +116,7 @@ delete_empty_dirs = false
 follow_active = true
 minimize_to_tray = false
 close_to_tray = false
+log_to_file = true
 
 [window]
 x = 120
@@ -131,3 +133,4 @@ theme = "system"
 | Fichier | Contenu |
 |---|---|
 | `rar-n-rush-processed.txt` | Une ligne par jeu déjà traité ou ignoré, pour ne pas le retraiter après un redémarrage. Supprime une ligne (ou le fichier) pour retraiter un jeu. |
+| `rar-n-rush.log`, `rar-n-rush.log.1` … `.3` | Fichier journal et ses copies tournantes (voir `log_to_file`). Le bouton **Exporter…** du journal enregistre les lignes affichées, dans la langue de l'interface, dans le fichier texte de ton choix. |

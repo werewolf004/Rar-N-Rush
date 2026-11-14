@@ -17,6 +17,12 @@ use std::sync::Arc;
 pub const SETTINGS_FILE: &str = "rar-n-rush.toml";
 /// File listing the keys of sets that were already processed.
 pub const PROCESSED_FILE: &str = "rar-n-rush-processed.txt";
+/// Log file (see [`Store::append_log`]).
+pub const LOG_FILE: &str = "rar-n-rush.log";
+/// Size above which the log file is rotated.
+pub const LOG_MAX_BYTES: u64 = 1024 * 1024;
+/// Number of rotated log files kept (`rar-n-rush.log.1` … `.3`).
+pub const LOG_KEEP: u32 = 3;
 
 /// Allowed range for [`Settings::scan_interval_secs`].
 pub const SCAN_INTERVAL_RANGE: std::ops::RangeInclusive<u64> = 2..=3600;
@@ -106,6 +112,8 @@ pub struct Settings {
     pub language: LanguagePref,
     /// Colour theme.
     pub theme: ThemePref,
+    /// Also write the log to `rar-n-rush.log` (rotated at 1 MB, 3 old files kept).
+    pub log_to_file: bool,
     /// Last size and position of the main window (saved on exit).
     pub window: Option<WindowGeometry>,
 }
@@ -203,6 +211,7 @@ impl Default for Settings {
             close_to_tray: false,
             language: LanguagePref::System,
             theme: ThemePref::System,
+            log_to_file: true,
             window: None,
         }
     }
@@ -508,6 +517,38 @@ impl Store {
         writeln!(file, "{}", key.replace(['\r', '\n'], " ")).map_err(io_err)
     }
 
+    /// Appends one line to the log file. When the file exceeds [`LOG_MAX_BYTES`],
+    /// it is renamed `rar-n-rush.log.1` (older ones shift up to [`LOG_KEEP`]).
+    pub fn append_log(&self, line: &str) -> Result<(), SettingsError> {
+        let path = self.dir.join(LOG_FILE);
+        let io_err = |source| SettingsError::Io {
+            path: path.clone(),
+            source,
+        };
+        fs::create_dir_all(&self.dir).map_err(io_err)?;
+        if fs::metadata(&path).is_ok_and(|m| m.len() >= LOG_MAX_BYTES) {
+            for n in (1..LOG_KEEP).rev() {
+                let _ = fs::rename(self.log_path(n), self.log_path(n + 1));
+            }
+            fs::rename(&path, self.log_path(1)).map_err(io_err)?;
+        }
+        let mut file = fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&path)
+            .map_err(io_err)?;
+        writeln!(file, "{}", line.replace(['\r', '\n'], " ")).map_err(io_err)
+    }
+
+    /// Path of the log file: `n = 0` for the current one, `n ≥ 1` for rotated ones.
+    pub fn log_path(&self, n: u32) -> PathBuf {
+        if n == 0 {
+            self.dir.join(LOG_FILE)
+        } else {
+            self.dir.join(format!("{LOG_FILE}.{n}"))
+        }
+    }
+
     fn write_atomic(&self, name: &str, bytes: &[u8]) -> Result<(), SettingsError> {
         let path = self.dir.join(name);
         let tmp = self.dir.join(format!("{name}.tmp"));
@@ -763,6 +804,31 @@ mod tests {
     }
 
     #[test]
+    fn log_file_is_rotated_and_bounded() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::at(dir.path());
+        let line = "x".repeat(100_000);
+        // About 5 MB in total: the current file plus three rotated ones remain.
+        for _ in 0..52 {
+            store.append_log(&line).unwrap();
+        }
+        for n in 0..=LOG_KEEP {
+            let len = fs::metadata(store.log_path(n)).unwrap().len();
+            assert!(len <= LOG_MAX_BYTES + 100_100, "file {n}: {len} bytes");
+        }
+        assert!(!store.log_path(LOG_KEEP + 1).exists());
+    }
+
+    #[test]
+    fn log_lines_cannot_be_split() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::at(dir.path());
+        store.append_log("a\nforged line").unwrap();
+        let text = fs::read_to_string(store.log_path(0)).unwrap();
+        assert_eq!(text.lines().count(), 1);
+    }
+
+    #[test]
     fn window_geometry_is_clamped() {
         let s = Settings {
             window: Some(WindowGeometry {
@@ -928,6 +994,7 @@ mod tests {
             close_to_tray: true,
             language: LanguagePref::French,
             theme: ThemePref::Dark,
+            log_to_file: false,
             window: Some(WindowGeometry {
                 x: -8,
                 y: 30,

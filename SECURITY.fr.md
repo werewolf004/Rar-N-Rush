@@ -27,6 +27,7 @@ Rar N Rush traite des fichiers téléchargés depuis Internet, qu'il faut consid
 - Les fichiers écrits avec un mauvais mot de passe sont supprimés avant d'essayer le mot de passe suivant.
 - L'analyse ne suit pas les liens symboliques : un lien ne peut pas faire entrer des fichiers extérieurs au dossier surveillé.
 - Les noms de dossier tirés des noms d'archives sont nettoyés (caractères interdits par Windows, noms réservés comme `CON` ou `NUL`).
+- Le fichier journal (`rar-n-rush.log`) ne contient jamais de mot de passe : les entrées du journal sont des événements typés sans secret, et un test le vérifie.
 - L'espace libre du disque de destination est vérifié avant l'extraction (taille de l'archive plus une réserve de 64 Mo).
 - Une extraction en échec ou annulée supprime les fichiers qu'elle a créés ; les fichiers déjà présents ne sont jamais supprimés.
 - Les fichiers sources sont envoyés à la **corbeille**, jamais supprimés définitivement, et seulement après un traitement entièrement réussi.
