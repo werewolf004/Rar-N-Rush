@@ -72,6 +72,11 @@ cargo deny check
 
   Without `RAR_N_RUSH_PAR2` these tests are skipped locally, and fail in CI.
 - UI tests drive the real application through its accessibility tree with `egui_kittest`. No window is opened.
+- Pixel snapshot tests (`snapshots` in `tests/ui.rs`) compare the main screens with `tests/snapshots/*.png`: main window (English light and dark, French), the three settings pages, the welcome screen. They are rendered by Windows' software rasterizer (WARP), so they need no GPU and run in CI. Times are frozen so every run gives the same image; the demo lives in `C:\Users\Public\RarNRush-snapshots`. They also check that every widget has an accessible name. After an intended visual change, look at the `*.diff.png` files (CI uploads them as the `snapshot-diffs` artifact), then update the images and commit them:
+
+  ```powershell
+  $env:UPDATE_SNAPSHOTS = 1; cargo test --test ui snapshots; Remove-Item Env:UPDATE_SNAPSHOTS
+  ```
 
 - `tests/properties.rs` checks properties of the parsers of untrusted input (PAR2, SFV, RAR names, entry paths, folder names) on thousands of generated inputs with `proptest`.
 - One test writes to the real Windows Credential Manager, under a unique `test-<pid>-` prefix, and removes what it wrote.

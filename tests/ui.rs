@@ -1,8 +1,13 @@
 //! Headless UI tests (no window is ever shown) and documentation screenshots.
 //!
 //! The tests drive the real [`App`] through `egui_kittest` and its accessibility
-//! tree. Screenshots are only written when `UPDATE_SCREENSHOTS=1` is set; they
-//! need a GPU adapter (wgpu) and are therefore not taken in CI.
+//! tree. Images are rendered with wgpu on Windows' software rasterizer (WARP),
+//! so no GPU is needed, in CI or locally:
+//!
+//! - `snapshots` compares the main screens pixel by pixel with
+//!   `tests/snapshots/*.png` (`UPDATE_SNAPSHOTS=1` rewrites them);
+//! - `screenshots` writes `docs/screenshots/*.png` only when
+//!   `UPDATE_SCREENSHOTS=1` is set.
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 
 mod common;
@@ -29,8 +34,13 @@ impl Demo {
     /// `neutral_path` puts the demo under `C:\Users\Public` so screenshots never
     /// show a personal user name.
     fn new(neutral_path: bool) -> Self {
-        let (guard, root) = if neutral_path {
-            let root = PathBuf::from(r"C:\Users\Public\RarNRush-demo");
+        Self::in_folder(neutral_path.then_some(r"C:\Users\Public\RarNRush-demo"))
+    }
+
+    /// Demo in a fixed folder (`Some`) or in a temporary one (`None`).
+    fn in_folder(fixed: Option<&str>) -> Self {
+        let (guard, root) = if let Some(fixed) = fixed {
+            let root = PathBuf::from(fixed);
             let _ = fs::remove_dir_all(&root);
             fs::create_dir_all(&root).unwrap();
             (None, root)
@@ -572,5 +582,67 @@ fn screenshots() {
             h.step();
         }
         save(&mut h, &format!("onboarding-{lang_tag}"));
+    }
+}
+
+/// Fixed folder of the snapshot demo: the paths shown on screen must not change
+/// between runs (a temporary folder would).
+const SNAPSHOT_ROOT: &str = r"C:\Users\Public\RarNRush-snapshots";
+
+/// Pixel comparison of the main screens with `tests/snapshots/*.png`.
+///
+/// Times are frozen and notices are off, so every run renders the same image.
+/// After an intended visual change, review the `.diff.png` files, then run
+/// `UPDATE_SNAPSHOTS=1 cargo test --test ui snapshots` and commit the new images.
+#[test]
+fn snapshots() {
+    let mut results = egui_kittest::SnapshotResults::new();
+    let cases = [
+        (LanguagePref::English, ThemePref::Light, "en-light"),
+        (LanguagePref::English, ThemePref::Dark, "en-dark"),
+        (LanguagePref::French, ThemePref::Light, "fr-light"),
+    ];
+    for (lang, theme, tag) in cases {
+        let demo = Demo::in_folder(Some(SNAPSHOT_ROOT));
+        let settings = Settings {
+            show_toasts: false,
+            ..demo.settings(lang, theme)
+        };
+        let mut h = harness(settings, &demo.state_dir(tag), true);
+        h.state_mut().freeze_clock();
+        settle(&mut h, 4);
+        results.add(h.try_snapshot(format!("main-{tag}")));
+
+        let english = lang == LanguagePref::English;
+        h.get_by_label(if english {
+            "⚙  Settings"
+        } else {
+            "⚙  Réglages"
+        })
+        .click();
+        frames(&mut h, 3);
+        results.add(h.try_snapshot(format!("settings-general-{tag}")));
+        if tag == "en-light" {
+            for page in ["Processing", "Window"] {
+                h.get_by_label(page).click();
+                frames(&mut h, 3);
+                results.add(h.try_snapshot(format!("settings-{}-{tag}", page.to_lowercase())));
+            }
+        }
+        drop(h);
+        drop(demo);
+    }
+
+    for (lang, tag) in [(LanguagePref::English, "en"), (LanguagePref::French, "fr")] {
+        let state = tempfile::tempdir().unwrap();
+        let settings = Settings {
+            language: lang,
+            theme: ThemePref::Light,
+            ..Settings::default()
+        };
+        let mut h = harness(settings, state.path(), true);
+        h.state_mut().freeze_clock();
+        frames(&mut h, 3);
+        results.add(h.try_snapshot(format!("onboarding-{tag}")));
     }
 }

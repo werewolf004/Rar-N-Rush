@@ -10,6 +10,11 @@ All notable changes to this project are documented here. The format follows [Kee
 
 - The release zip ships `par2.exe` (par2cmdline-turbo 1.5.0, GPL-2.0, unmodified) next to `rar-n-rush.exe`, with its licence; its source archive is attached to the release. PAR2 repair works without installing anything, and Rar N Rush still never downloads anything.
 - End-to-end tests with the real par2 in CI (pinned version, SHA-256 checked): damaged volume, missing volume, not enough blocks, and a set that is repaired and extracted once its recovery volumes arrive.
+- Pixel snapshot tests of the main screens (main window in English light and dark and in French, the three settings pages, the welcome screen), rendered without a GPU by Windows' software rasterizer, in CI too.
+
+### Fixed
+
+- Screen readers now announce the name of every field of the settings: the folder and `par2.exe` paths, the two durations, the language list and the passwords box had no accessible name. Found by the new snapshot tests.
 
 ### Changed
 

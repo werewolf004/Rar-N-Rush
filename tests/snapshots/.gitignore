@@ -1,0 +1,4 @@
+# Written by failing snapshot tests, for review only.
+*.new.png
+*.diff.png
+*.old.png

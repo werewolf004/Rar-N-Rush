@@ -10,6 +10,11 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 - Le zip de release contient `par2.exe` (par2cmdline-turbo 1.5.0, GPL-2.0, non modifié) à côté de `rar-n-rush.exe`, avec sa licence ; son archive source est jointe à la release. La réparation PAR2 marche sans rien installer, et Rar N Rush ne télécharge toujours rien.
 - Tests de bout en bout avec le vrai par2 en CI (version figée, SHA-256 vérifié) : volume abîmé, volume manquant, blocs insuffisants, et un jeu réparé puis extrait dès que ses volumes de récupération arrivent.
+- Tests de capture pixel par pixel des écrans principaux (fenêtre principale en anglais clair et foncé et en français, les trois pages des réglages, l'écran d'accueil), rendus sans GPU par le rasteriseur logiciel de Windows, en CI aussi.
+
+### Corrigé
+
+- Les lecteurs d'écran annoncent désormais le nom de chaque champ des réglages : les chemins des dossiers et de `par2.exe`, les deux durées, la liste des langues et la zone des mots de passe n'avaient pas de nom accessible. Trouvé par les nouveaux tests de capture.
 
 ### Modifié
 

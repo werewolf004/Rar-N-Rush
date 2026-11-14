@@ -46,6 +46,16 @@ jobs:
         run: cargo clippy --all-targets --locked -- -D warnings
       - name: Tests
         run: cargo test --all-targets --locked
+      # Pixel snapshots that do not match: the new image and the diff, for review.
+      - name: Upload snapshot differences
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: snapshot-diffs
+          path: |
+            tests/snapshots/*.new.png
+            tests/snapshots/*.diff.png
+          if-no-files-found: ignore
       - name: Doc tests
         run: cargo test --doc --locked
       - name: Documentation builds without warnings

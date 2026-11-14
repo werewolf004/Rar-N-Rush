@@ -62,6 +62,8 @@ pub struct App {
     toasts: Vec<Toast>,
     /// Last known size and position of the main window.
     geometry: Option<WindowGeometry>,
+    /// Fixed times for snapshot tests (see [`App::freeze_clock`]).
+    frozen_clock: Option<&'static str>,
 }
 
 /// Pages of the settings window.
@@ -206,7 +208,15 @@ impl App {
             seen: HashMap::new(),
             toasts: Vec::new(),
             geometry: settings.window,
+            frozen_clock: None,
         }
+    }
+
+    /// Shows a fixed time (`12:00:00`, "scanned 0 s ago") instead of the real
+    /// one, so that pixel snapshot tests render the same image on every run.
+    #[doc(hidden)]
+    pub fn freeze_clock(&mut self) {
+        self.frozen_clock = Some("12:00:00");
     }
 
     /// The engine driven by this window (read access for tests and tooling).
@@ -516,7 +526,12 @@ impl App {
             } else {
                 ui.label(if snap.running { t.watching } else { t.paused });
                 if let (true, Some(at)) = (snap.running, snap.last_scan) {
-                    ui.weak(format!("· {}", self.lang.scanned_ago(at.elapsed().as_secs())));
+                    let secs = if self.frozen_clock.is_some() {
+                        0
+                    } else {
+                        at.elapsed().as_secs()
+                    };
+                    ui.weak(format!("· {}", self.lang.scanned_ago(secs)));
                 }
             }
         });
@@ -630,8 +645,9 @@ impl App {
                     .iter()
                     .filter(|l| !self.errors_only || l.notice.is_error())
                 {
-                    let text = RichText::new(format!("{}  {}", line.time, line.notice.localize(self.lang)))
-                        .monospace();
+                    let time = self.frozen_clock.unwrap_or(&line.time);
+                    let text =
+                        RichText::new(format!("{time}  {}", line.notice.localize(self.lang))).monospace();
                     ui.label(if line.notice.is_error() {
                         text.color(status_color(Status::Failed, dark))
                     } else {
@@ -834,12 +850,13 @@ impl App {
                         SettingsTab::Processing => {
                             processing_toggles(ui, &mut draft, t);
                             ui.add_space(6.0);
-                            ui.strong(t.passwords);
+                            let label = ui.strong(t.passwords);
                             ui.add(
                                 egui::TextEdit::multiline(&mut self.passwords_text)
                                     .desired_rows(3)
                                     .desired_width(f32::INFINITY),
-                            );
+                            )
+                            .labelled_by(label.id);
                             ui.weak(if self.store.has_vault() {
                                 t.passwords_hint_vault
                             } else {
@@ -965,13 +982,14 @@ fn settings_grid(ui: &mut egui::Ui, draft: &mut Settings, t: &Texts, lang: Lang,
         t.browse,
     );
 
-    ui.label(t.par2_exe);
+    let label = ui.label(t.par2_exe);
     ui.horizontal(|ui| {
         ui.add(
             egui::TextEdit::singleline(&mut draft.par2_path)
                 .hint_text(t.par2_auto)
                 .desired_width(300.0),
-        );
+        )
+        .labelled_by(label.id);
         if ui.button(t.browse).clicked()
             && let Some(f) = rfd::FileDialog::new()
                 .add_filter(t.program_filter, &["exe"])
@@ -988,22 +1006,24 @@ fn settings_grid(ui: &mut egui::Ui, draft: &mut Settings, t: &Texts, lang: Lang,
     };
     ui.end_row();
 
-    ui.label(t.scan_every);
+    let label = ui.label(t.scan_every);
     ui.add(
         egui::DragValue::new(&mut draft.scan_interval_secs)
             .range(SCAN_INTERVAL_RANGE)
             .suffix(t.seconds),
-    );
+    )
+    .labelled_by(label.id);
     ui.end_row();
-    ui.label(t.wait_stable);
+    let label = ui.label(t.wait_stable);
     ui.add(
         egui::DragValue::new(&mut draft.stable_secs)
             .range(STABLE_RANGE)
             .suffix(t.seconds_unchanged),
-    );
+    )
+    .labelled_by(label.id);
     ui.end_row();
 
-    ui.label(t.language);
+    let label = ui.label(t.language);
     egui::ComboBox::from_id_salt("language")
         .selected_text(match draft.language {
             LanguagePref::System => t.follow_system,
@@ -1014,7 +1034,9 @@ fn settings_grid(ui: &mut egui::Ui, draft: &mut Settings, t: &Texts, lang: Lang,
             ui.selectable_value(&mut draft.language, LanguagePref::System, t.follow_system);
             ui.selectable_value(&mut draft.language, LanguagePref::English, t.english);
             ui.selectable_value(&mut draft.language, LanguagePref::French, t.french);
-        });
+        })
+        .response
+        .labelled_by(label.id);
     ui.end_row();
     ui.label(t.theme);
     ui.horizontal(|ui| {
@@ -1072,13 +1094,14 @@ fn window_toggles(ui: &mut egui::Ui, draft: &mut Settings, t: &Texts) {
 }
 
 fn folder_row(ui: &mut egui::Ui, label: &str, value: &mut String, hint: &str, browse: &str) {
-    ui.label(label);
+    let label = ui.label(label);
     ui.horizontal(|ui| {
         ui.add(
             egui::TextEdit::singleline(value)
                 .hint_text(hint)
                 .desired_width(300.0),
-        );
+        )
+        .labelled_by(label.id);
         if ui.button(browse).clicked()
             && let Some(dir) = rfd::FileDialog::new().pick_folder()
         {

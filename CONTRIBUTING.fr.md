@@ -72,6 +72,11 @@ cargo deny check
 
   Sans `RAR_N_RUSH_PAR2`, ces tests sont ignorés en local et échouent en CI.
 - Les tests d'interface pilotent la vraie application via son arbre d'accessibilité avec `egui_kittest`. Aucune fenêtre n'est ouverte.
+- Les tests de capture pixel par pixel (`snapshots` dans `tests/ui.rs`) comparent les écrans principaux à `tests/snapshots/*.png` : fenêtre principale (anglais clair et foncé, français), les trois pages des réglages, l'écran d'accueil. Ils sont rendus par le rasteriseur logiciel de Windows (WARP) : pas besoin de GPU, et ils tournent en CI. Les heures sont figées pour que chaque exécution donne la même image ; la démo est placée dans `C:\Users\Public\RarNRush-snapshots`. Ils vérifient aussi que chaque widget a un nom accessible. Après un changement visuel voulu, regarde les fichiers `*.diff.png` (la CI les joint dans l'artefact `snapshot-diffs`), puis mets les images à jour et commite-les :
+
+  ```powershell
+  $env:UPDATE_SNAPSHOTS = 1; cargo test --test ui snapshots; Remove-Item Env:UPDATE_SNAPSHOTS
+  ```
 
 - `tests/properties.rs` vérifie des propriétés des parseurs de données non fiables (PAR2, SFV, noms RAR, chemins d'entrées, noms de dossiers) sur des milliers d'entrées générées avec `proptest`.
 - Un test écrit dans le vrai Gestionnaire d'identifiants Windows, sous un préfixe unique `test-<pid>-`, puis supprime ce qu'il a écrit.
