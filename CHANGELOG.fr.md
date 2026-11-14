@@ -6,6 +6,16 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+### Ajouté
+
+- **Guide utilisateur** en anglais et en français ([docs/USER-GUIDE.fr.md](docs/USER-GUIDE.fr.md)) : chaque écran, pas à pas, avec captures, y compris les deux confirmations et le bandeau du fichier de réglages.
+
+### Corrigé
+
+- **Les réglages pouvaient être perdus** quand le fichier de réglages était enregistré par le Bloc-notes en « ANSI » au lieu d'UTF-8 (fréquent avec des chemins accentués) : il était jugé illisible, les valeurs par défaut étaient affichées, et l'enregistrement de la taille de la fenêtre à la fermeture remplaçait le fichier par celles-ci. Un tel fichier est désormais lu en Windows-1252 avec toutes ses valeurs, copié à côté, et réécrit en UTF-8.
+- Un fichier de réglages illisible n'est désormais **jamais remplacé** : il est d'abord mis de côté, et si même cela échoue, rien n'est écrit.
+- **Les mots de passe d'archives pouvaient être effacés** quand le Gestionnaire d'identifiants Windows était illisible au démarrage : l'enregistrement suivant (même la taille de la fenêtre à la fermeture) écrivait une liste vide par-dessus. Le Gestionnaire d'identifiants n'est désormais plus touché pendant le reste de la session, et les mots de passe saisis entre-temps attendent dans le fichier de réglages jusqu'au lancement suivant.
+
 ## [0.5.0] - 2026-11-14
 
 Intégration Windows : une seule instance à la fois, démarrage avec Windows en option, et notifications Windows quand la fenêtre n'est pas au premier plan.

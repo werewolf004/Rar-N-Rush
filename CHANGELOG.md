@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- **User guide** in English and French ([docs/USER-GUIDE.md](docs/USER-GUIDE.md)): every screen, step by step, with screenshots, including the two confirmations and the settings-file banner.
+
+### Fixed
+
+- **Settings could be lost** when the settings file was saved by Notepad in "ANSI" instead of UTF-8 (common with accented paths): it was treated as unreadable, the defaults were shown, and saving the window size on exit replaced the file with them. Such a file is now read as Windows-1252 with every value kept, copied aside, and written back in UTF-8.
+- A settings file that cannot be read is now **never replaced**: it is moved aside first, and if even that fails, nothing is written.
+- **Archive passwords could be erased** when the Windows Credential Manager could not be read at start-up: the next save (even the window size on exit) wrote an empty list over them. The Credential Manager is now left untouched for the rest of the session, and passwords typed meanwhile wait in the settings file until the next start.
+
 ## [0.5.0] - 2026-11-14
 
 Windows integration: one instance at a time, optional start with Windows, and Windows notifications while the window is not in front.

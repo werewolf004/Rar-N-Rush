@@ -28,4 +28,4 @@ Icône dans la zone de notification (avancée en v0.2.0) ; une seule instance pa
 
 - Installateur (MSI) et paquet winget.
 - Signature du code.
-- Guide utilisateur avec une capture de chaque écran.
+- ✅ Guide utilisateur avec une capture de chaque écran ([docs/USER-GUIDE.fr.md](docs/USER-GUIDE.fr.md)).

@@ -20,7 +20,8 @@ Your settings are never silently lost:
 - a missing key takes its default value (an old or partial file keeps working); unknown keys are ignored;
 - each key is read on its own: **valid values are kept**, only invalid ones are reset to their default;
 - out-of-range numbers are clamped to the allowed range;
-- a byte-order mark added by Notepad is accepted;
+- a byte-order mark added by Notepad is accepted, and so is a file saved in "ANSI" (Windows-1252) instead of UTF-8: every value is kept, the original is copied aside, and the file is written back in UTF-8;
+- a file that cannot be read at all (locked, permissions) is never replaced: the defaults are used for the session, and saving moves it aside first or, if that fails too, writes nothing;
 - whenever something is reset, the original file is first copied to `rar-n-rush.toml.<date-time>.bak`, and a banner at the top of the window says which keys were reset and where the copy is.
 
 The settings window has three pages: **General** (folders, timing, language, theme), **Processing** (behaviour, clean-up, passwords) and **Window**. It opens with **Settings** or **Ctrl+,**.

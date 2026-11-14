@@ -40,7 +40,7 @@ Rar N Rush traite des fichiers téléchargés depuis Internet, qu'il faut consid
 
 ### Données persistantes
 
-- Les réglages ne sont jamais perdus en silence : chaque clé est lue séparément, une valeur invalide est remise par défaut individuellement, et le fichier d'origine est d'abord sauvegardé (`rar-n-rush.toml.<date-heure>.bak`). L'utilisateur est averti par un bandeau.
+- Les réglages ne sont jamais perdus en silence : un fichier de réglages illisible n'est jamais remplacé, un fichier enregistré en « ANSI » est lu en Windows-1252, un Gestionnaire d'identifiants illisible au démarrage n'est jamais écrit pendant cette session ; chaque clé est lue séparément, une valeur invalide est remise par défaut individuellement, et le fichier d'origine est d'abord sauvegardé (`rar-n-rush.toml.<date-heure>.bak`). L'utilisateur est averti par un bandeau.
 - Un fichier de réglages existant est toujours retrouvé, à côté de l'exécutable ou dans `%APPDATA%\RarNRush`, même après un déplacement de l'exécutable.
 - Les réglages et la liste des jeux traités sont écrits de façon atomique (fichier temporaire puis renommage) : un plantage ne peut pas laisser un fichier tronqué.
 - Un jeu est enregistré comme traité **avant** que son statut ne s'affiche : un plantage ne peut pas provoquer un double traitement.

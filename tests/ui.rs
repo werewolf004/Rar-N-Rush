@@ -114,13 +114,15 @@ fn harness_with_issue(
         ThemePref::Dark => egui::Theme::Dark,
         _ => egui::Theme::Light,
     };
-    let store = Store::at(store_dir);
+    let mut store = Store::at(store_dir);
     let mut builder = Harness::builder()
         .with_size(SIZE)
         .with_theme(theme)
         .with_render_cursor(false);
     if gpu {
         builder = builder.wgpu();
+        // Images show what users see: passwords in a vault, not "stored in plain text".
+        store = store.with_vault(std::sync::Arc::new(rar_n_rush::secrets::ChunkedVault::in_memory()));
     }
     builder.build_eframe(move |cc| {
         let ctx = cc.egui_ctx.clone();
@@ -584,7 +586,48 @@ fn screenshots() {
             h.step();
         }
         save(&mut h, &format!("onboarding-{lang_tag}"));
+        drop(h);
+        guide_screenshots(lang, lang_tag);
     }
+}
+
+/// Extra screens of the user guide: settings-file banner and the two questions.
+fn guide_screenshots(lang: LanguagePref, lang_tag: &str) {
+    let t = match lang {
+        LanguagePref::French => rar_n_rush::i18n::Lang::Fr,
+        _ => rar_n_rush::i18n::Lang::En,
+    }
+    .texts();
+
+    // A value the user typed by hand was out of range: it is reset, the rest kept.
+    let demo = Demo::new(true);
+    let issue = LoadIssue::InvalidValues {
+        keys: vec!["scan_interval_secs".into()],
+        backup: Some(demo.root.join("rar-n-rush.toml.20261114-120000.bak")),
+    };
+    let settings = demo.settings(lang, ThemePref::Light);
+    let mut h = harness_with_issue(settings, &demo.state_dir("banner"), true, Some(issue));
+    h.state_mut().freeze_clock();
+    settle(&mut h, 4);
+    save(&mut h, &format!("banner-{lang_tag}"));
+
+    // Turning on overwriting asks first.
+    h.get_by_label(t.settings).click();
+    frames(&mut h, 3);
+    h.get_by_label(t.group_processing).click();
+    frames(&mut h, 2);
+    h.get_by_label(t.overwrite).click();
+    frames(&mut h, 2);
+    h.get_by_label(t.save).click();
+    frames(&mut h, 3);
+    save(&mut h, &format!("confirm-overwrite-{lang_tag}"));
+
+    // Closing the settings with unsaved changes asks too.
+    h.get_by_label(t.cancel).click();
+    frames(&mut h, 2);
+    h.get_by_label(t.cancel).click();
+    frames(&mut h, 3);
+    save(&mut h, &format!("confirm-discard-{lang_tag}"));
 }
 
 /// Fixed folder of the snapshot demo: the paths shown on screen must not change

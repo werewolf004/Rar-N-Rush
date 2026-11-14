@@ -40,7 +40,7 @@ Rar N Rush processes files downloaded from the Internet, which must be treated a
 
 ### Persistent data
 
-- Settings are never silently lost: each key is read on its own, invalid values are reset individually, and the original file is backed up first (`rar-n-rush.toml.<date-time>.bak`). The user is told in a banner.
+- Settings are never silently lost: a settings file that cannot be read is never replaced, a file saved in "ANSI" is read as Windows-1252, a Credential Manager that could not be read at start-up is never written to during that session; each key is read on its own, invalid values are reset individually, and the original file is backed up first (`rar-n-rush.toml.<date-time>.bak`). The user is told in a banner.
 - An existing settings file is always found again, next to the executable or in `%APPDATA%\RarNRush`, even after the executable is moved.
 - Settings and the processed-sets list are written atomically (temporary file then rename): a crash cannot leave a truncated file.
 - A set is recorded as processed **before** its status is shown, so a crash cannot cause it to be processed twice.

@@ -20,7 +20,8 @@ Tes réglages ne sont jamais perdus en silence :
 - une clé absente prend sa valeur par défaut (un fichier ancien ou partiel reste valide) ; une clé inconnue est ignorée ;
 - chaque clé est lue séparément : **les valeurs valides sont conservées**, seules les invalides reviennent à leur valeur par défaut ;
 - un nombre hors plage est ramené dans la plage autorisée ;
-- le marqueur d'ordre des octets (BOM) ajouté par le Bloc-notes est accepté ;
+- le marqueur d'ordre des octets (BOM) ajouté par le Bloc-notes est accepté, de même qu'un fichier enregistré en « ANSI » (Windows-1252) au lieu d'UTF-8 : toutes les valeurs sont conservées, l'original est copié à côté, et le fichier est réécrit en UTF-8 ;
+- un fichier totalement illisible (verrouillé, droits) n'est jamais remplacé : les valeurs par défaut sont utilisées pour la session, et l'enregistrement le met d'abord de côté ou, si cela échoue aussi, n'écrit rien ;
 - dès qu'une valeur est remise par défaut, le fichier d'origine est d'abord copié sous `rar-n-rush.toml.<date-heure>.bak`, et un bandeau en haut de la fenêtre indique les clés concernées et l'emplacement de la copie.
 
 La fenêtre des réglages a trois pages : **Général** (dossiers, délais, langue, thème), **Traitement** (comportement, nettoyage, mots de passe) et **Fenêtre**. Elle s'ouvre avec **Réglages** ou **Ctrl+,**.

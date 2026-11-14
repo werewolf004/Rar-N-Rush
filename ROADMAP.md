@@ -28,4 +28,4 @@ Notification-area icon (brought forward to v0.2.0); one instance per settings fo
 
 - Installer (MSI) and winget package.
 - Code signing.
-- User guide with screenshots for every screen.
+- ✅ User guide with screenshots for every screen ([docs/USER-GUIDE.md](docs/USER-GUIDE.md)).
