@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.10.0.schema.json
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.28.0.schema.json
 
 PackageIdentifier: werewolf004.RarNRush
 PackageVersion: 1.0.0
@@ -22,4 +22,4 @@ Installers:
   InstallerUrl: https://github.com/werewolf004/Rar-N-Rush/releases/download/v1.0.0/rar-n-rush-v1.0.0-windows-x64.msi
   InstallerSha256: 752042053E6B86C3C023F31A3C8AA9A4E5FA024BAE2855165014475E1C91471B
 ManifestType: installer
-ManifestVersion: 1.10.0
+ManifestVersion: 1.28.0

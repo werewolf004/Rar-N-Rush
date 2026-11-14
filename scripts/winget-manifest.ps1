@@ -23,7 +23,7 @@ Set-StrictMode -Version Latest
 
 $Id = 'werewolf004.RarNRush'
 $Repo = 'https://github.com/werewolf004/Rar-N-Rush'
-$ManifestVersion = '1.10.0'
+$ManifestVersion = '1.28.0'
 $Schema = "https://aka.ms/winget-manifest"
 
 $Msi = (Resolve-Path $Msi).Path
