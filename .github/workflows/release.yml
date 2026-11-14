@@ -48,6 +48,7 @@ jobs:
 
       # Same end-to-end check as CI, on the optimised binary that ships.
       - name: Installer package (tested, then built for the release)
+        timeout-minutes: 15
         shell: pwsh
         run: |
           ./scripts/test-msi.ps1

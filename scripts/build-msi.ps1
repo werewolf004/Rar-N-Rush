@@ -49,8 +49,13 @@ Set-Content -LiteralPath (Join-Path $stage 'rar-n-rush.installed') -Encoding utf
 )
 
 $icon = Join-Path $OutDir 'rar-n-rush.ico'
-$profileArg = if ($BuildProfile -eq 'release') { @('--release') } else { @() }
-cargo run @profileArg --locked --quiet --manifest-path (Join-Path $root 'Cargo.toml') --example write_icon -- $icon
+# Built as a list: `if` would unwrap a one-item array into a string, which
+# splatting would then pass to cargo one character at a time.
+$cargoArgs = [Collections.Generic.List[string]]::new()
+$cargoArgs.AddRange([string[]]@('run', '--locked', '--quiet', '--manifest-path', (Join-Path $root 'Cargo.toml'), '--example', 'write_icon'))
+if ($BuildProfile -eq 'release') { $cargoArgs.Add('--release') }
+$cargoArgs.AddRange([string[]]@('--', $icon))
+& cargo @cargoArgs
 if ($LASTEXITCODE -ne 0) { throw "write_icon failed with exit code $LASTEXITCODE" }
 
 $wix = & (Join-Path $PSScriptRoot 'fetch-wix.ps1')

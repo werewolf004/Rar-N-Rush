@@ -59,6 +59,7 @@ jobs:
       # Windows Installer package (WiX 5, pinned): silent install, upgrade and
       # removal, checking the files, shortcut and registry left at each step.
       - name: Installer package
+        timeout-minutes: 15
         shell: pwsh
         run: |
           cargo build --locked
