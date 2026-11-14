@@ -76,8 +76,11 @@ Ouvre **Réglages** pour changer les dossiers, les délais, la langue, le thème
 | **Ctrl+,** | Ouvrir les réglages |
 | **Échap** | Fermer les réglages (demande d'abord si quelque chose a changé) ; dans le champ du dossier surveillé, annuler la saisie |
 | **Entrée** | Dans le champ du dossier surveillé, surveiller le dossier saisi ; dans un champ de mot de passe, essayer le mot de passe |
+| **↑ / ↓** | Sélectionner un jeu dans la liste (ou cliquer dessus) |
+| **Suppr** | Retirer le jeu sélectionné de la liste (ses fichiers ne sont pas touchés) |
+| **Entrée** (jeu sélectionné) | Ouvrir le dossier du jeu sélectionné |
 
-La fenêtre se rouvre à la taille et à la position qu'elle avait à la fermeture.
+La fenêtre se rouvre à la taille et à la position qu'elle avait à la fermeture. Quand un jeu se termine, échoue ou demande un mot de passe, un court message apparaît quelques secondes en bas à droite, sans t'interrompre.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/settings-fr-dark.png">

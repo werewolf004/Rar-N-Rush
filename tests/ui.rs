@@ -428,6 +428,103 @@ fn invalid_folder_disables_save() {
     assert!(!state.join("rar-n-rush.toml").exists(), "nothing was saved");
 }
 
+#[test]
+fn keyboard_selects_and_removes_sets() {
+    let demo = Demo::new(false);
+    let mut h = harness(
+        demo.settings(LanguagePref::English, ThemePref::Light),
+        &demo.state_dir("keys"),
+        false,
+    );
+    settle(&mut h, 4);
+    let jobs = |h: &Harness<'static, App>| h.state().engine().with_state(|s| s.jobs.len());
+    assert_eq!(jobs(&h), 4);
+    h.key_press(egui::Key::ArrowDown); // first set
+    h.key_press(egui::Key::ArrowDown); // second set
+    frames(&mut h, 2);
+    let second = h.state().engine().with_state(|s| s.jobs[1].set.name.clone());
+    h.key_press(egui::Key::Delete);
+    frames(&mut h, 4);
+    std::thread::sleep(Duration::from_millis(300)); // the worker handles the command
+    frames(&mut h, 2);
+    let names: Vec<String> = h
+        .state()
+        .engine()
+        .with_state(|s| s.jobs.iter().map(|j| j.set.name.clone()).collect());
+    assert_eq!(names.len(), 3, "{names:?}");
+    assert!(!names.contains(&second), "{second} should be removed: {names:?}");
+}
+
+#[test]
+fn finished_sets_raise_a_short_notice() {
+    let demo = Demo::new(false);
+    let mut h = harness(
+        demo.settings(LanguagePref::English, ThemePref::Light),
+        &demo.state_dir("toasts"),
+        false,
+    );
+    settle(&mut h, 4);
+    h.get_by_label("Photos — Done");
+    h.get_by_label("Private.Documents — Password required");
+}
+
+#[test]
+fn turning_on_overwrite_asks_first() {
+    let demo = Demo::new(false);
+    let state = demo.state_dir("overwrite");
+    let mut h = harness(
+        demo.settings(LanguagePref::English, ThemePref::Light),
+        &state,
+        false,
+    );
+    frames(&mut h, 2);
+    h.get_by_label("⚙  Settings").click();
+    frames(&mut h, 3);
+    h.get_by_label("Processing").click();
+    frames(&mut h, 2);
+    h.get_by_label("Overwrite existing files (otherwise use “name (1).ext”)")
+        .click();
+    frames(&mut h, 2);
+    h.get_by_label("Save").click();
+    frames(&mut h, 3);
+    h.get_by_label_contains("replaces existing files for good");
+    assert!(
+        !state.join("rar-n-rush.toml").exists(),
+        "nothing saved before the answer"
+    );
+    h.get_by_label("Enable").click();
+    frames(&mut h, 3);
+    assert!(Store::at(&state).load_settings().unwrap().overwrite_existing);
+}
+
+/// At the smallest window size, every page of the settings keeps Save reachable.
+#[test]
+fn settings_fit_the_minimum_window() {
+    let demo = Demo::new(false);
+    let store = Store::at(demo.state_dir("min"));
+    let settings = demo.settings(LanguagePref::French, ThemePref::Light); // longer labels
+    let mut h = Harness::builder()
+        .with_size(egui::vec2(720.0, 420.0))
+        .with_render_cursor(false)
+        .build_eframe(move |cc| {
+            let ctx = cc.egui_ctx.clone();
+            let engine = Engine::start(settings, store.clone(), move || ctx.request_repaint()).unwrap();
+            App::new(&cc.egui_ctx, engine, store, None)
+        });
+    frames(&mut h, 2);
+    h.get_by_label("⚙  Réglages").click();
+    frames(&mut h, 3);
+    for page in ["Général", "Traitement", "Fenêtre"] {
+        h.get_by_label(page).click();
+        frames(&mut h, 3);
+        let save = h.get_by_label("Enregistrer").rect();
+        assert!(
+            save.max.y <= 420.0 && save.max.x <= 720.0,
+            "page {page}: Save at {save:?} is outside the window"
+        );
+    }
+}
+
 /// Regenerates `docs/screenshots/*.png`. Run with:
 /// `UPDATE_SCREENSHOTS=1 cargo test --test ui screenshots -- --test-threads=1`
 #[test]

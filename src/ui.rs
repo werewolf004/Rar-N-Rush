@@ -50,8 +50,16 @@ pub struct App {
     /// Settings and password text as they were when the settings window opened,
     /// to detect unsaved changes.
     draft_original: Option<(Settings, String)>,
-    /// The user tried to close the settings window with unsaved changes.
-    confirm_discard: bool,
+    /// Question shown in place of Save / Cancel in the settings window.
+    confirm: Option<Confirm>,
+    /// Set selected in the list (keyboard navigation, Del, Enter).
+    selected: Option<u64>,
+    /// Scroll the list to the selected set on the next frame.
+    scroll_to_selected: bool,
+    /// Last status seen for each set, to notice when one finishes.
+    seen: HashMap<u64, Status>,
+    /// Short notices shown in the bottom-right corner.
+    toasts: Vec<Toast>,
     /// Last known size and position of the main window.
     geometry: Option<WindowGeometry>,
 }
@@ -65,6 +73,32 @@ enum SettingsTab {
     Processing,
     /// Window and notification area.
     Window,
+}
+
+/// Question asked before an action in the settings window.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Confirm {
+    /// Close with unsaved changes?
+    Discard,
+    /// Turn on overwriting, which cannot be undone?
+    Overwrite,
+}
+
+/// Height taken by the settings window around its page: title bar, tabs,
+/// messages and buttons, plus a margin from the edges of the main window.
+const SETTINGS_CHROME_HEIGHT: f32 = 190.0;
+
+/// How long a notice stays on screen.
+const TOAST_DURATION: Duration = Duration::from_secs(6);
+/// At most this many notices at once; older ones go first.
+const TOAST_MAX: usize = 4;
+
+/// A short, non-blocking notice ("“Photos” done").
+#[derive(Debug, Clone)]
+struct Toast {
+    text: String,
+    status: Status,
+    shown_at: Instant,
 }
 
 /// State of the main window with respect to the notification area.
@@ -117,6 +151,16 @@ fn status_color(status: Status, dark: bool) -> Color32 {
     }
 }
 
+/// Fill of the selected row: softer than egui's default selection colour, so every
+/// status colour keeps a 4.5:1 contrast on it.
+fn selection_fill(dark: bool) -> Color32 {
+    if dark {
+        Color32::from_rgb(35, 50, 70)
+    } else {
+        Color32::from_rgb(220, 236, 252)
+    }
+}
+
 fn theme_preference(theme: ThemePref) -> egui::ThemePreference {
     match theme {
         ThemePref::System => egui::ThemePreference::System,
@@ -156,7 +200,11 @@ impl App {
             window: WindowState::Shown,
             settings_tab: SettingsTab::General,
             draft_original: None,
-            confirm_discard: false,
+            confirm: None,
+            selected: None,
+            scroll_to_selected: false,
+            seen: HashMap::new(),
+            toasts: Vec::new(),
             geometry: settings.window,
         }
     }
@@ -178,7 +226,7 @@ impl App {
         self.draft = Some(settings.clone());
         self.draft_original = Some((settings.clone(), self.passwords_text.clone()));
         self.settings_error = None;
-        self.confirm_discard = false;
+        self.confirm = None;
     }
 
     /// `true` when the settings window holds changes that are not saved.
@@ -248,6 +296,10 @@ impl App {
                 i.key_pressed(egui::Key::Escape),
             )
         });
+        // List keys only when nothing else (text field, settings window) has them.
+        if self.draft.is_none() && ctx.memory(|m| m.focused().is_none()) {
+            self.list_keys(ctx, snap);
+        }
         if scan && snap.running {
             self.engine.send(Command::ScanNow);
         }
@@ -260,10 +312,102 @@ impl App {
         }
     }
 
+    /// ↑ / ↓ select a set, Del removes it from the list, Enter opens its folder.
+    fn list_keys(&mut self, ctx: &egui::Context, snap: &Snapshot) {
+        let (up, down, delete, enter) = ctx.input_mut(|i| {
+            (
+                i.consume_key(egui::Modifiers::NONE, egui::Key::ArrowUp),
+                i.consume_key(egui::Modifiers::NONE, egui::Key::ArrowDown),
+                i.consume_key(egui::Modifiers::NONE, egui::Key::Delete),
+                i.consume_key(egui::Modifiers::NONE, egui::Key::Enter),
+            )
+        });
+        if snap.jobs.is_empty() {
+            self.selected = None;
+            return;
+        }
+        let index = self
+            .selected
+            .and_then(|id| snap.jobs.iter().position(|j| j.id == id));
+        let last = snap.jobs.len() - 1;
+        let moved = match (index, up, down) {
+            (None, true, _) => Some(last),
+            (None, _, true) => Some(0),
+            (Some(i), true, _) => Some(i.saturating_sub(1)),
+            (Some(i), _, true) => Some((i + 1).min(last)),
+            _ => None,
+        };
+        if let Some(job) = moved.and_then(|i| snap.jobs.get(i)) {
+            self.selected = Some(job.id);
+            self.scroll_to_selected = true;
+        }
+        let Some((i, job)) = index.and_then(|i| snap.jobs.get(i).map(|j| (i, j))) else {
+            return;
+        };
+        if delete && !job.status.is_active() {
+            self.engine.send(Command::Forget(job.id));
+            // Keep a selection so Del can be pressed again.
+            let next = snap
+                .jobs
+                .get(i + 1)
+                .or_else(|| i.checked_sub(1).and_then(|p| snap.jobs.get(p)));
+            self.selected = next.map(|j| j.id);
+        }
+        if enter {
+            open_in_explorer(&job.set.dir);
+        }
+    }
+
+    /// Adds a notice for each set that just finished, failed or needs a password.
+    fn collect_toasts(&mut self, snap: &Snapshot) {
+        let lang = self.lang;
+        for job in &snap.jobs {
+            let previous = self.seen.insert(job.id, job.status);
+            let worth_telling = matches!(
+                job.status,
+                Status::Done | Status::Failed | Status::NeedPassword | Status::RepairImpossible
+            );
+            if snap.settings.show_toasts && worth_telling && previous.is_some_and(|p| p != job.status) {
+                self.toasts.push(Toast {
+                    text: format!("{} — {}", job.set.name, job.status.localize(lang)),
+                    status: job.status,
+                    shown_at: Instant::now(),
+                });
+            }
+        }
+        self.seen.retain(|id, _| snap.jobs.iter().any(|j| j.id == *id));
+        self.toasts.retain(|t| t.shown_at.elapsed() < TOAST_DURATION);
+        let excess = self.toasts.len().saturating_sub(TOAST_MAX);
+        self.toasts.drain(..excess);
+    }
+
+    /// Draws the notices in the bottom-right corner, newest at the bottom.
+    fn show_toasts(&self, ctx: &egui::Context, dark: bool) {
+        if self.toasts.is_empty() {
+            return;
+        }
+        ctx.request_repaint_after(Duration::from_millis(250));
+        egui::Area::new(egui::Id::unique("toasts"))
+            .anchor(egui::Align2::RIGHT_BOTTOM, egui::vec2(-16.0, -16.0))
+            .order(egui::Order::Foreground)
+            .interactable(false)
+            .show(ctx, |ui| {
+                ui.with_layout(egui::Layout::top_down(egui::Align::Max), |ui| {
+                    for toast in &self.toasts {
+                        egui::Frame::popup(ui.style()).show(ui, |ui| {
+                            let text = RichText::new(&toast.text).color(status_color(toast.status, dark));
+                            ui.add(egui::Label::new(text).wrap_mode(egui::TextWrapMode::Extend));
+                        });
+                        ui.add_space(6.0);
+                    }
+                });
+            });
+    }
+
     /// Closes the settings window, or asks first when there are unsaved changes.
     fn request_close_settings(&mut self) {
         match &self.draft {
-            Some(draft) if self.draft_is_dirty(draft) => self.confirm_discard = true,
+            Some(draft) if self.draft_is_dirty(draft) => self.confirm = Some(Confirm::Discard),
             _ => self.close_settings(),
         }
     }
@@ -271,7 +415,7 @@ impl App {
     fn close_settings(&mut self) {
         self.draft = None;
         self.draft_original = None;
-        self.confirm_discard = false;
+        self.confirm = None;
         self.settings_error = None;
     }
 
@@ -532,7 +676,16 @@ impl App {
         let t = self.texts();
         let lang = self.lang;
         let mut actions: Vec<Command> = Vec::new();
-        let mut table = TableBuilder::new(ui);
+        ui.visuals_mut().selection.bg_fill = selection_fill(dark);
+        let mut table = TableBuilder::new(ui).sense(egui::Sense::click());
+        if self.scroll_to_selected
+            && let Some(row) = self
+                .selected
+                .and_then(|id| snap.jobs.iter().position(|j| j.id == id))
+        {
+            self.scroll_to_selected = false;
+            table = table.scroll_to_row(row, None);
+        }
         if snap.settings.follow_active
             && let Some((row, job)) = snap.jobs.iter().enumerate().find(|(_, j)| j.status.is_active())
             && self.followed != Some(job.id)
@@ -595,6 +748,10 @@ impl App {
                             ui.label(&detail).on_hover_text(&detail);
                         });
                         row.col(|ui| self.row_actions(ui, job, &mut actions));
+                        row.set_selected(self.selected == Some(job.id));
+                        if row.response().clicked() {
+                            self.selected = Some(job.id);
+                        }
                     });
                 }
             });
@@ -646,7 +803,7 @@ impl App {
         let t = self.texts();
         let lang = self.lang;
         let mut open = true;
-        let (mut save, mut cancel, mut discard, mut keep) = (false, false, false, false);
+        let (mut save, mut cancel, mut accept, mut keep) = (false, false, false, false);
         let problems = draft_problems(&draft, t);
         egui::Window::new(t.settings_title)
             .open(&mut open)
@@ -661,30 +818,36 @@ impl App {
                     ui.selectable_value(tab, SettingsTab::Window, t.group_window);
                 });
                 ui.separator();
-                match self.settings_tab {
-                    SettingsTab::General => {
-                        egui::Grid::new("settings_grid")
-                            .num_columns(2)
-                            .spacing([12.0, 8.0])
-                            .show(ui, |ui| settings_grid(ui, &mut draft, t, lang, dark));
-                    }
-                    SettingsTab::Processing => {
-                        processing_toggles(ui, &mut draft, t);
-                        ui.add_space(6.0);
-                        ui.strong(t.passwords);
-                        ui.add(
-                            egui::TextEdit::multiline(&mut self.passwords_text)
-                                .desired_rows(3)
-                                .desired_width(f32::INFINITY),
-                        );
-                        ui.weak(if self.store.has_vault() {
-                            t.passwords_hint_vault
-                        } else {
-                            t.passwords_hint
-                        });
-                    }
-                    SettingsTab::Window => window_toggles(ui, &mut draft, t),
-                }
+                // The page scrolls when the window is small; the tabs and the
+                // Save / Cancel buttons always stay visible.
+                let page_height = (ctx.content_rect().height() - SETTINGS_CHROME_HEIGHT).max(80.0);
+                egui::ScrollArea::vertical()
+                    .max_height(page_height)
+                    .auto_shrink([false, true])
+                    .show(ui, |ui| match self.settings_tab {
+                        SettingsTab::General => {
+                            egui::Grid::new("settings_grid")
+                                .num_columns(2)
+                                .spacing([12.0, 8.0])
+                                .show(ui, |ui| settings_grid(ui, &mut draft, t, lang, dark));
+                        }
+                        SettingsTab::Processing => {
+                            processing_toggles(ui, &mut draft, t);
+                            ui.add_space(6.0);
+                            ui.strong(t.passwords);
+                            ui.add(
+                                egui::TextEdit::multiline(&mut self.passwords_text)
+                                    .desired_rows(3)
+                                    .desired_width(f32::INFINITY),
+                            );
+                            ui.weak(if self.store.has_vault() {
+                                t.passwords_hint_vault
+                            } else {
+                                t.passwords_hint
+                            });
+                        }
+                        SettingsTab::Window => window_toggles(ui, &mut draft, t),
+                    });
                 ui.separator();
                 let error = status_color(Status::Failed, dark);
                 for problem in &problems {
@@ -697,11 +860,15 @@ impl App {
                     ui.colored_label(error, e);
                 }
                 ui.add_space(8.0);
-                if self.confirm_discard {
+                if let Some(confirm) = self.confirm {
+                    let (question, yes, no) = match confirm {
+                        Confirm::Discard => (t.discard_question, t.discard, t.keep_editing),
+                        Confirm::Overwrite => (t.overwrite_question, t.enable, t.cancel),
+                    };
+                    ui.colored_label(status_color(Status::NeedPassword, dark), question);
                     ui.horizontal(|ui| {
-                        ui.colored_label(status_color(Status::NeedPassword, dark), t.discard_question);
-                        discard = ui.button(t.discard).clicked();
-                        keep = ui.button(t.keep_editing).clicked();
+                        accept = ui.button(yes).clicked();
+                        keep = ui.button(no).clicked();
                     });
                 } else {
                     ui.horizontal(|ui| {
@@ -714,14 +881,32 @@ impl App {
             });
         self.draft = Some(draft);
         if keep {
-            self.confirm_discard = false;
-        } else if discard {
-            self.close_settings();
+            self.confirm = None;
+        } else if accept {
+            match self.confirm.take() {
+                Some(Confirm::Discard) => self.close_settings(),
+                Some(Confirm::Overwrite) => self.save_draft(ctx),
+                None => {}
+            }
         } else if save {
-            self.save_draft(ctx);
+            if self.turns_on_overwrite() {
+                self.confirm = Some(Confirm::Overwrite);
+            } else {
+                self.save_draft(ctx);
+            }
         } else if cancel || !open {
             self.request_close_settings();
         }
+    }
+
+    /// `true` when the settings being saved switch overwriting on.
+    fn turns_on_overwrite(&self) -> bool {
+        let before = self
+            .draft_original
+            .as_ref()
+            .is_some_and(|(s, _)| s.overwrite_existing);
+        let after = self.draft.as_ref().is_some_and(|d| d.overwrite_existing);
+        after && !before
     }
 
     /// Saves the settings window; it stays open with the error when saving fails.
@@ -880,6 +1065,7 @@ fn processing_toggles(ui: &mut egui::Ui, draft: &mut Settings, t: &Texts) {
 fn window_toggles(ui: &mut egui::Ui, draft: &mut Settings, t: &Texts) {
     ui.checkbox(&mut draft.follow_active, t.follow_active);
     ui.checkbox(&mut draft.log_to_file, t.log_to_file);
+    ui.checkbox(&mut draft.show_toasts, t.show_toasts);
     ui.checkbox(&mut draft.minimize_to_tray, t.minimize_to_tray);
     ui.checkbox(&mut draft.close_to_tray, t.close_to_tray)
         .on_hover_text(t.close_to_tray_hint);
@@ -988,6 +1174,7 @@ impl eframe::App for App {
         let dark = ctx.global_style().visuals.dark_mode;
         ctx.request_repaint_after(Duration::from_secs(1));
         self.shortcuts(&ctx, &snap);
+        self.collect_toasts(&snap);
 
         egui::Panel::top("toolbar").show(root, |ui| self.toolbar(ui, &snap));
         if self.load_issue.is_some() || self.warning.is_some() {
@@ -1029,6 +1216,7 @@ impl eframe::App for App {
             }
         });
         self.settings_window(&ctx, dark);
+        self.show_toasts(&ctx, dark);
     }
 }
 
@@ -1088,7 +1276,13 @@ mod tests {
         for (visuals, dark) in [(egui::Visuals::light(), false), (egui::Visuals::dark(), true)] {
             // Striped rows draw `faint_bg_color` (premultiplied, possibly additive) over the panel.
             let stripe = over(visuals.faint_bg_color, visuals.panel_fill);
-            let backgrounds = [visuals.panel_fill, visuals.window_fill, stripe];
+            // A selected row uses `selection_fill`; notices use `window_fill`.
+            let backgrounds = [
+                visuals.panel_fill,
+                visuals.window_fill,
+                stripe,
+                selection_fill(dark),
+            ];
             for status in ALL {
                 for bg in backgrounds {
                     let ratio = contrast(status_color(status, dark), bg);

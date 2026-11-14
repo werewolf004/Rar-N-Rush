@@ -55,7 +55,7 @@ La fenêtre des réglages a trois pages : **Général** (dossiers, délais, lang
 | `recursive` | Analyser aussi les sous-dossiers | booléen | `true` | Analyse les sous-dossiers, jusqu'à 8 niveaux. Les liens symboliques ne sont pas suivis. |
 | `create_subfolder` | Extraire dans un sous-dossier au nom du jeu | booléen | `true` | Extrait `Vacances.part1.rar` dans `<destination>\Vacances\`. Les caractères interdits par Windows sont remplacés par `_`. |
 | `extract_nested` | Extraire les archives RAR contenues dans une archive | booléen | `true` | Extrait les archives trouvées dans une archive extraite (jusqu'à 3 niveaux), puis supprime ces archives internes. |
-| `overwrite_existing` | Écraser les fichiers existants | booléen | `false` | À `false`, un fichier existant est conservé et la copie extraite est nommée `nom (1).ext`, `nom (2).ext`… |
+| `overwrite_existing` | Écraser les fichiers existants | booléen | `false` | À `false`, un fichier existant est conservé et la copie extraite est nommée `nom (1).ext`, `nom (2).ext`… L'activer demande d'abord une confirmation, car un fichier écrasé ne peut pas être récupéré. |
 | `delete_after_success` | Envoyer les fichiers PAR2/SFV/RAR à la corbeille après succès | booléen | `false` | Après un traitement réussi, envoie à la corbeille les fichiers PAR2, le SFV, les volumes RAR et les sauvegardes de par2 (`fichier.1`). Les fichiers vérifiés qui ne sont pas des RAR sont toujours conservés. |
 | `autostart` | Démarrer la surveillance au lancement | booléen | `true` | Démarre la surveillance au lancement si un dossier surveillé est défini. |
 
@@ -84,6 +84,7 @@ La fenêtre des réglages a trois pages : **Général** (dossiers, délais, lang
 |---|---|---|---|---|
 | `follow_active` | Garder visible le jeu en cours de traitement | booléen | `true` | Fait défiler la liste jusqu'à chaque nouveau jeu en cours de traitement, une seule fois : tu restes libre de faire défiler entre-temps. |
 | `log_to_file` | Écrire aussi le journal dans rar-n-rush.log | booléen | `true` | Écrit chaque ligne du journal, avec sa date, dans `rar-n-rush.log` à côté du fichier de réglages. Le fichier tourne à 1 Mo ; les trois précédents sont conservés (`rar-n-rush.log.1` … `.3`). Les lignes sont en anglais, pour être jointes à un rapport de bug. Les mots de passe n'y apparaissent jamais. |
+| `show_toasts` | Afficher un court message quand un jeu se termine, échoue ou demande un mot de passe | booléen | `true` | Les messages apparaissent en bas à droite pendant 6 secondes (4 au plus) et ne prennent jamais le focus. |
 | `minimize_to_tray` | Réduire dans la zone de notification | booléen | `false` | Réduire la fenêtre la masque ; une icône dans la zone de notification la fait revenir (clic, ou **Afficher Rar N Rush** dans son menu). |
 | `window` | *(aucun, enregistré automatiquement)* | table | *(aucune)* | Taille et position de la fenêtre principale, enregistrées à la fermeture et restaurées au lancement suivant : `x`, `y`, `width`, `height` en pixels et `maximized`. Les valeurs hors limites sont corrigées (minimum 720 × 420). Supprime la table pour revenir à la taille par défaut. |
 | `close_to_tray` | Fermer dans la zone de notification | booléen | `false` | Le ✕ de la fenêtre la masque au lieu de quitter ; la surveillance continue. Pour quitter, choisis **Quitter** dans le menu de l'icône. Si l'icône ne peut pas être créée, la fenêtre se ferme normalement et la fenêtre des réglages en donne la raison. |
@@ -117,6 +118,7 @@ follow_active = true
 minimize_to_tray = false
 close_to_tray = false
 log_to_file = true
+show_toasts = true
 
 [window]
 x = 120

@@ -12,11 +12,15 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 - **Les mots de passe d'archives sont conservés dans le Gestionnaire d'identifiants Windows**, et non plus en clair dans `rar-n-rush.toml`. Ceux d'un ancien fichier de réglages y sont déplacés au lancement. Si le Gestionnaire d'identifiants est indisponible, ils restent dans le fichier pour qu'aucun ne soit perdu, et la fenêtre l'indique.
 - **Fichier journal** : le journal est aussi écrit dans `rar-n-rush.log` (`log_to_file`, activé par défaut), avec rotation à 1 Mo et trois anciens fichiers conservés. **Exporter…** dans le journal enregistre les lignes affichées dans un fichier texte. Un test vérifie qu'aucun mot de passe n'arrive jamais dans le journal.
 - Les archives et exécutables des releases portent une provenance de build signée (attestation d'artefact GitHub) ; `gh attestation verify` la vérifie.
-
+- Navigation de la liste au clavier : **↑/↓** sélectionnent un jeu (un clic aussi), **Suppr** le retire de la liste, **Entrée** ouvre son dossier.
+- Courts messages non bloquants en bas à droite quand un jeu se termine, échoue ou demande un mot de passe (`show_toasts`, activé par défaut).
+- Activer **Écraser les fichiers existants** demande d'abord une confirmation, car un fichier écrasé ne peut pas être récupéré.
 - Tests de propriétés (`proptest`) et cibles de fuzzing (`cargo fuzz`, workflow hebdomadaire **Fuzz**) pour les parseurs de données non fiables : PAR2, SFV, noms RAR, chemins des entrées d'archive, noms de dossiers.
 
 ### Corrigé
 
+- À la plus petite taille de fenêtre, la page Traitement des réglages poussait **Enregistrer** hors de la fenêtre ; la page défile désormais et les boutons restent visibles.
+- Une ligne sélectionnée pouvait rendre les couleurs de statut trop pâles (moins de 4,5:1) ; la couleur de sélection est désormais plus douce et couverte par le test de contraste.
 - Un jeu nommé comme un périphérique réservé de Windows suivi d'une extension (`CON.txt`, `nul.tar`) donnait un dossier d'extraction que Windows ne peut pas créer ; il est désormais préfixé par `_`. Trouvé par les nouveaux tests de propriétés.
 - Une extraction en échec ou annulée ne laisse plus de fichiers derrière elle : tout ce qu'elle a créé est supprimé (les fichiers déjà présents sont conservés), donc **Réessayer** repart de zéro au lieu de produire des doublons `nom (1).ext`.
 

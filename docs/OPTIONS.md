@@ -55,7 +55,7 @@ The settings window has three pages: **General** (folders, timing, language, the
 | `recursive` | Also scan sub-folders | bool | `true` | Scan sub-folders, up to 8 levels deep. Symbolic links are not followed. |
 | `create_subfolder` | Extract into a sub-folder named after the set | bool | `true` | Extracts `Holidays.part1.rar` into `<destination>\Holidays\`. Characters forbidden by Windows are replaced with `_`. |
 | `extract_nested` | Extract RAR archives found inside an archive | bool | `true` | Extracts archives found in an extracted archive (up to 3 levels), then deletes those inner archives. |
-| `overwrite_existing` | Overwrite existing files | bool | `false` | When `false`, an existing file is kept and the extracted copy is named `name (1).ext`, `name (2).ext`… |
+| `overwrite_existing` | Overwrite existing files | bool | `false` | When `false`, an existing file is kept and the extracted copy is named `name (1).ext`, `name (2).ext`… Turning it on asks for confirmation first, because an overwritten file cannot be recovered. |
 | `delete_after_success` | Move PAR2/SFV/RAR files to the Recycle Bin after success | bool | `false` | After a successful run, sends the PAR2 files, the SFV, the RAR volumes and par2 backups (`file.1`) to the Recycle Bin. Verified non-RAR files are always kept. |
 | `autostart` | Start monitoring when the app starts | bool | `true` | Starts monitoring on launch when a watched folder is set. |
 
@@ -84,6 +84,7 @@ The settings window has three pages: **General** (folders, timing, language, the
 |---|---|---|---|---|
 | `follow_active` | Keep the set being processed in view | bool | `true` | Scrolls the list to each new set being processed, once, so you can still scroll freely in between. |
 | `log_to_file` | Also write the log to rar-n-rush.log | bool | `true` | Writes every log line, with its date, to `rar-n-rush.log` next to the settings file. The file is rotated at 1 MB; the three previous ones are kept (`rar-n-rush.log.1` … `.3`). Lines are in English, to be attached to a bug report. Passwords never appear in it. |
+| `show_toasts` | Show a short notice when a set finishes, fails or needs a password | bool | `true` | Notices appear in the bottom-right corner for 6 seconds (4 at most) and never take the focus. |
 | `minimize_to_tray` | Minimise to the notification area | bool | `false` | Minimising hides the window; an icon in the notification area brings it back (click, or **Show Rar N Rush** in its menu). |
 | `window` | *(none, saved automatically)* | table | *(none)* | Size and position of the main window, saved when the app exits and restored at the next start: `x`, `y`, `width`, `height` in pixels and `maximized`. Out-of-range values are clamped (minimum 720 × 420). Delete the table to return to the default size. |
 | `close_to_tray` | Close to the notification area | bool | `false` | The window's ✕ hides the window instead of quitting; monitoring goes on. Quit with **Quit** in the icon's menu. If the icon cannot be created, the window closes normally and the settings window shows the reason. |
@@ -117,6 +118,7 @@ follow_active = true
 minimize_to_tray = false
 close_to_tray = false
 log_to_file = true
+show_toasts = true
 
 [window]
 x = 120

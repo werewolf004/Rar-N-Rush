@@ -114,6 +114,8 @@ pub struct Settings {
     pub theme: ThemePref,
     /// Also write the log to `rar-n-rush.log` (rotated at 1 MB, 3 old files kept).
     pub log_to_file: bool,
+    /// Show a short notice in the window when a set finishes, fails or needs a password.
+    pub show_toasts: bool,
     /// Last size and position of the main window (saved on exit).
     pub window: Option<WindowGeometry>,
 }
@@ -212,6 +214,7 @@ impl Default for Settings {
             language: LanguagePref::System,
             theme: ThemePref::System,
             log_to_file: true,
+            show_toasts: true,
             window: None,
         }
     }
@@ -995,6 +998,7 @@ mod tests {
             language: LanguagePref::French,
             theme: ThemePref::Dark,
             log_to_file: false,
+            show_toasts: false,
             window: Some(WindowGeometry {
                 x: -8,
                 y: 30,

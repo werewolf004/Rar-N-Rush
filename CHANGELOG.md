@@ -12,11 +12,15 @@ All notable changes to this project are documented here. The format follows [Kee
 - **Archive passwords are kept in the Windows Credential Manager**, no longer in plain text in `rar-n-rush.toml`. Passwords from an older settings file are moved there at start-up. If the Credential Manager is unavailable, they stay in the file so none is lost, and the window says so.
 - **Log file**: the log is also written to `rar-n-rush.log` (`log_to_file`, on by default), rotated at 1 MB with three old files kept. **Export…** in the log panel saves the lines shown to a text file. A test checks that no password ever reaches the log.
 - Release archives and executables carry a signed build provenance (GitHub artifact attestation); `gh attestation verify` checks it.
-
+- Keyboard navigation of the list: **↑/↓** select a set (a click works too), **Del** removes it from the list, **Enter** opens its folder.
+- Short, non-blocking notices in the bottom-right corner when a set finishes, fails or needs a password (`show_toasts`, on by default).
+- Turning on **Overwrite existing files** asks for confirmation first, because an overwritten file cannot be recovered.
 - Property tests (`proptest`) and fuzz targets (`cargo fuzz`, weekly **Fuzz** workflow) for the parsers of untrusted input: PAR2, SFV, RAR names, archive entry paths, folder names.
 
 ### Fixed
 
+- At the smallest window size, the Processing page of the settings pushed **Save** out of the window; the page now scrolls and the buttons stay visible.
+- A selected row could make status colours too faint (below 4.5:1); the selection colour is now softer and covered by the contrast test.
 - A set named like a reserved Windows device followed by an extension (`CON.txt`, `nul.tar`) produced an extraction folder Windows cannot create; it is now prefixed with `_`. Found by the new property tests.
 - A failed or cancelled extraction no longer leaves files behind: everything it created is removed (files that existed before are kept), so **Retry** starts clean instead of producing `name (1).ext` duplicates.
 

@@ -76,8 +76,11 @@ Open **Settings** to change the folders, timings, language, theme and behaviour.
 | **Ctrl+,** | Open the settings |
 | **Esc** | Close the settings (asks first if something changed); in the watched-folder field, cancel the edit |
 | **Enter** | In the watched-folder field, watch the folder typed; in a password field, try the password |
+| **↑ / ↓** | Select a set in the list (or click it) |
+| **Del** | Remove the selected set from the list (its files are not touched) |
+| **Enter** (set selected) | Open the folder of the selected set |
 
-The window reopens at the size and position it had when you closed it.
+The window reopens at the size and position it had when you closed it. When a set finishes, fails or needs a password, a short notice appears for a few seconds in the bottom-right corner, without interrupting you.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/settings-en-dark.png">
