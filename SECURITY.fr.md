@@ -59,6 +59,7 @@ Rar N Rush traite des fichiers téléchargés depuis Internet, qu'il faut consid
 
 ### Releases
 
+- Le programme et l'installateur ne portent pas de signature Authenticode (les certificats de signature ne sont pas gratuits) : Windows SmartScreen peut donc avertir au premier lancement. Leur origine se prouve à la place par la somme SHA-256 et la provenance de build signée ci-dessous.
 - Chaque archive et chaque installateur de release sont publiés avec leur somme de contrôle SHA-256. Vérifie-la avant utilisation (voir le README).
 - L'installateur est construit avec WiX Toolset 5.0.2, figé par SHA-256 (`scripts/fetch-wix.ps1`) ; à chaque push, la CI l'installe, le met à jour et le désinstalle en silence, et vérifie ce que chaque étape laisse.
 - À partir de la v0.3.0, l'archive et l'exécutable portent une provenance de build SLSA signée (attestation d'artefact GitHub, Sigstore) : À partir de la v1.0.0, l'installateur l'est aussi. `gh attestation verify` prouve qu'ils ont été produits par le workflow de release de ce dépôt à partir du commit tagué.

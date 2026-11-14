@@ -59,6 +59,7 @@ Rar N Rush processes files downloaded from the Internet, which must be treated a
 
 ### Releases
 
+- The program and the installer carry no Authenticode signature (code-signing certificates are not free), so Windows SmartScreen may warn on first use. Their origin is proven instead by the SHA-256 checksum and the signed build provenance below.
 - Each release archive and installer is published with its SHA-256 checksum. Verify it before use (see the README).
 - The installer is built with WiX Toolset 5.0.2, pinned by SHA-256 (`scripts/fetch-wix.ps1`); CI installs, upgrades and removes it silently on every push and checks what each step leaves behind.
 - From v0.3.0, the archive and the executable carry a signed SLSA build provenance (GitHub artifact attestation, Sigstore): From v1.0.0 the installer is covered too. `gh attestation verify` proves they were built by the release workflow of this repository from the tagged commit.

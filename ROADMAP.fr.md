@@ -28,5 +28,5 @@ Icône dans la zone de notification (avancée en v0.2.0) ; une seule instance pa
 
 - ✅ Installateur par utilisateur (MSI) : sans droits administrateur, raccourci dans le menu Démarrer, mises à jour qui gardent les réglages, désinstallation qui nettoie le registre ; testé de bout en bout en CI.
 - Paquet winget.
-- Signature du code.
+- ✅ Pas de signature du code : les certificats sont payants et le projet reste gratuit. L'avertissement SmartScreen est documenté, et chaque téléchargement se vérifie à la place avec sa somme SHA-256 et sa provenance de build signée (`gh attestation verify`).
 - ✅ Guide utilisateur avec une capture de chaque écran ([docs/USER-GUIDE.fr.md](docs/USER-GUIDE.fr.md)).

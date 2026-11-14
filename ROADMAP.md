@@ -28,5 +28,5 @@ Notification-area icon (brought forward to v0.2.0); one instance per settings fo
 
 - ✅ Per-user installer (MSI): no administrator rights, Start menu shortcut, upgrades that keep the settings, removal that cleans the registry; tested end to end in CI.
 - winget package.
-- Code signing.
+- ✅ No code signing: certificates cost money and the project stays free. The SmartScreen warning is documented, and every download can be checked instead with its SHA-256 and its signed build provenance (`gh attestation verify`).
 - ✅ User guide with screenshots for every screen ([docs/USER-GUIDE.md](docs/USER-GUIDE.md)).
