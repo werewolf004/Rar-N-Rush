@@ -1,6 +1,6 @@
 [package]
 name = "rar-n-rush"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2024"
 rust-version = "1.95"
 description = "Watches a download folder, verifies PAR2/SFV sets, repairs them and extracts RAR archives automatically."

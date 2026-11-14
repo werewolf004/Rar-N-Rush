@@ -6,6 +6,10 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+## [0.5.1] - 2026-11-14
+
+Corrige deux façons dont les réglages ou les mots de passe enregistrés pouvaient être perdus, et ajoute le guide utilisateur. Recommandée pour tous.
+
 ### Ajouté
 
 - **Guide utilisateur** en anglais et en français ([docs/USER-GUIDE.fr.md](docs/USER-GUIDE.fr.md)) : chaque écran, pas à pas, avec captures, y compris les deux confirmations et le bandeau du fichier de réglages.
@@ -123,7 +127,8 @@ Première version publique : toute la chaîne de traitement, des fondations qual
 
 - `#![forbid(unsafe_code)]` sur tout le crate ; `unwrap`, `expect` et `panic` sont interdits hors des tests.
 
-[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.0...HEAD
+[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.2.0...v0.3.0
