@@ -27,6 +27,8 @@ Rar N Rush traite des fichiers téléchargés depuis Internet, qu'il faut consid
 - Les fichiers écrits avec un mauvais mot de passe sont supprimés avant d'essayer le mot de passe suivant.
 - L'analyse ne suit pas les liens symboliques : un lien ne peut pas faire entrer des fichiers extérieurs au dossier surveillé.
 - Les noms de dossier tirés des noms d'archives sont nettoyés (caractères interdits par Windows, noms réservés comme `CON` ou `NUL`).
+- L'espace libre du disque de destination est vérifié avant l'extraction (taille de l'archive plus une réserve de 64 Mo).
+- Une extraction en échec ou annulée supprime les fichiers qu'elle a créés ; les fichiers déjà présents ne sont jamais supprimés.
 - Les fichiers sources sont envoyés à la **corbeille**, jamais supprimés définitivement, et seulement après un traitement entièrement réussi.
 - `par2.exe` est lancé sans shell, avec des arguments passés séparément (pas d'injection de commande), sans fenêtre console, et uniquement depuis le chemin choisi par l'utilisateur, le dossier du programme ou le `PATH`.
 
@@ -53,3 +55,4 @@ Rar N Rush traite des fichiers téléchargés depuis Internet, qu'il faut consid
 ### Releases
 
 - Chaque archive de release est publiée avec sa somme de contrôle SHA-256. Vérifie-la avant utilisation (voir le README).
+- À partir de la v0.3.0, l'archive et l'exécutable portent une provenance de build SLSA signée (attestation d'artefact GitHub, Sigstore) : `gh attestation verify` prouve qu'ils ont été produits par le workflow de release de ce dépôt à partir du commit tagué.

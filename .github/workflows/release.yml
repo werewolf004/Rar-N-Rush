@@ -18,6 +18,8 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: write # create the release
+      id-token: write # sign the build provenance (Sigstore)
+      attestations: write # store the attestation on GitHub
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
@@ -48,6 +50,14 @@ jobs:
           Copy-Item docs/THIRD-PARTY-LICENSES.md $name
           Compress-Archive -Path $name -DestinationPath "$name.zip"
           (Get-FileHash "$name.zip" -Algorithm SHA256).Hash.ToLower() + "  $name.zip" | Out-File -Encoding ascii "$name.zip.sha256"
+
+      # Signed SLSA build provenance: anyone can check that the zip was built by
+      # this workflow from this tag with `gh attestation verify`.
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            rar-n-rush-${{ github.ref_name }}-windows-x64.zip
+            target/release/rar-n-rush.exe
 
       - name: Release notes from CHANGELOG
         shell: pwsh

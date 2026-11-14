@@ -135,20 +135,24 @@ fn existing_files_are_kept_unless_overwrite_is_enabled() {
 }
 
 #[test]
-fn corrupt_data_is_reported() {
+fn corrupt_data_is_reported_and_partial_files_removed() {
     let dir = tempfile::tempdir().unwrap();
     common::copy_fixtures(dir.path(), &["corrupt.rar"]);
-    let err = run(
-        &dir.path().join("corrupt.rar"),
-        &dir.path().join("out"),
-        &[],
-        Options::default(),
-    )
-    .unwrap_err();
+    let out = dir.path().join("out");
+    fs::create_dir_all(&out).unwrap();
+    fs::write(out.join("mine.txt"), b"user file").unwrap();
+    let err = run(&dir.path().join("corrupt.rar"), &out, &[], Options::default()).unwrap_err();
     match err {
         ExtractError::Archive { problem, .. } => assert_eq!(problem, ArchiveProblem::Corrupt),
-        other @ ExtractError::CreateDir { .. } => panic!("unexpected error: {other:?}"),
+        other => panic!("unexpected error: {other:?}"),
     }
+    // A retry must start clean: nothing written by the failed run is left behind,
+    // and what was already there is untouched.
+    let left: Vec<_> = fs::read_dir(&out)
+        .unwrap()
+        .map(|e| e.unwrap().file_name())
+        .collect();
+    assert_eq!(left, vec![std::ffi::OsString::from("mine.txt")]);
 }
 
 #[test]

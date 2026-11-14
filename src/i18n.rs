@@ -475,9 +475,49 @@ impl Localize for JobError {
                     let name = file.file_name().map(|n| n.to_string_lossy()).unwrap_or_default();
                     format!("{name}: {}", problem.localize(lang))
                 }
+                ExtractError::NotEnoughSpace {
+                    dest,
+                    needed,
+                    available,
+                } => match lang {
+                    Lang::En => format!(
+                        "not enough free space in {}: {} needed, {} available",
+                        dest.display(),
+                        human_size(*needed, lang),
+                        human_size(*available, lang)
+                    ),
+                    Lang::Fr => format!(
+                        "espace libre insuffisant dans {} : {} nécessaires, {} disponibles",
+                        dest.display(),
+                        human_size(*needed, lang),
+                        human_size(*available, lang)
+                    ),
+                },
             },
         }
     }
+}
+
+/// Size with one decimal and a binary unit: `1.5 GB` in English, `1,5 Go` in French.
+pub fn human_size(bytes: u64, lang: Lang) -> String {
+    let units: [&str; 5] = match lang {
+        Lang::En => ["B", "KB", "MB", "GB", "TB"],
+        Lang::Fr => ["o", "Ko", "Mo", "Go", "To"],
+    };
+    let mut unit = 0;
+    let mut whole = bytes;
+    while whole >= 1024 * 1024 && unit < units.len() - 2 {
+        whole /= 1024;
+        unit += 1;
+    }
+    // `whole` is below 1024² here, so tenths are computed exactly in integers.
+    if whole < 1024 {
+        return format!("{whole} {}", units.get(unit).unwrap_or(&"B"));
+    }
+    let tenths = whole * 10 / 1024;
+    let sep = if lang == Lang::Fr { "," } else { "." };
+    let unit = units.get(unit + 1).unwrap_or(&"TB");
+    format!("{}{sep}{} {unit}", tenths / 10, tenths % 10)
 }
 
 impl Localize for Detail {
@@ -694,6 +734,16 @@ fn extra_files_kept(reason: NotMoved, name: &str, lang: Lang) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sizes_are_readable_in_both_languages() {
+        assert_eq!(human_size(0, Lang::En), "0 B");
+        assert_eq!(human_size(1023, Lang::En), "1023 B");
+        assert_eq!(human_size(1536, Lang::En), "1.5 KB");
+        assert_eq!(human_size(64 * 1024 * 1024, Lang::Fr), "64,0 Mo");
+        assert_eq!(human_size(3 * 1024 * 1024 * 1024 / 2, Lang::En), "1.5 GB");
+        assert_eq!(human_size(u64::MAX, Lang::En), "16777215.9 TB"); // rounded down
+    }
 
     #[test]
     fn locale_detection() {

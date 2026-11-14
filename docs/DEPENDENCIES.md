@@ -2,7 +2,7 @@
 
 **English** · [Français](DEPENDENCIES.fr.md)
 
-Every direct dependency is listed below with the reason it is needed. The complete list of the 220 crates compiled into the release binary, with their licences, is generated in [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) (`python scripts/third-party.py`).
+Every direct dependency is listed below with the reason it is needed. The complete list of the 222 crates compiled into the release binary, with their licences, is generated in [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) (`python scripts/third-party.py`).
 
 Rules applied to dependencies:
 
@@ -28,6 +28,7 @@ Rules applied to dependencies:
 | [`chrono`](https://crates.io/crates/chrono) | 0.4 | MIT OR Apache-2.0 | Local time of log lines. Only the `clock` feature is enabled. |
 | [`sys-locale`](https://crates.io/crates/sys-locale) | 0.3 | MIT OR Apache-2.0 | Reads the Windows display language to pick English or French. |
 | [`tray-icon`](https://crates.io/crates/tray-icon) | 0.26 | MIT OR Apache-2.0 | Icon and menu in the notification area (only created when a tray option is enabled). Default features off: on Windows it only pulls `muda` (menu), `windows-sys` and `crossbeam-channel`. |
+| [`fs4`](https://crates.io/crates/fs4) | 0.13 | MIT OR Apache-2.0 | Free space of the destination drive, checked before each extraction. Only the `sync` feature is enabled. |
 
 ## Development dependencies
 

@@ -27,6 +27,8 @@ Rar N Rush processes files downloaded from the Internet, which must be treated a
 - Files written with a wrong password are removed before the next password is tried.
 - The scan does not follow symbolic links, so a link cannot pull files from outside the watched tree.
 - Folder names derived from archive names are sanitised (characters forbidden by Windows, reserved names such as `CON` or `NUL`).
+- The free space of the destination drive is checked before extracting (archive size plus a 64 MB reserve).
+- A failed or cancelled extraction removes the files it created; files that existed before are never removed.
 - Source files are sent to the **Recycle Bin**, never deleted permanently, and only after a fully successful run.
 - `par2.exe` is started without a shell, with arguments passed separately (no command injection), without a console window, and only from the path set by the user, the program folder or `PATH`.
 
@@ -53,3 +55,4 @@ Rar N Rush processes files downloaded from the Internet, which must be treated a
 ### Releases
 
 - Each release archive is published with its SHA-256 checksum. Verify it before use (see the README).
+- From v0.3.0, the archive and the executable carry a signed SLSA build provenance (GitHub artifact attestation, Sigstore): `gh attestation verify` proves they were built by the release workflow of this repository from the tagged commit.

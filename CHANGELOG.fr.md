@@ -6,6 +6,15 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+### Ajouté
+
+- L'espace libre du disque de destination est vérifié avant l'extraction : si le contenu de l'archive plus une réserve de 64 Mo ne tient pas, le jeu échoue avec un message clair (tailles nécessaire et disponible) au lieu d'une extraction à moitié écrite.
+- Les archives et exécutables des releases portent une provenance de build signée (attestation d'artefact GitHub) ; `gh attestation verify` la vérifie.
+
+### Corrigé
+
+- Une extraction en échec ou annulée ne laisse plus de fichiers derrière elle : tout ce qu'elle a créé est supprimé (les fichiers déjà présents sont conservés), donc **Réessayer** repart de zéro au lieu de produire des doublons `nom (1).ext`.
+
 ## [0.2.0] - 2026-11-14
 
 Expérience utilisateur : le dossier surveillé dans la fenêtre principale, les options de Par-N-Rar (rangement, zone de notification), les raccourcis clavier et des réglages plus sûrs.

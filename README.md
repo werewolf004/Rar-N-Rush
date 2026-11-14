@@ -35,6 +35,10 @@ Written in Rust with an [egui](https://github.com/emilk/egui) interface. The con
    ```powershell
    Get-FileHash .\rar-n-rush-vX.Y.Z-windows-x64.zip -Algorithm SHA256
    ```
+   From v0.3.0, you can also check that the archive was built by this repository's release workflow (signed build provenance, requires the [GitHub CLI](https://cli.github.com/)):
+   ```powershell
+   gh attestation verify .\rar-n-rush-vX.Y.Z-windows-x64.zip --repo werewolf004/Rar-N-Rush
+   ```
 3. Unzip it anywhere and run `rar-n-rush.exe`.
 4. For PAR2 repair, place `par2.exe` next to `rar-n-rush.exe`, add it to your `PATH`, or set its path in the settings.
 
@@ -86,7 +90,7 @@ The window reopens at the size and position it had when you closed it.
 |---|---|
 | [docs/OPTIONS.md](docs/OPTIONS.md) | Every setting: name, default, range, effect |
 | [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md) | Every dependency and why it is used |
-| [docs/THIRD-PARTY-LICENSES.md](docs/THIRD-PARTY-LICENSES.md) | All 220 crates in the binary, with licences |
+| [docs/THIRD-PARTY-LICENSES.md](docs/THIRD-PARTY-LICENSES.md) | All 222 crates in the binary, with licences |
 | [CHANGELOG.md](CHANGELOG.md) | Changes per release |
 | [ROADMAP.md](ROADMAP.md) | What comes next |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to build, test and contribute |

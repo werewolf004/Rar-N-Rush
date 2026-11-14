@@ -35,6 +35,10 @@ Rar N Rush surveille ton dossier de téléchargements. Pour chaque jeu de fichie
    ```powershell
    Get-FileHash .\rar-n-rush-vX.Y.Z-windows-x64.zip -Algorithm SHA256
    ```
+   À partir de la v0.3.0, tu peux aussi vérifier que l'archive a bien été produite par le workflow de release de ce dépôt (provenance de build signée, nécessite la [GitHub CLI](https://cli.github.com/)) :
+   ```powershell
+   gh attestation verify .\rar-n-rush-vX.Y.Z-windows-x64.zip --repo werewolf004/Rar-N-Rush
+   ```
 3. Décompresse-la où tu veux et lance `rar-n-rush.exe`.
 4. Pour la réparation PAR2, place `par2.exe` à côté de `rar-n-rush.exe`, ajoute-le au `PATH` ou indique son chemin dans les réglages.
 
@@ -86,7 +90,7 @@ La fenêtre se rouvre à la taille et à la position qu'elle avait à la fermetu
 |---|---|
 | [docs/OPTIONS.fr.md](docs/OPTIONS.fr.md) | Chaque réglage : nom, valeur par défaut, plage, effet |
 | [docs/DEPENDENCIES.fr.md](docs/DEPENDENCIES.fr.md) | Chaque dépendance et son rôle |
-| [docs/THIRD-PARTY-LICENSES.md](docs/THIRD-PARTY-LICENSES.md) | Les 220 crates du binaire, avec leurs licences |
+| [docs/THIRD-PARTY-LICENSES.md](docs/THIRD-PARTY-LICENSES.md) | Les 222 crates du binaire, avec leurs licences |
 | [CHANGELOG.fr.md](CHANGELOG.fr.md) | Les changements de chaque version |
 | [ROADMAP.fr.md](ROADMAP.fr.md) | La suite prévue |
 | [CONTRIBUTING.fr.md](CONTRIBUTING.fr.md) | Compiler, tester et contribuer |

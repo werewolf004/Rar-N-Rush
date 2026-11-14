@@ -5,7 +5,10 @@
 //!
 //! Safety rules applied to every entry:
 //! - absolute paths and `..` components are refused (no writes outside `dest`);
-//! - existing files are never overwritten unless asked: a free name is used instead.
+//! - existing files are never overwritten unless asked: a free name is used instead;
+//! - the free space of the destination drive is checked before writing anything;
+//! - when an extraction fails or is cancelled, the files it created are removed,
+//!   so a retry starts clean (files that existed before are never removed).
 
 use std::fs;
 use std::io;
@@ -21,6 +24,8 @@ use crate::sync::lock;
 const PROGRESS_INTERVAL: Duration = Duration::from_millis(250);
 /// Upper bound when looking for a free `name (n).ext`.
 const MAX_RENAME_ATTEMPTS: u32 = 10_000;
+/// Free space kept in reserve on the destination drive, on top of the archive size.
+pub const SPACE_MARGIN: u64 = 64 * 1024 * 1024;
 
 /// Options for [`extract`].
 #[derive(Debug, Clone, Copy, Default)]
@@ -88,6 +93,16 @@ pub enum ExtractError {
         #[source]
         source: io::Error,
     },
+    /// The destination drive does not have enough free space.
+    #[error("not enough free space in {dest}: {needed} bytes needed, {available} available")]
+    NotEnoughSpace {
+        /// Destination folder.
+        dest: PathBuf,
+        /// Bytes needed (archive content plus [`SPACE_MARGIN`]).
+        needed: u64,
+        /// Bytes available.
+        available: u64,
+    },
     /// The archive could not be read or an entry could not be written.
     #[error("{problem:?} in {archive}{}", entry.as_ref().map(|e| format!(" ({})", e.display())).unwrap_or_default())]
     Archive {
@@ -154,6 +169,51 @@ fn list(first: &Path, password: Option<&str>) -> Result<Vec<Entry>, UnrarError> 
         .collect()
 }
 
+/// Nearest existing folder at or above `path` (the destination may not exist yet).
+fn existing_ancestor(path: &Path) -> Option<&Path> {
+    path.ancestors().find(|p| p.is_dir())
+}
+
+/// Checks that the drive of `dest` can hold `size` bytes plus [`SPACE_MARGIN`].
+/// When the free space cannot be read, extraction is allowed: a full disk is still
+/// reported by `UnRAR` as a write error.
+fn check_space(dest: &Path, size: u64) -> Result<(), ExtractError> {
+    let Some(available) = existing_ancestor(dest).and_then(|dir| fs4::available_space(dir).ok()) else {
+        return Ok(());
+    };
+    let needed = size.saturating_add(SPACE_MARGIN);
+    if available < needed {
+        return Err(ExtractError::NotEnoughSpace {
+            dest: dest.to_path_buf(),
+            needed,
+            available,
+        });
+    }
+    Ok(())
+}
+
+/// A file written by an attempt.
+struct Created {
+    path: PathBuf,
+    /// The file was already there (overwrite enabled): never removed.
+    existed: bool,
+}
+
+/// Removes the files an attempt created (not those it overwrote), then the
+/// folders left empty under `dest`.
+fn remove_created(created: &[Created], dest: &Path) {
+    for file in created.iter().rev().filter(|c| !c.existed) {
+        let _ = fs::remove_file(&file.path);
+        let mut dir = file.path.parent();
+        while let Some(d) = dir.filter(|d| d.starts_with(dest) && *d != dest) {
+            if fs::remove_dir(d).is_err() {
+                break; // not empty
+            }
+            dir = d.parent();
+        }
+    }
+}
+
 /// Extracts `first` (first volume) into `dest`, trying `passwords` when needed.
 pub fn extract(
     first: &Path,
@@ -199,14 +259,21 @@ pub fn extract(
             },
         };
         let total: u64 = entries.iter().filter(|(_, dir)| !dir).map(|(s, _)| s).sum();
-        match extract_once(first, dest, password, total, options, cancel, &progress)? {
-            Attempt::Done(files) => return Ok(Outcome::Extracted(files)),
-            Attempt::Cancelled => return Ok(Outcome::Cancelled),
-            Attempt::WrongPassword(created) => {
-                // Remove what the wrong password produced, then try the next one.
-                for f in created.iter().rev() {
-                    let _ = fs::remove_file(f);
-                }
+        check_space(dest, total)?;
+        let (result, created) = extract_once(first, dest, password, total, options, cancel, &progress);
+        match result {
+            Ok(Attempt::Done) => {
+                return Ok(Outcome::Extracted(created.into_iter().map(|c| c.path).collect()));
+            }
+            // Remove what the wrong password produced, then try the next one.
+            Ok(Attempt::WrongPassword) => remove_created(&created, dest),
+            Ok(Attempt::Cancelled) => {
+                remove_created(&created, dest);
+                return Ok(Outcome::Cancelled);
+            }
+            Err(e) => {
+                remove_created(&created, dest);
+                return Err(e);
             }
         }
     }
@@ -214,8 +281,8 @@ pub fn extract(
 }
 
 enum Attempt {
-    Done(Vec<PathBuf>),
-    WrongPassword(Vec<PathBuf>),
+    Done,
+    WrongPassword,
     Cancelled,
 }
 
@@ -233,11 +300,15 @@ fn extract_once(
     options: Options,
     cancel: &AtomicBool,
     progress: &(impl Fn(f32) + Sync),
-) -> Result<Attempt, ExtractError> {
-    fs::create_dir_all(dest).map_err(|source| ExtractError::CreateDir {
-        path: dest.to_path_buf(),
-        source,
-    })?;
+) -> (Result<Attempt, ExtractError>, Vec<Created>) {
+    let mut created = Vec::new();
+    if let Err(source) = fs::create_dir_all(dest) {
+        let error = ExtractError::CreateDir {
+            path: dest.to_path_buf(),
+            source,
+        };
+        return (Err(error), created);
+    }
     let total = total.max(1);
     let shared = Shared {
         done_bytes: AtomicU64::new(0),
@@ -256,9 +327,9 @@ fn extract_once(
                 std::thread::sleep(PROGRESS_INTERVAL);
             }
         });
-        let result = run_entries(first, dest, password, options, cancel, &shared);
+        let result = run_entries(first, dest, password, options, cancel, &shared, &mut created);
         shared.finished.store(true, Ordering::Relaxed);
-        result
+        (result, created)
     })
 }
 
@@ -269,6 +340,7 @@ fn run_entries(
     options: Options,
     cancel: &AtomicBool,
     shared: &Shared,
+    created: &mut Vec<Created>,
 ) -> Result<Attempt, ExtractError> {
     let err = |entry: Option<&Path>, code: Code| ExtractError::Archive {
         archive: first.to_path_buf(),
@@ -281,10 +353,9 @@ fn run_entries(
     };
     let mut open = match archive.open_for_processing() {
         Ok(a) => a,
-        Err(e) if is_password_error(&e) => return Ok(Attempt::WrongPassword(Vec::new())),
+        Err(e) if is_password_error(&e) => return Ok(Attempt::WrongPassword),
         Err(e) => return Err(err(None, e.code)),
     };
-    let mut created: Vec<PathBuf> = Vec::new();
     loop {
         if cancel.load(Ordering::Relaxed) {
             return Ok(Attempt::Cancelled);
@@ -292,7 +363,7 @@ fn run_entries(
         let header = match open.read_header() {
             Ok(Some(h)) => h,
             Ok(None) => break,
-            Err(e) if is_password_error(&e) => return Ok(Attempt::WrongPassword(created)),
+            Err(e) if is_password_error(&e) => return Ok(Attempt::WrongPassword),
             Err(e) => return Err(err(None, e.code)),
         };
         let entry = header.entry();
@@ -317,21 +388,24 @@ fn run_entries(
             })?;
         }
         *lock(&shared.current) = Some(target.clone());
-        created.push(target.clone());
+        created.push(Created {
+            existed: target.exists(),
+            path: target.clone(),
+        });
         open = match header.extract_to(&target) {
             Ok(a) => a,
             // RAR4 reports a wrong password as a CRC error on encrypted entries.
             Err(e)
                 if is_password_error(&e) || (encrypted && password.is_some() && e.code == Code::BadData) =>
             {
-                return Ok(Attempt::WrongPassword(created));
+                return Ok(Attempt::WrongPassword);
             }
             Err(e) => return Err(err(Some(&rel), e.code)),
         };
         *lock(&shared.current) = None;
         shared.done_bytes.fetch_add(size, Ordering::Relaxed);
     }
-    Ok(Attempt::Done(created))
+    Ok(Attempt::Done)
 }
 
 #[cfg(test)]
@@ -347,6 +421,46 @@ mod tests {
         assert!(!is_safe_relative(Path::new("C:\\Windows\\x.dll")));
         assert!(!is_safe_relative(Path::new("\\x")));
         assert!(!is_safe_relative(Path::new("")));
+    }
+
+    #[test]
+    fn space_check_uses_the_nearest_existing_folder() {
+        let dir = tempfile::tempdir().unwrap();
+        let deep = dir.path().join("not").join("yet").join("created");
+        assert_eq!(existing_ancestor(&deep), Some(dir.path()));
+        assert!(check_space(&deep, 1).is_ok());
+        match check_space(&deep, u64::MAX - 1) {
+            Err(ExtractError::NotEnoughSpace {
+                needed, available, ..
+            }) => {
+                assert_eq!(needed, u64::MAX, "saturates instead of overflowing");
+                assert!(available < needed);
+            }
+            other => panic!("expected NotEnoughSpace, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn only_new_files_and_their_empty_folders_are_removed() {
+        let dir = tempfile::tempdir().unwrap();
+        let dest = dir.path().join("out");
+        fs::create_dir_all(dest.join("sub")).unwrap();
+        fs::write(dest.join("sub").join("new.txt"), b"new").unwrap();
+        fs::write(dest.join("kept.txt"), b"was there").unwrap();
+        let created = [
+            Created {
+                path: dest.join("kept.txt"),
+                existed: true,
+            },
+            Created {
+                path: dest.join("sub").join("new.txt"),
+                existed: false,
+            },
+        ];
+        remove_created(&created, &dest);
+        assert!(dest.join("kept.txt").is_file());
+        assert!(!dest.join("sub").exists());
+        assert!(dest.is_dir(), "the destination itself stays");
     }
 
     #[test]

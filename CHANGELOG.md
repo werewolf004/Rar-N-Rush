@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- The free space of the destination drive is checked before extracting: when the archive content plus a 64 MB reserve does not fit, the set fails with a clear message (needed and available sizes) instead of a half-written extraction.
+- Release archives and executables carry a signed build provenance (GitHub artifact attestation); `gh attestation verify` checks it.
+
+### Fixed
+
+- A failed or cancelled extraction no longer leaves files behind: everything it created is removed (files that existed before are kept), so **Retry** starts clean instead of producing `name (1).ext` duplicates.
+
 ## [0.2.0] - 2026-11-14
 
 User experience: the watched folder in the main window, the Par-N-Rar options (tidy-up, notification area), keyboard shortcuts and safer settings.
