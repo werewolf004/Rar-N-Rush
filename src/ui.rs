@@ -3,8 +3,8 @@
 use crate::engine::{Command, Engine, EngineState, Job, LogLine, Status};
 use crate::i18n::{Lang, Localize, Texts};
 use crate::settings::{
-    LanguagePref, LoadIssue, SCAN_INTERVAL_RANGE, STABLE_RANGE, Settings, Store, ThemePref, WindowGeometry,
-    is_writable,
+    LanguagePref, LoadIssue, SCAN_INTERVAL_RANGE, STABLE_RANGE, Settings, SettingsError, Store, ThemePref,
+    WindowGeometry, is_writable,
 };
 use crate::tray::{self, Request, Tray, WindowAction, WindowInput};
 use eframe::egui::{self, Color32, RichText};
@@ -33,6 +33,9 @@ pub struct App {
     watch_error: Option<String>,
     /// Problem found in the settings file at start-up, shown until dismissed.
     load_issue: Option<LoadIssue>,
+    /// Warning raised while running (e.g. passwords kept in the file), shown in
+    /// the same banner until dismissed.
+    warning: Option<String>,
     /// Last set scrolled into view, so the list follows each new active set once
     /// and the user stays free to scroll in between.
     followed: Option<u64>,
@@ -146,6 +149,7 @@ impl App {
             watch_dirty: false,
             watch_error: None,
             load_issue,
+            warning: None,
             followed: None,
             tray: None,
             tray_error: None,
@@ -275,9 +279,14 @@ impl App {
     /// so what the user sees always matches the file. Returns the localised error.
     fn apply_settings(&mut self, ctx: &egui::Context, settings: Settings) -> Result<(), String> {
         let settings = settings.validated();
-        self.store
-            .save_settings(&settings)
-            .map_err(|e| self.lang.save_failed(&e.to_string()))?;
+        match self.store.save_settings(&settings) {
+            Ok(()) => {}
+            // Saved, with the passwords in the file: apply, and say so.
+            Err(SettingsError::PasswordsNotStored(e)) => {
+                self.warning = Some(self.lang.passwords_in_file(&e.to_string()));
+            }
+            Err(e) => return Err(self.lang.save_failed(&e.to_string())),
+        }
         self.lang = Lang::resolve(settings.language);
         if self.theme != settings.theme {
             self.theme = settings.theme;
@@ -430,8 +439,13 @@ impl App {
 
     /// Warning shown when the settings file had a problem at start-up.
     fn load_issue_banner(&mut self, ui: &mut egui::Ui, dark: bool) {
-        let Some(issue) = &self.load_issue else { return };
-        let text = issue.localize(self.lang);
+        let Some(text) = self
+            .warning
+            .clone()
+            .or_else(|| self.load_issue.as_ref().map(|i| i.localize(self.lang)))
+        else {
+            return;
+        };
         let mut dismiss = false;
         ui.add_space(4.0);
         ui.horizontal_wrapped(|ui| {
@@ -443,7 +457,8 @@ impl App {
             dismiss = ui.button(self.texts().ok).clicked();
         });
         ui.add_space(4.0);
-        if dismiss {
+        // The warning (newest) goes first, then the start-up problem.
+        if dismiss && self.warning.take().is_none() {
             self.load_issue = None;
         }
     }
@@ -624,7 +639,11 @@ impl App {
                                 .desired_rows(3)
                                 .desired_width(f32::INFINITY),
                         );
-                        ui.weak(t.passwords_hint);
+                        ui.weak(if self.store.has_vault() {
+                            t.passwords_hint_vault
+                        } else {
+                            t.passwords_hint
+                        });
                     }
                     SettingsTab::Window => window_toggles(ui, &mut draft, t),
                 }
@@ -932,7 +951,7 @@ impl eframe::App for App {
         self.shortcuts(&ctx, &snap);
 
         egui::Panel::top("toolbar").show(root, |ui| self.toolbar(ui, &snap));
-        if self.load_issue.is_some() {
+        if self.load_issue.is_some() || self.warning.is_some() {
             egui::Panel::top("load_issue").show(root, |ui| self.load_issue_banner(ui, dark));
         }
         egui::Panel::bottom("log")

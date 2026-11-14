@@ -43,7 +43,8 @@ Rar N Rush traite des fichiers téléchargés depuis Internet, qu'il faut consid
 - Un fichier de réglages existant est toujours retrouvé, à côté de l'exécutable ou dans `%APPDATA%\RarNRush`, même après un déplacement de l'exécutable.
 - Les réglages et la liste des jeux traités sont écrits de façon atomique (fichier temporaire puis renommage) : un plantage ne peut pas laisser un fichier tronqué.
 - Un jeu est enregistré comme traité **avant** que son statut ne s'affiche : un plantage ne peut pas provoquer un double traitement.
-- **Limite connue** : les mots de passe d'archives sont stockés en clair dans `rar-n-rush.toml`, comme indiqué sous le champ dans la fenêtre des réglages. Leur passage dans le Gestionnaire d'identifiants Windows est prévu en v0.3.0.
+- Les mots de passe d'archives sont conservés dans le Gestionnaire d'identifiants Windows (protégé par ton compte Windows), et non dans `rar-n-rush.toml`. L'écriture résiste aux plantages : une nouvelle copie est écrite, puis activée, puis l'ancienne est supprimée. Si le Gestionnaire d'identifiants est indisponible, les mots de passe restent en clair dans le fichier de réglages pour qu'aucun ne soit perdu, et la fenêtre l'indique.
+- **Limite connue** : les copies de sauvegarde du fichier de réglages faites par les versions précédentes (`rar-n-rush.toml.<date-heure>.bak`) peuvent encore contenir des mots de passe en clair ; supprime-les si besoin.
 
 ### Code tiers
 

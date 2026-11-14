@@ -65,7 +65,9 @@ The settings window has three pages: **General** (folders, timing, language, the
 |---|---|---|---|---|
 | `passwords` | Passwords to try (one per line) | list of text | `[]` | Tried in order on protected archives. A password typed in a row of the main window is tried first. |
 
-> **Warning**: in this version, passwords are stored in plain text in `rar-n-rush.toml`. Moving them to the Windows Credential Manager is planned for v0.3.0 (see [ROADMAP.md](../ROADMAP.md)).
+> Since v0.3.0, passwords are kept in the **Windows Credential Manager** (entries `passwords*.RarNRush`, visible in Control Panel → Credential Manager → Windows Credentials), not in `rar-n-rush.toml`. Passwords found in the file of an older version are moved there at start-up; the file is rewritten without them once the Credential Manager has been read back with the full list.
+>
+> If the Credential Manager cannot be used, nothing is lost: the passwords stay in the settings file (in plain text, as before), the hint under the field says so, and a banner explains why.
 
 ## After a successful run *(Processing page)*
 

@@ -5,11 +5,13 @@
 //! Every write is atomic: data goes to a temporary file which then replaces the
 //! target, so a crash never leaves a truncated settings file behind.
 
+use crate::secrets::{SecretError, SecretVault};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 /// Settings file name.
 pub const SETTINGS_FILE: &str = "rar-n-rush.toml";
@@ -47,6 +49,10 @@ pub enum SettingsError {
     /// The settings could not be serialised.
     #[error("cannot serialise settings: {0}")]
     Serialize(#[from] toml::ser::Error),
+    /// The settings were saved, but the passwords could not be put in the
+    /// Credential Manager: they were kept in the settings file so none is lost.
+    #[error("passwords kept in the settings file: {0}")]
+    PasswordsNotStored(#[source] SecretError),
 }
 
 /// User settings. Every field has a default, so older files keep loading.
@@ -77,7 +83,10 @@ pub struct Settings {
     pub scan_interval_secs: u64,
     /// Seconds a set must stay unchanged before it is processed.
     pub stable_secs: u64,
-    /// Passwords tried automatically on protected archives.
+    /// Passwords tried automatically on protected archives. Kept in the Windows
+    /// Credential Manager; written to the settings file only when the Credential
+    /// Manager is unavailable (see [`Store::save_settings`]).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub passwords: Vec<String>,
     /// Start monitoring when the application starts.
     pub autostart: bool,
@@ -267,16 +276,34 @@ fn non_empty_path(s: &str) -> Option<PathBuf> {
     (!t.is_empty()).then(|| PathBuf::from(t))
 }
 
-/// Folder holding the settings and state files.
+/// Folder holding the settings and state files, and the password vault.
 #[derive(Debug, Clone)]
 pub struct Store {
     dir: PathBuf,
+    /// Where archive passwords live. `None`: in the settings file (tests, or the
+    /// Credential Manager could not be opened).
+    vault: Option<Arc<dyn SecretVault>>,
 }
 
 impl Store {
     /// Store in an explicit folder (used by tests and portable setups).
     pub fn at(dir: impl Into<PathBuf>) -> Self {
-        Self { dir: dir.into() }
+        Self {
+            dir: dir.into(),
+            vault: None,
+        }
+    }
+
+    /// Keeps archive passwords in `vault` instead of the settings file.
+    #[must_use]
+    pub fn with_vault(mut self, vault: Arc<dyn SecretVault>) -> Self {
+        self.vault = Some(vault);
+        self
+    }
+
+    /// `true` when passwords are kept in a vault rather than in the settings file.
+    pub fn has_vault(&self) -> bool {
+        self.vault.is_some()
     }
 
     /// Finds the settings folder for this computer (see [`Store::locate_in`]):
@@ -302,14 +329,14 @@ impl Store {
         if let Some(dir) = &portable
             && dir.join(SETTINGS_FILE).is_file()
         {
-            return Self { dir: dir.clone() };
+            return Self::at(dir.clone());
         }
         if fallback.join(SETTINGS_FILE).is_file() {
-            return Self { dir: fallback };
+            return Self::at(fallback);
         }
         match portable {
-            Some(dir) if is_writable(&dir) => Self { dir },
-            _ => Self { dir: fallback },
+            Some(dir) if is_writable(&dir) => Self::at(dir),
+            _ => Self::at(fallback),
         }
     }
 
@@ -321,7 +348,49 @@ impl Store {
     ///
     /// Whenever something is reset, the original file is copied to a backup
     /// before anything can overwrite it.
+    ///
+    /// With a vault, its passwords are added to the settings, and passwords
+    /// still found in the file (older versions) are moved into it.
     pub fn load(&self) -> Loaded {
+        let mut loaded = self.load_file();
+        if let Some(vault) = &self.vault
+            && let Err(e) = self.merge_vault(vault.as_ref(), &mut loaded.settings)
+        {
+            loaded
+                .issue
+                .get_or_insert(LoadIssue::Vault { error: e.to_string() });
+        }
+        loaded
+    }
+
+    /// Adds the vault's passwords to `settings`, then moves the passwords found in
+    /// the settings file into the vault. The file is rewritten without them only
+    /// once the vault was read back with the full list.
+    fn merge_vault(&self, vault: &dyn SecretVault, settings: &mut Settings) -> Result<(), SecretError> {
+        // Read the vault first: if it fails, the passwords of the file stay in use.
+        let mut merged = vault.load()?;
+        let from_file = std::mem::take(&mut settings.passwords);
+        for p in &from_file {
+            if !merged.contains(p) {
+                merged.push(p.clone());
+            }
+        }
+        settings.passwords.clone_from(&merged);
+        if from_file.is_empty() {
+            return Ok(());
+        }
+        vault.save(&merged)?;
+        if vault.load()? == merged {
+            let mut file = settings.clone();
+            file.passwords.clear();
+            // If this write fails, the file keeps its passwords and the move is
+            // simply done again at the next start.
+            let _ = self.write_settings_file(&file);
+        }
+        Ok(())
+    }
+
+    fn load_file(&self) -> Loaded {
         let path = self.dir.join(SETTINGS_FILE);
         let text = match fs::read_to_string(&path) {
             Ok(text) => text,
@@ -383,8 +452,27 @@ impl Store {
         }
     }
 
-    /// Saves settings atomically.
+    /// Saves settings atomically. With a vault, the passwords go to the vault and
+    /// not to the file; if the vault fails, they are written to the file (so none
+    /// is ever lost) and [`SettingsError::PasswordsNotStored`] is returned.
     pub fn save_settings(&self, settings: &Settings) -> Result<(), SettingsError> {
+        let Some(vault) = &self.vault else {
+            return self.write_settings_file(settings);
+        };
+        match vault.save(&settings.passwords) {
+            Ok(()) => {
+                let mut file = settings.clone();
+                file.passwords.clear();
+                self.write_settings_file(&file)
+            }
+            Err(e) => {
+                self.write_settings_file(settings)?;
+                Err(SettingsError::PasswordsNotStored(e))
+            }
+        }
+    }
+
+    fn write_settings_file(&self, settings: &Settings) -> Result<(), SettingsError> {
         let text = toml::to_string_pretty(settings)?;
         self.write_atomic(SETTINGS_FILE, text.as_bytes())
     }
@@ -476,6 +564,12 @@ pub enum LoadIssue {
         keys: Vec<String>,
         /// Copy of the original file, if it could be made.
         backup: Option<PathBuf>,
+    },
+    /// The Windows Credential Manager could not be read: its passwords are not
+    /// available in this session (they are not deleted).
+    Vault {
+        /// System error message.
+        error: String,
     },
 }
 
@@ -581,6 +675,91 @@ mod tests {
         let s = s.validated();
         assert_eq!(s.recent_watch_dirs.len(), RECENT_WATCH_DIRS_MAX);
         assert_eq!(s.recent_watch_dirs[0], "D:\\in24");
+    }
+
+    /// A vault that always fails, like a locked or unavailable Credential Manager.
+    #[derive(Debug)]
+    struct BrokenVault;
+
+    impl SecretVault for BrokenVault {
+        fn load(&self) -> Result<Vec<String>, SecretError> {
+            Err(SecretError::Vault("locked".into()))
+        }
+        fn save(&self, _: &[String]) -> Result<(), SecretError> {
+            Err(SecretError::Vault("locked".into()))
+        }
+    }
+
+    fn vault_store(dir: &Path) -> (Store, Arc<crate::secrets::ChunkedVault>) {
+        let vault = Arc::new(crate::secrets::ChunkedVault::in_memory());
+        (Store::at(dir).with_vault(vault.clone()), vault)
+    }
+
+    #[test]
+    fn passwords_go_to_the_vault_not_the_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let (store, vault) = vault_store(dir.path());
+        let s = Settings {
+            watch_dir: "D:\\in".into(),
+            passwords: vec!["secret".into()],
+            ..Settings::default()
+        };
+        store.save_settings(&s).unwrap();
+        let text = fs::read_to_string(dir.path().join(SETTINGS_FILE)).unwrap();
+        assert!(!text.contains("secret") && !text.contains("passwords"), "{text}");
+        assert_eq!(vault.load().unwrap(), vec!["secret".to_owned()]);
+        assert_eq!(store.load(), Loaded::clean(s));
+    }
+
+    #[test]
+    fn passwords_from_an_older_file_are_moved_to_the_vault() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(
+            dir.path().join(SETTINGS_FILE),
+            "watch_dir = 'D:\\in'\npasswords = ['legacy-secret', 'shared']\n",
+        )
+        .unwrap();
+        let (store, vault) = vault_store(dir.path());
+        vault
+            .save(&["shared".to_owned(), "vault-only".to_owned()])
+            .unwrap();
+
+        let loaded = store.load();
+        assert_eq!(loaded.issue, None);
+        assert_eq!(loaded.settings.watch_dir, "D:\\in");
+        assert_eq!(
+            loaded.settings.passwords,
+            vec!["shared", "vault-only", "legacy-secret"]
+        );
+        assert_eq!(vault.load().unwrap(), loaded.settings.passwords);
+        let text = fs::read_to_string(dir.path().join(SETTINGS_FILE)).unwrap();
+        assert!(
+            !text.contains("legacy-secret"),
+            "plain-text passwords removed from the file: {text}"
+        );
+        let from_file = Store::at(dir.path()).load_settings().unwrap();
+        assert_eq!(from_file.watch_dir, "D:\\in", "other settings kept");
+        assert_eq!(from_file.passwords, Vec::<String>::new());
+    }
+
+    #[test]
+    fn unavailable_vault_never_loses_passwords() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::at(dir.path()).with_vault(Arc::new(BrokenVault));
+        let s = Settings {
+            passwords: vec!["keep-me".into()],
+            ..Settings::default()
+        };
+        assert!(matches!(
+            store.save_settings(&s),
+            Err(SettingsError::PasswordsNotStored(_))
+        ));
+        // Saved in the file instead, and found again at the next start.
+        let loaded = store.load();
+        assert_eq!(loaded.settings.passwords, vec!["keep-me".to_owned()]);
+        assert!(matches!(loaded.issue, Some(LoadIssue::Vault { .. })));
+        let text = fs::read_to_string(dir.path().join(SETTINGS_FILE)).unwrap();
+        assert!(text.contains("keep-me"));
     }
 
     #[test]

@@ -15,8 +15,8 @@ Dossier surveillé modifiable dans la fenêtre principale avec les dossiers réc
 ## v0.3.0 — Données et sécurité
 
 - Reporté de la v0.2.0 : navigation complète de la liste au clavier et Suppr pour retirer ; confirmation avant les actions destructrices et notifications non bloquantes ; mise à l'échelle DPI testée de 100 à 200 % ; tests de capture des écrans principaux.
-- Mots de passe d'archives stockés dans le Gestionnaire d'identifiants Windows au lieu du fichier de réglages.
-- Vérification de l'espace libre avant extraction ; nettoyage des fichiers partiels en cas d'échec.
+- ✅ Mots de passe d'archives stockés dans le Gestionnaire d'identifiants Windows au lieu du fichier de réglages.
+- ✅ Vérification de l'espace libre avant extraction ; nettoyage des fichiers partiels en cas d'échec.
 - Fuzzing des parseurs PAR2 et SFV (`cargo fuzz`), tests de propriétés pour le regroupement des noms.
 - Export et rotation du journal ; aucun secret jamais écrit dans le journal.
 - Sommes de contrôle des releases signées (Sigstore / attestations d'artefacts GitHub).

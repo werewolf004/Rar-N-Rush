@@ -90,7 +90,7 @@ The window reopens at the size and position it had when you closed it.
 |---|---|
 | [docs/OPTIONS.md](docs/OPTIONS.md) | Every setting: name, default, range, effect |
 | [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md) | Every dependency and why it is used |
-| [docs/THIRD-PARTY-LICENSES.md](docs/THIRD-PARTY-LICENSES.md) | All 222 crates in the binary, with licences |
+| [docs/THIRD-PARTY-LICENSES.md](docs/THIRD-PARTY-LICENSES.md) | All 226 crates in the binary, with licences |
 | [CHANGELOG.md](CHANGELOG.md) | Changes per release |
 | [ROADMAP.md](ROADMAP.md) | What comes next |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to build, test and contribute |

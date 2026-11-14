@@ -62,6 +62,18 @@ impl Lang {
         }
     }
 
+    /// Warning shown when the passwords had to stay in the settings file.
+    pub fn passwords_in_file(self, error: &str) -> String {
+        match self {
+            Self::En => format!(
+                "Settings saved, but the archive passwords could not be stored in the Windows Credential Manager ({error}). They were kept in the settings file, in plain text."
+            ),
+            Self::Fr => format!(
+                "Réglages enregistrés, mais les mots de passe d'archives n'ont pas pu être placés dans le Gestionnaire d'identifiants Windows ({error}). Ils ont été conservés en clair dans le fichier de réglages."
+            ),
+        }
+    }
+
     /// Settings save failure.
     pub fn save_failed(self, error: &str) -> String {
         match self {
@@ -160,6 +172,7 @@ pub struct Texts {
     pub tray_failed: &'static str,
     pub passwords: &'static str,
     pub passwords_hint: &'static str,
+    pub passwords_hint_vault: &'static str,
     pub language: &'static str,
     pub theme: &'static str,
     pub follow_system: &'static str,
@@ -250,7 +263,8 @@ static EN: Texts = Texts {
     tray_quit: "Quit",
     tray_failed: "The notification area icon could not be created:",
     passwords: "Passwords to try (one per line)",
-    passwords_hint: "Stored in plain text in the settings file.",
+    passwords_hint: "Stored in plain text in the settings file (the Windows Credential Manager is unavailable).",
+    passwords_hint_vault: "Stored in the Windows Credential Manager, not in the settings file.",
     language: "Language",
     theme: "Theme",
     follow_system: "Follow Windows",
@@ -341,7 +355,8 @@ static FR: Texts = Texts {
     tray_quit: "Quitter",
     tray_failed: "Impossible de créer l'icône de la zone de notification :",
     passwords: "Mots de passe à essayer (un par ligne)",
-    passwords_hint: "Stockés en clair dans le fichier de réglages.",
+    passwords_hint: "Stockés en clair dans le fichier de réglages (le Gestionnaire d'identifiants Windows est indisponible).",
+    passwords_hint_vault: "Stockés dans le Gestionnaire d'identifiants Windows, pas dans le fichier de réglages.",
     language: "Langue",
     theme: "Thème",
     follow_system: "Suivre Windows",
@@ -605,6 +620,12 @@ impl Localize for LoadIssue {
                 "Des valeurs invalides ont été remises par défaut : {}. Tes autres réglages ont été conservés.{}",
                 keys.join(", "),
                 backup_note(backup)
+            ),
+            (Self::Vault { error }, Lang::En) => format!(
+                "The Windows Credential Manager could not be read ({error}). Your saved archive passwords are not available in this session; they were not deleted."
+            ),
+            (Self::Vault { error }, Lang::Fr) => format!(
+                "Le Gestionnaire d'identifiants Windows est illisible ({error}). Tes mots de passe d'archives enregistrés ne sont pas disponibles pour cette session ; ils n'ont pas été supprimés."
             ),
         }
     }

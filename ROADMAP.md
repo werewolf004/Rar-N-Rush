@@ -15,8 +15,8 @@ Watched folder editable in the main window with recent folders; Par-N-Rar option
 ## v0.3.0 — Data and security
 
 - Carried over from v0.2.0: full keyboard navigation of the list and Del to remove; confirmation before destructive actions and non-blocking toasts; DPI scaling tested at 100–200 %; snapshot tests of the main screens.
-- Archive passwords stored in the Windows Credential Manager instead of the settings file.
-- Free-space check before extraction; clean-up of partial files on failure.
+- ✅ Archive passwords stored in the Windows Credential Manager instead of the settings file.
+- ✅ Free-space check before extraction; clean-up of partial files on failure.
 - Fuzzing of the PAR2 and SFV parsers (`cargo fuzz`), property tests for name grouping.
 - Log export and rotation; no secret ever written to the log.
 - Signed release checksums (Sigstore / GitHub artifact attestations).

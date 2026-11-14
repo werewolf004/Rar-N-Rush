@@ -9,6 +9,7 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 ### Ajouté
 
 - L'espace libre du disque de destination est vérifié avant l'extraction : si le contenu de l'archive plus une réserve de 64 Mo ne tient pas, le jeu échoue avec un message clair (tailles nécessaire et disponible) au lieu d'une extraction à moitié écrite.
+- **Les mots de passe d'archives sont conservés dans le Gestionnaire d'identifiants Windows**, et non plus en clair dans `rar-n-rush.toml`. Ceux d'un ancien fichier de réglages y sont déplacés au lancement. Si le Gestionnaire d'identifiants est indisponible, ils restent dans le fichier pour qu'aucun ne soit perdu, et la fenêtre l'indique.
 - Les archives et exécutables des releases portent une provenance de build signée (attestation d'artefact GitHub) ; `gh attestation verify` la vérifie.
 
 ### Corrigé

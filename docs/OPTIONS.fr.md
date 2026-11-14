@@ -65,7 +65,9 @@ La fenêtre des réglages a trois pages : **Général** (dossiers, délais, lang
 |---|---|---|---|---|
 | `passwords` | Mots de passe à essayer (un par ligne) | liste de textes | `[]` | Essayés dans l'ordre sur les archives protégées. Un mot de passe saisi dans une ligne de la fenêtre principale est essayé en premier. |
 
-> **Attention** : dans cette version, les mots de passe sont stockés en clair dans `rar-n-rush.toml`. Leur passage dans le Gestionnaire d'identifiants Windows est prévu en v0.3.0 (voir [ROADMAP.fr.md](../ROADMAP.fr.md)).
+> Depuis la v0.3.0, les mots de passe sont conservés dans le **Gestionnaire d'identifiants Windows** (entrées `passwords*.RarNRush`, visibles dans Panneau de configuration → Gestionnaire d'identification → Informations d'identification Windows), et non dans `rar-n-rush.toml`. Les mots de passe trouvés dans le fichier d'une version précédente y sont déplacés au lancement ; le fichier n'est réécrit sans eux qu'une fois le Gestionnaire relu avec la liste complète.
+>
+> Si le Gestionnaire d'identifiants est inutilisable, rien n'est perdu : les mots de passe restent dans le fichier de réglages (en clair, comme avant), l'aide sous le champ l'indique et un bandeau explique pourquoi.
 
 ## Après un traitement réussi *(page Traitement)*
 

@@ -20,6 +20,7 @@ pub mod i18n;
 pub mod icon;
 pub mod par2;
 pub mod scan;
+pub mod secrets;
 pub mod settings;
 pub mod sfv;
 mod sync;

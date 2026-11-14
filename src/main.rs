@@ -4,11 +4,18 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use rar_n_rush::engine::Engine;
+use rar_n_rush::secrets::ChunkedVault;
 use rar_n_rush::settings::Store;
 use rar_n_rush::ui::App;
+use std::sync::Arc;
 
 fn main() -> eframe::Result {
-    let store = Store::locate();
+    // Archive passwords live in the Windows Credential Manager. If it cannot be
+    // opened, they stay in the settings file, as before.
+    let store = match ChunkedVault::windows() {
+        Ok(vault) => Store::locate().with_vault(Arc::new(vault)),
+        Err(_) => Store::locate(),
+    };
     // Never fails: invalid values are reset one by one, the original file is backed
     // up, and the problem is shown to the user in a banner.
     let loaded = store.load();
