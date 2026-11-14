@@ -16,11 +16,9 @@ Watched folder editable in the main window with recent folders; Par-N-Rar option
 
 Archive passwords in the Windows Credential Manager (migrated from the settings file, never lost); free-space check before extraction and clean-up of failed extractions; log file with rotation and export, with no secret ever written; signed build provenance for releases; property tests and `cargo fuzz` targets for every parser of untrusted input; keyboard navigation of the list, non-blocking notices and confirmation before overwriting.
 
-## v0.4.0 — Complete PAR2
+## ✅ v0.4.0 — Complete PAR2
 
-- ✅ Carried over from v0.3.0: pixel snapshot tests of the main screens, rendered without a GPU by Windows' software rasterizer (WARP), so they run in CI.
-- ✅ End-to-end tests with a real `par2` (pinned version and checksum) in CI: damaged and missing files, repair, not enough blocks.
-- ✅ par2cmdline-turbo shipped in the release zip (pinned version and checksum, licence and source included) instead of a download from the settings: the application stays fully offline.
+par2cmdline-turbo shipped in the release zip (pinned version and SHA-256, licence and source included; the application stays offline); end-to-end tests with the real par2 in CI (damaged and missing volumes, not enough blocks, waiting for recovery volumes); pixel snapshot tests of the main screens without a GPU; accessible names for every settings field.
 
 ## v0.5.0 — Windows integration
 

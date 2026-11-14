@@ -16,11 +16,9 @@ Dossier surveillé modifiable dans la fenêtre principale avec les dossiers réc
 
 Mots de passe d'archives dans le Gestionnaire d'identifiants Windows (migrés depuis le fichier de réglages, jamais perdus) ; vérification de l'espace libre avant extraction et nettoyage des extractions en échec ; fichier journal avec rotation et export, sans aucun secret écrit ; provenance de build signée pour les releases ; tests de propriétés et cibles `cargo fuzz` pour chaque parseur de données non fiables ; navigation de la liste au clavier, messages non bloquants et confirmation avant l'écrasement.
 
-## v0.4.0 — PAR2 complet
+## ✅ v0.4.0 — PAR2 complet
 
-- ✅ Reporté de la v0.3.0 : tests de capture pixel par pixel des écrans principaux, rendus sans GPU par le rasteriseur logiciel de Windows (WARP) : ils tournent en CI.
-- ✅ Tests de bout en bout avec un vrai `par2` (version et somme de contrôle figées) en CI : fichiers abîmés ou manquants, réparation, blocs insuffisants.
-- ✅ par2cmdline-turbo fourni dans le zip de release (version et somme de contrôle figées, licence et source incluses) au lieu d'un téléchargement depuis les réglages : l'application reste entièrement hors ligne.
+par2cmdline-turbo fourni dans le zip de release (version et SHA-256 figés, licence et source incluses ; l'application reste hors ligne) ; tests de bout en bout avec le vrai par2 en CI (volumes abîmés ou manquants, blocs insuffisants, attente des volumes de récupération) ; tests de capture pixel par pixel des écrans principaux sans GPU ; noms accessibles pour chaque champ des réglages.
 
 ## v0.5.0 — Intégration Windows
 

@@ -6,6 +6,10 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+## [0.4.0] - 2026-11-14
+
+PAR2 complet : par2cmdline-turbo fourni dans le zip, tests de bout en bout avec le vrai par2, et tests de capture pixel par pixel des écrans principaux.
+
 ### Ajouté
 
 - Le zip de release contient `par2.exe` (par2cmdline-turbo 1.5.0, GPL-2.0, non modifié) à côté de `rar-n-rush.exe`, avec sa licence ; son archive source est jointe à la release. La réparation PAR2 marche sans rien installer, et Rar N Rush ne télécharge toujours rien.
@@ -95,7 +99,8 @@ Première version publique : toute la chaîne de traitement, des fondations qual
 
 - `#![forbid(unsafe_code)]` sur tout le crate ; `unwrap`, `expect` et `panic` sont interdits hors des tests.
 
-[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.3.0...HEAD
+[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/werewolf004/Rar-N-Rush/releases/tag/v0.1.0
