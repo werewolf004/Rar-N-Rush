@@ -12,6 +12,7 @@ use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Settings file name.
 pub const SETTINGS_FILE: &str = "rar-n-rush.toml";
@@ -59,6 +60,16 @@ pub enum SettingsError {
     /// Credential Manager: they were kept in the settings file so none is lost.
     #[error("passwords kept in the settings file: {0}")]
     PasswordsNotStored(#[source] SecretError),
+    /// The existing settings file cannot be read and could not be moved aside,
+    /// so it is not replaced: the user's settings would be lost.
+    #[error("{path} cannot be read ({source}); it is kept as it is and not replaced")]
+    KeptUnreadable {
+        /// Settings file.
+        path: PathBuf,
+        /// Why it cannot be read.
+        #[source]
+        source: io::Error,
+    },
 }
 
 /// User settings. Every field has a default, so older files keep loading.
@@ -301,6 +312,10 @@ pub struct Store {
     /// Where archive passwords live. `None`: in the settings file (tests, or the
     /// Credential Manager could not be opened).
     vault: Option<Arc<dyn SecretVault>>,
+    /// Set when the vault could not be read at start-up: it is then never
+    /// written, since saving the (incomplete) list would erase the passwords
+    /// it still holds.
+    vault_unread: Arc<AtomicBool>,
 }
 
 impl Store {
@@ -309,6 +324,7 @@ impl Store {
         Self {
             dir: dir.into(),
             vault: None,
+            vault_unread: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -385,8 +401,11 @@ impl Store {
     /// the settings file into the vault. The file is rewritten without them only
     /// once the vault was read back with the full list.
     fn merge_vault(&self, vault: &dyn SecretVault, settings: &mut Settings) -> Result<(), SecretError> {
-        // Read the vault first: if it fails, the passwords of the file stay in use.
-        let mut merged = vault.load()?;
+        // Read the vault first: if it fails, the passwords of the file stay in use,
+        // and the vault is left alone for the rest of the session.
+        let mut merged = vault
+            .load()
+            .inspect_err(|_| self.vault_unread.store(true, Ordering::Relaxed))?;
         let from_file = std::mem::take(&mut settings.passwords);
         for p in &from_file {
             if !merged.contains(p) {
@@ -410,8 +429,8 @@ impl Store {
 
     fn load_file(&self) -> Loaded {
         let path = self.dir.join(SETTINGS_FILE);
-        let text = match fs::read_to_string(&path) {
-            Ok(text) => text,
+        let bytes = match fs::read(&path) {
+            Ok(bytes) => bytes,
             Err(e) if e.kind() == io::ErrorKind::NotFound => return Loaded::clean(Settings::default()),
             Err(e) => {
                 return Loaded {
@@ -422,6 +441,14 @@ impl Store {
                     }),
                 };
             }
+        };
+        // A file edited with an editor set to the Windows "ANSI" code page is not
+        // UTF-8. Reading it as Windows-1252 keeps every value (accented folder
+        // names included); it is written back in UTF-8 at the next save, and the
+        // original is copied aside first.
+        let (text, reencoded) = match String::from_utf8(bytes) {
+            Ok(text) => (text, None),
+            Err(e) => (windows_1252(e.as_bytes()), Some(self.backup(&path))),
         };
         // Notepad may save UTF-8 with a byte-order mark, which TOML rejects.
         let text = text.strip_prefix('\u{feff}').unwrap_or(&text);
@@ -434,6 +461,12 @@ impl Store {
             };
         };
         let (settings, invalid_keys) = merge_valid_keys(table);
+        if let Some(backup) = reencoded {
+            return Loaded {
+                settings,
+                issue: Some(LoadIssue::NotUtf8 { invalid_keys, backup }),
+            };
+        }
         if invalid_keys.is_empty() {
             return Loaded::clean(settings);
         }
@@ -477,6 +510,18 @@ impl Store {
         let Some(vault) = &self.vault else {
             return self.write_settings_file(settings);
         };
+        if self.vault_unread.load(Ordering::Relaxed) {
+            // Its content is unknown: writing would replace it. Keep the passwords
+            // of this session in the file; they move to the vault at the next start.
+            self.write_settings_file(settings)?;
+            return if settings.passwords.is_empty() {
+                Ok(())
+            } else {
+                Err(SettingsError::PasswordsNotStored(SecretError::Vault(
+                    "not readable since start-up, left untouched".into(),
+                )))
+            };
+        }
         match vault.save(&settings.passwords) {
             Ok(()) => {
                 let mut file = settings.clone();
@@ -492,7 +537,25 @@ impl Store {
 
     fn write_settings_file(&self, settings: &Settings) -> Result<(), SettingsError> {
         let text = toml::to_string_pretty(settings)?;
+        self.keep_unreadable_file()?;
         self.write_atomic(SETTINGS_FILE, text.as_bytes())
+    }
+
+    /// Never replaces a settings file that exists but cannot be read: the
+    /// defaults shown in that case would overwrite the user's real settings
+    /// (for example when the window size is saved on exit). The file is moved
+    /// aside first; if even that fails, the write is refused.
+    fn keep_unreadable_file(&self) -> Result<(), SettingsError> {
+        let path = self.dir.join(SETTINGS_FILE);
+        match fs::File::open(&path) {
+            Ok(_) => Ok(()),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(()),
+            Err(source) => {
+                let stamp = chrono::Local::now().format("%Y%m%d-%H%M%S");
+                let aside = self.dir.join(format!("{SETTINGS_FILE}.{stamp}.unreadable"));
+                fs::rename(&path, &aside).map_err(|_| SettingsError::KeptUnreadable { path, source })
+            }
+        }
     }
 
     /// Loads the keys of already processed sets. A missing file yields an empty set.
@@ -575,6 +638,24 @@ impl Store {
     }
 }
 
+/// Decodes Windows-1252 (the "ANSI" code page of Western Windows): bytes
+/// 0x80–0x9F map to the characters below, the others to the same code point.
+/// The five bytes left undefined by Windows-1252 become U+FFFD.
+fn windows_1252(bytes: &[u8]) -> String {
+    const HIGH: [char; 32] = [
+        '€', '\u{fffd}', '‚', 'ƒ', '„', '…', '†', '‡', 'ˆ', '‰', 'Š', '‹', 'Œ', '\u{fffd}', 'Ž', '\u{fffd}',
+        '\u{fffd}', '\u{2018}', '\u{2019}', '\u{201c}', '\u{201d}', '•', '–', '—', '˜', '™', 'š', '›', 'œ',
+        '\u{fffd}', 'ž', 'Ÿ',
+    ];
+    bytes
+        .iter()
+        .map(|&b| match b {
+            0x80..=0x9F => HIGH.get(usize::from(b - 0x80)).copied().unwrap_or('\u{fffd}'),
+            _ => char::from(b),
+        })
+        .collect()
+}
+
 /// Result of [`Store::load`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Loaded {
@@ -612,6 +693,14 @@ pub enum LoadIssue {
     InvalidValues {
         /// Keys that were reset.
         keys: Vec<String>,
+        /// Copy of the original file, if it could be made.
+        backup: Option<PathBuf>,
+    },
+    /// The file was not UTF-8 (saved in the Windows "ANSI" code page): it was
+    /// read as Windows-1252, will be written back in UTF-8, and was copied first.
+    NotUtf8 {
+        /// Keys that were also invalid and reset (usually none).
+        invalid_keys: Vec<String>,
         /// Copy of the original file, if it could be made.
         backup: Option<PathBuf>,
     },
@@ -1058,5 +1147,166 @@ mod tests {
         assert!(keys.contains("a|b"));
         assert!(keys.contains("c d"));
         assert_eq!(keys.len(), 2);
+    }
+
+    /// `watch_dir = 'C:\Téléchargements'` as Notepad writes it in "ANSI".
+    fn ansi_settings_file() -> Vec<u8> {
+        let mut bytes = br"watch_dir = 'C:\T".to_vec();
+        bytes.extend_from_slice(&[0xE9, b'l', 0xE9]); // é l é
+        bytes.extend_from_slice(b"chargements'\nscan_interval_secs = 7\n");
+        bytes
+    }
+
+    #[test]
+    fn ansi_file_keeps_every_value() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::at(dir.path());
+        let original = ansi_settings_file();
+        fs::write(dir.path().join(SETTINGS_FILE), &original).unwrap();
+
+        let loaded = store.load();
+        assert_eq!(loaded.settings.watch_dir, r"C:\Téléchargements");
+        assert_eq!(loaded.settings.scan_interval_secs, 7);
+        let Some(LoadIssue::NotUtf8 { invalid_keys, backup }) = loaded.issue else {
+            panic!("expected NotUtf8, got {:?}", loaded.issue);
+        };
+        assert_eq!(invalid_keys, Vec::<String>::new());
+        assert_eq!(
+            fs::read(backup.unwrap()).unwrap(),
+            original,
+            "original kept aside"
+        );
+
+        // Saved back in UTF-8, values intact.
+        store.save_settings(&loaded.settings).unwrap();
+        let text = fs::read_to_string(dir.path().join(SETTINGS_FILE)).unwrap();
+        assert!(text.contains("Téléchargements"), "{text}");
+        assert!(store.load().issue.is_none());
+    }
+
+    #[test]
+    fn windows_1252_special_range() {
+        assert_eq!(
+            windows_1252(&[0x80, 0x93, 0x94, 0x9C, 0xFF, 0x81]),
+            "€\u{201c}\u{201d}œÿ\u{fffd}"
+        );
+    }
+
+    /// A settings file another program holds open without sharing: it cannot
+    /// be read, moved or replaced. Defaults are shown, but saving (for example
+    /// the window size on exit) must never overwrite it.
+    #[test]
+    fn locked_settings_file_is_never_overwritten() {
+        use std::os::windows::fs::OpenOptionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::at(dir.path());
+        let path = dir.path().join(SETTINGS_FILE);
+        fs::write(&path, "watch_dir = 'D:\\Mine'\n").unwrap();
+        let lock = fs::OpenOptions::new()
+            .read(true)
+            .share_mode(0)
+            .open(&path)
+            .unwrap();
+
+        let loaded = store.load();
+        assert!(
+            matches!(loaded.issue, Some(LoadIssue::Unreadable { .. })),
+            "{:?}",
+            loaded.issue
+        );
+        let result = store.save_settings(&loaded.settings);
+        assert!(
+            matches!(result, Err(SettingsError::KeptUnreadable { .. })),
+            "{result:?}"
+        );
+
+        drop(lock);
+        assert_eq!(
+            store.load().settings.watch_dir,
+            r"D:\Mine",
+            "the user's file is intact"
+        );
+    }
+
+    /// Unreadable but movable (here a folder in place of the file): it is moved
+    /// aside, with its content, before the new file is written.
+    #[test]
+    fn unreadable_settings_file_is_moved_aside_before_saving() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::at(dir.path());
+        let odd = dir.path().join(SETTINGS_FILE);
+        fs::create_dir(&odd).unwrap();
+        fs::write(odd.join("inside.txt"), "keep me").unwrap();
+
+        assert!(matches!(store.load().issue, Some(LoadIssue::Unreadable { .. })));
+        store.save_settings(&Settings::default()).unwrap();
+        assert!(dir.path().join(SETTINGS_FILE).is_file());
+        let aside: Vec<_> = fs::read_dir(dir.path())
+            .unwrap()
+            .filter_map(|e| e.ok().map(|e| e.path()))
+            .filter(|p| p.to_string_lossy().ends_with(".unreadable"))
+            .collect();
+        assert_eq!(aside.len(), 1, "{aside:?}");
+        assert_eq!(
+            fs::read_to_string(aside[0].join("inside.txt")).unwrap(),
+            "keep me"
+        );
+    }
+
+    /// A vault that fails to read at start-up and works again afterwards.
+    #[derive(Debug)]
+    struct FlakyVault {
+        inner: crate::secrets::ChunkedVault,
+        fail_next_load: AtomicBool,
+    }
+
+    impl SecretVault for FlakyVault {
+        fn load(&self) -> Result<Vec<String>, SecretError> {
+            if self.fail_next_load.swap(false, Ordering::Relaxed) {
+                return Err(SecretError::Vault("busy".into()));
+            }
+            self.inner.load()
+        }
+        fn save(&self, passwords: &[String]) -> Result<(), SecretError> {
+            self.inner.save(passwords)
+        }
+    }
+
+    #[test]
+    fn vault_unreadable_at_start_is_never_overwritten() {
+        let dir = tempfile::tempdir().unwrap();
+        let vault = Arc::new(FlakyVault {
+            inner: crate::secrets::ChunkedVault::in_memory(),
+            fail_next_load: AtomicBool::new(false),
+        });
+        vault.save(&["stored-1".into(), "stored-2".into()]).unwrap();
+        vault.fail_next_load.store(true, Ordering::Relaxed);
+        let store = Store::at(dir.path()).with_vault(vault.clone());
+
+        let loaded = store.load();
+        assert!(matches!(loaded.issue, Some(LoadIssue::Vault { .. })));
+        assert!(loaded.settings.passwords.is_empty(), "not available this session");
+
+        // Saving the settings (or the window size on exit) must not erase them.
+        store.save_settings(&loaded.settings).unwrap();
+        assert_eq!(
+            vault.load().unwrap(),
+            vec!["stored-1".to_owned(), "stored-2".to_owned()]
+        );
+
+        // A password typed this session is kept in the file, not lost...
+        let typed = Settings {
+            passwords: vec!["typed".into()],
+            ..loaded.settings
+        };
+        assert!(matches!(
+            store.save_settings(&typed),
+            Err(SettingsError::PasswordsNotStored(_))
+        ));
+        assert_eq!(vault.load().unwrap().len(), 2, "vault still untouched");
+        // ...and joins the others at the next start.
+        let next = Store::at(dir.path()).with_vault(vault.clone()).load();
+        assert_eq!(next.settings.passwords, vec!["stored-1", "stored-2", "typed"]);
+        assert!(next.issue.is_none());
     }
 }

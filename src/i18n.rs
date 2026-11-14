@@ -650,11 +650,11 @@ impl Localize for LoadIssue {
         };
         match (self, lang) {
             (Self::Unreadable { path, error }, Lang::En) => format!(
-                "The settings file {} could not be read ({error}). Default settings are used; saving will replace that file.",
+                "The settings file {} could not be read ({error}). Default settings are used for now; your file is kept and will not be replaced while it cannot be read.",
                 path.display()
             ),
             (Self::Unreadable { path, error }, Lang::Fr) => format!(
-                "Le fichier de réglages {} est illisible ({error}). Les réglages par défaut sont utilisés ; enregistrer remplacera ce fichier.",
+                "Le fichier de réglages {} est illisible ({error}). Les réglages par défaut sont utilisés pour l'instant ; ton fichier est conservé et ne sera pas remplacé tant qu'il est illisible.",
                 path.display()
             ),
             (Self::Corrupt { backup }, Lang::En) => {
@@ -679,6 +679,34 @@ impl Localize for LoadIssue {
                 keys.join(", "),
                 backup_note(backup)
             ),
+            (Self::NotUtf8 { invalid_keys, backup }, Lang::En) => {
+                let reset = if invalid_keys.is_empty() {
+                    String::new()
+                } else {
+                    format!(
+                        " Invalid values were reset to their default: {}.",
+                        invalid_keys.join(", ")
+                    )
+                };
+                format!(
+                    "The settings file was not saved in UTF-8. It was read as Windows-1252 and all your settings were kept; it will be saved in UTF-8.{reset}{}",
+                    backup_note(backup)
+                )
+            }
+            (Self::NotUtf8 { invalid_keys, backup }, Lang::Fr) => {
+                let reset = if invalid_keys.is_empty() {
+                    String::new()
+                } else {
+                    format!(
+                        " Des valeurs invalides ont été remises par défaut : {}.",
+                        invalid_keys.join(", ")
+                    )
+                };
+                format!(
+                    "Le fichier de réglages n'était pas enregistré en UTF-8. Il a été lu en Windows-1252 et tous tes réglages ont été conservés ; il sera enregistré en UTF-8.{reset}{}",
+                    backup_note(backup)
+                )
+            }
             (Self::Vault { error }, Lang::En) => format!(
                 "The Windows Credential Manager could not be read ({error}). Your saved archive passwords are not available in this session; they were not deleted."
             ),
