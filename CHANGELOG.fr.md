@@ -6,6 +6,10 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+## [0.3.0] - 2026-11-14
+
+Données et sécurité : mots de passe dans le Gestionnaire d'identifiants Windows, vérification de l'espace libre et nettoyage des extractions en échec, fichier journal avec rotation, provenance signée des releases, tests de propriétés et fuzzing, ainsi que la navigation de la liste au clavier et des messages non bloquants.
+
 ### Ajouté
 
 - L'espace libre du disque de destination est vérifié avant l'extraction : si le contenu de l'archive plus une réserve de 64 Mo ne tient pas, le jeu échoue avec un message clair (tailles nécessaire et disponible) au lieu d'une extraction à moitié écrite.
@@ -77,6 +81,7 @@ Première version publique : toute la chaîne de traitement, des fondations qual
 
 - `#![forbid(unsafe_code)]` sur tout le crate ; `unwrap`, `expect` et `panic` sont interdits hors des tests.
 
-[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.2.0...HEAD
+[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/werewolf004/Rar-N-Rush/releases/tag/v0.1.0

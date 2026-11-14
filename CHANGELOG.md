@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-14
+
+Data and security: passwords in the Windows Credential Manager, free-space check and clean-up of failed extractions, a rotated log file, signed release provenance, property tests and fuzzing, plus keyboard navigation of the list and non-blocking notices.
+
 ### Added
 
 - The free space of the destination drive is checked before extracting: when the archive content plus a 64 MB reserve does not fit, the set fails with a clear message (needed and available sizes) instead of a half-written extraction.
@@ -77,6 +81,7 @@ First public version: the complete processing chain, a quality foundation and th
 
 - `#![forbid(unsafe_code)]` on the whole crate; `unwrap`, `expect` and `panic` are denied outside tests.
 
-[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/werewolf004/Rar-N-Rush/releases/tag/v0.1.0

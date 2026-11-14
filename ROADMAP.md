@@ -12,18 +12,13 @@ Complete processing chain (scan, PAR2, SFV, RAR), typed errors, no `unsafe`/`unw
 
 Watched folder editable in the main window with recent folders; Par-N-Rar options (move extra files, delete empty folders, follow the active set, notification area); settings in three pages with validation and an unsaved-changes guard; shortcuts F5, Ctrl+, and Esc; window size and position remembered; WCAG 2.2 AA contrast test; AccessKit labels checked by the UI tests.
 
-## v0.3.0 — Data and security
+## ✅ v0.3.0 — Data and security
 
-- ✅ Carried over from v0.2.0: keyboard navigation of the list (↑/↓, Del, Enter); confirmation before the only irreversible choice (overwriting); non-blocking notices; every settings page tested at the smallest window size.
-- Still to do: pixel snapshot tests of the main screens (they need a GPU, which CI runners do not have).
-- ✅ Archive passwords stored in the Windows Credential Manager instead of the settings file.
-- ✅ Free-space check before extraction; clean-up of partial files on failure.
-- ✅ Fuzzing of the PAR2 and SFV parsers (`cargo fuzz`), property tests for name grouping.
-- ✅ Log export and rotation; no secret ever written to the log.
-- ✅ Signed build provenance for releases (Sigstore / GitHub artifact attestations).
+Archive passwords in the Windows Credential Manager (migrated from the settings file, never lost); free-space check before extraction and clean-up of failed extractions; log file with rotation and export, with no secret ever written; signed build provenance for releases; property tests and `cargo fuzz` targets for every parser of untrusted input; keyboard navigation of the list, non-blocking notices and confirmation before overwriting.
 
 ## v0.4.0 — Complete PAR2
 
+- Carried over from v0.3.0: pixel snapshot tests of the main screens (they need a GPU, which CI runners do not have).
 - End-to-end tests with a real `par2` (pinned version and checksum) in CI: damaged and missing files, repair, not enough blocks.
 - Optional download of par2cmdline-turbo from the settings, with checksum verification and user confirmation.
 
