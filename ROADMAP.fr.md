@@ -24,9 +24,12 @@ par2cmdline-turbo fourni dans le zip de release (version et SHA-256 figés, lice
 
 Icône dans la zone de notification (avancée en v0.2.0) ; une seule instance par dossier de réglages, un deuxième lancement ramène la fenêtre ; démarrage avec Windows en option, réduit ou dans la zone de notification ; notifications Windows quand un jeu se termine, échoue ou demande un mot de passe alors que la fenêtre n'est pas au premier plan. Tout reste dans le registre de l'utilisateur courant et est annulé quand l'option est désactivée.
 
-## v1.0.0 — Distribution
+## ✅ v1.0.0 — Distribution
 
 - ✅ Installateur par utilisateur (MSI) : sans droits administrateur, raccourci dans le menu Démarrer, mises à jour qui gardent les réglages, désinstallation qui nettoie le registre ; testé de bout en bout en CI.
-- Paquet winget.
 - ✅ Pas de signature du code : les certificats sont payants et le projet reste gratuit. L'avertissement SmartScreen est documenté, et chaque téléchargement se vérifie à la place avec sa somme SHA-256 et sa provenance de build signée (`gh attestation verify`).
 - ✅ Guide utilisateur avec une capture de chaque écran ([docs/USER-GUIDE.fr.md](docs/USER-GUIDE.fr.md)).
+
+## Après la v1.0.0
+
+- Paquet winget (`winget install`), qui pointe vers l'installateur publié.

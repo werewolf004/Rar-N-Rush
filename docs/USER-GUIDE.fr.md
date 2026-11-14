@@ -174,7 +174,7 @@ Clique sur **OK** pour le masquer. Les autres cas sont traités de la même faç
 
 ## 10. Fichiers, vie privée et désinstallation
 
-Rar N Rush **ne se connecte jamais à Internet** : aucune vérification de mise à jour, aucune télémétrie. Pour mettre à jour, télécharge une nouvelle release quand tu le veux : lance le nouvel installateur (il remplace la version installée et garde tout), ou remplace les fichiers de la copie portable.
+Rar N Rush **ne se connecte jamais à Internet** : aucune vérification de mise à jour, aucune télémétrie. Pour mettre à jour, télécharge une nouvelle release quand tu le veux : lance le nouvel installateur (il remplace la version installée et garde tout), ou remplace les fichiers de la copie portable. Pour passer du zip portable à l'installateur, copie `rar-n-rush.toml` et `rar-n-rush-processed.txt` du dossier du zip vers `%APPDATA%\RarNRush` avant le premier lancement.
 
 À côté des réglages (`%APPDATA%\RarNRush` pour le programme installé ; pour le zip portable, dossier de `rar-n-rush.exe`, ou `%APPDATA%\RarNRush`) :
 

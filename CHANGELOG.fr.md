@@ -6,6 +6,10 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+## [1.0.0] - 2026-11-14
+
+Première version stable : un installateur par utilisateur rejoint le zip portable. Le zip fonctionne comme avant. Pour passer du zip à l'installateur, copie `rar-n-rush.toml` et `rar-n-rush-processed.txt` du dossier du zip vers `%APPDATA%\RarNRush` (s'ils n'y sont pas déjà) ; les mots de passe enregistrés dans le Gestionnaire d'identifiants sont retrouvés.
+
 ### Ajouté
 
 - Paquet Windows Installer (`rar-n-rush-vX.Y.Z-windows-x64.msi`), à côté du zip portable. Il installe pour l'utilisateur courant seulement, dans `%LOCALAPPDATA%\Programs\Rar N Rush`, sans droits administrateur, et ajoute un raccourci dans le menu Démarrer. Un paquet plus récent remplace la version installée et garde les réglages, les mots de passe et « Démarrer avec Windows ». Le désinstaller supprime aussi son entrée « Démarrer avec Windows » et son identité de notification ; les réglages et les mots de passe sont conservés. Il est publié avec sa somme SHA-256 et couvert par l'attestation de provenance.
@@ -135,7 +139,8 @@ Première version publique : toute la chaîne de traitement, des fondations qual
 
 - `#![forbid(unsafe_code)]` sur tout le crate ; `unwrap`, `expect` et `panic` sont interdits hors des tests.
 
-[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.1...HEAD
+[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.1...v1.0.0
 [0.5.1]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.3.0...v0.4.0

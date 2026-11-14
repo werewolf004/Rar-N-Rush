@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-14
+
+First stable version: a per-user installer joins the portable zip. The zip keeps working as before. To switch from the zip to the installer, copy `rar-n-rush.toml` and `rar-n-rush-processed.txt` from the zip folder to `%APPDATA%\RarNRush` (if they are not already there); passwords stored in the Credential Manager are found again.
+
 ### Added
 
 - Windows Installer package (`rar-n-rush-vX.Y.Z-windows-x64.msi`), next to the portable zip. It installs for the current user only, in `%LOCALAPPDATA%\Programs\Rar N Rush`, without administrator rights, and adds a Start menu shortcut. A newer package replaces the installed version and keeps the settings, passwords and "Start with Windows". Removing it also removes its "Start with Windows" entry and its notification identity; settings and passwords are kept. It is published with its SHA-256 and covered by the build provenance attestation.
@@ -135,7 +139,8 @@ First public version: the complete processing chain, a quality foundation and th
 
 - `#![forbid(unsafe_code)]` on the whole crate; `unwrap`, `expect` and `panic` are denied outside tests.
 
-[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.1...v1.0.0
 [0.5.1]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.3.0...v0.4.0
