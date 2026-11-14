@@ -56,6 +56,9 @@ try {
     Assert-That (Test-Path $shortcut) 'Start menu shortcut created'
 
     # What the program writes when "Start with Windows" and notifications are on.
+    # A fresh account may not have the Run key yet (CI runners). Never use
+    # New-Item -Force on it: that would wipe the other programs' entries.
+    if (-not (Test-Path $runKey)) { New-Item $runKey | Out-Null }
     Set-ItemProperty $runKey -Name 'Rar N Rush' -Value "`"$exe`" --autostart"
     New-Item $identity -Force | Out-Null
 
