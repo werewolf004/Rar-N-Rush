@@ -19,7 +19,7 @@ Rar N Rush surveille ton dossier de téléchargements. Pour chaque jeu de fichie
 ## Fonctionnalités
 
 - **Surveillance d'un dossier** : le dossier surveillé (et, au choix, ses sous-dossiers) est analysé à intervalle régulier. Un jeu n'est traité qu'une fois ses fichiers stables : un téléchargement en cours n'est jamais touché.
-- **PAR2** : vérification et réparation via `par2.exe` ([par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) recommandé). S'il manque des blocs de récupération, le jeu attend et repart dès que de nouveaux fichiers arrivent.
+- **PAR2** : vérification et réparation via `par2.exe`. Le zip de release contient [par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) 1.5.0 à côté de `rar-n-rush.exe` : ça marche sans rien installer. S'il manque des blocs de récupération, le jeu attend et repart dès que de nouveaux fichiers arrivent.
 - **SFV** : vérification CRC32 native.
 - **RAR** : extraction avec la bibliothèque officielle UnRAR. Gère les archives multi-volumes (`.partN.rar`, `.rar` + `.r00`), les mots de passe (liste essayée automatiquement, ou saisie dans la fenêtre), les en-têtes chiffrés et les archives contenues dans une archive.
 - **Sécurité des données** : par défaut, un fichier existant n'est jamais écrasé (on utilise `nom (1).ext`). Les chemins qui sortiraient du dossier de destination sont refusés. Les fichiers sources peuvent être envoyés à la corbeille, jamais supprimés définitivement.
@@ -40,7 +40,7 @@ Rar N Rush surveille ton dossier de téléchargements. Pour chaque jeu de fichie
    gh attestation verify .\rar-n-rush-vX.Y.Z-windows-x64.zip --repo werewolf004/Rar-N-Rush
    ```
 3. Décompresse-la où tu veux et lance `rar-n-rush.exe`.
-4. Pour la réparation PAR2, place `par2.exe` à côté de `rar-n-rush.exe`, ajoute-le au `PATH` ou indique son chemin dans les réglages.
+4. La réparation PAR2 utilise le `par2.exe` fourni dans le zip. Pour en utiliser un autre, indique son chemin dans les réglages (ou retire celui fourni et mets le tien dans le `PATH`). Rar N Rush ne télécharge jamais rien.
 
 Configuration requise : Windows 10 ou 11 (64 bits).
 

@@ -39,6 +39,9 @@ jobs:
         with:
           components: clippy
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: Real par2 for the end-to-end tests (pinned, SHA-256 checked)
+        shell: pwsh
+        run: ./scripts/fetch-par2.ps1
       - name: Clippy (pedantic, warnings are errors)
         run: cargo clippy --all-targets --locked -- -D warnings
       - name: Tests

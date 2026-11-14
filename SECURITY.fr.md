@@ -31,7 +31,7 @@ Rar N Rush traite des fichiers téléchargés depuis Internet, qu'il faut consid
 - L'espace libre du disque de destination est vérifié avant l'extraction (taille de l'archive plus une réserve de 64 Mo).
 - Une extraction en échec ou annulée supprime les fichiers qu'elle a créés ; les fichiers déjà présents ne sont jamais supprimés.
 - Les fichiers sources sont envoyés à la **corbeille**, jamais supprimés définitivement, et seulement après un traitement entièrement réussi.
-- `par2.exe` est lancé sans shell, avec des arguments passés séparément (pas d'injection de commande), sans fenêtre console, et uniquement depuis le chemin choisi par l'utilisateur, le dossier du programme ou le `PATH`.
+- `par2.exe` est lancé sans shell, avec des arguments passés séparément (pas d'injection de commande), sans fenêtre console, et uniquement depuis le chemin choisi par l'utilisateur, le dossier du programme ou le `PATH`. Le `par2.exe` fourni dans le zip de release est le build officiel de par2cmdline-turbo, vérifié contre un SHA-256 figé avant d'être testé et empaqueté, et couvert par l'attestation de provenance de la release.
 
 ### Aucun accès réseau
 

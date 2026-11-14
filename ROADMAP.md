@@ -19,8 +19,8 @@ Archive passwords in the Windows Credential Manager (migrated from the settings 
 ## v0.4.0 — Complete PAR2
 
 - Carried over from v0.3.0: pixel snapshot tests of the main screens (they need a GPU, which CI runners do not have).
-- End-to-end tests with a real `par2` (pinned version and checksum) in CI: damaged and missing files, repair, not enough blocks.
-- Optional download of par2cmdline-turbo from the settings, with checksum verification and user confirmation.
+- ✅ End-to-end tests with a real `par2` (pinned version and checksum) in CI: damaged and missing files, repair, not enough blocks.
+- ✅ par2cmdline-turbo shipped in the release zip (pinned version and checksum, licence and source included) instead of a download from the settings: the application stays fully offline.
 
 ## v0.5.0 — Windows integration
 

@@ -62,7 +62,15 @@ cargo deny check
 ## Tests
 
 - `tests/fixtures/*.rar` are real archives made with WinRAR by `tests/fixtures/make-fixtures.ps1`. They are committed, so CI does not need WinRAR.
-- PAR2 behaviour is tested with small batch scripts that mimic `par2` output and exit codes (`tests/common/mod.rs`).
+- PAR2 behaviour is tested with small batch scripts that mimic `par2` output and exit codes (`tests/common/mod.rs`), and end to end with the real par2cmdline-turbo (`tests/par2_real.rs`): damaged volume, missing volume, not enough blocks, and a set that waits for its recovery volumes. CI always runs them; locally:
+
+  ```powershell
+  pwsh scripts/fetch-par2.ps1   # pinned version, SHA-256 checked -> target/par2/par2.exe
+  $env:RAR_N_RUSH_PAR2 = (Resolve-Path target/par2/par2.exe)
+  cargo test --test par2_real
+  ```
+
+  Without `RAR_N_RUSH_PAR2` these tests are skipped locally, and fail in CI.
 - UI tests drive the real application through its accessibility tree with `egui_kittest`. No window is opened.
 
 - `tests/properties.rs` checks properties of the parsers of untrusted input (PAR2, SFV, RAR names, entry paths, folder names) on thousands of generated inputs with `proptest`.

@@ -62,7 +62,15 @@ cargo deny check
 ## Tests
 
 - `tests/fixtures/*.rar` sont de vraies archives créées avec WinRAR par `tests/fixtures/make-fixtures.ps1`. Elles sont versionnées : la CI n'a pas besoin de WinRAR.
-- Le comportement PAR2 est testé avec de petits scripts batch qui imitent la sortie et les codes de retour de `par2` (`tests/common/mod.rs`).
+- Le comportement PAR2 est testé avec de petits scripts batch qui imitent la sortie et les codes de retour de `par2` (`tests/common/mod.rs`), et de bout en bout avec le vrai par2cmdline-turbo (`tests/par2_real.rs`) : volume abîmé, volume manquant, blocs insuffisants, et un jeu qui attend ses volumes de récupération. La CI les lance toujours ; en local :
+
+  ```powershell
+  pwsh scripts/fetch-par2.ps1   # version figée, SHA-256 vérifié -> target/par2/par2.exe
+  $env:RAR_N_RUSH_PAR2 = (Resolve-Path target/par2/par2.exe)
+  cargo test --test par2_real
+  ```
+
+  Sans `RAR_N_RUSH_PAR2`, ces tests sont ignorés en local et échouent en CI.
 - Les tests d'interface pilotent la vraie application via son arbre d'accessibilité avec `egui_kittest`. Aucune fenêtre n'est ouverte.
 
 - `tests/properties.rs` vérifie des propriétés des parseurs de données non fiables (PAR2, SFV, noms RAR, chemins d'entrées, noms de dossiers) sur des milliers d'entrées générées avec `proptest`.

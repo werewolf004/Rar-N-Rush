@@ -31,7 +31,7 @@ Rar N Rush processes files downloaded from the Internet, which must be treated a
 - The free space of the destination drive is checked before extracting (archive size plus a 64 MB reserve).
 - A failed or cancelled extraction removes the files it created; files that existed before are never removed.
 - Source files are sent to the **Recycle Bin**, never deleted permanently, and only after a fully successful run.
-- `par2.exe` is started without a shell, with arguments passed separately (no command injection), without a console window, and only from the path set by the user, the program folder or `PATH`.
+- `par2.exe` is started without a shell, with arguments passed separately (no command injection), without a console window, and only from the path set by the user, the program folder or `PATH`. The `par2.exe` shipped in the release zip is the official par2cmdline-turbo build, checked against a pinned SHA-256 before it is tested and packaged, and covered by the release provenance attestation.
 
 ### No network access
 

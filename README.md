@@ -19,7 +19,7 @@ Written in Rust with an [egui](https://github.com/emilk/egui) interface. The con
 ## Features
 
 - **Folder monitoring**: the watched folder (and optionally its sub-folders) is scanned at a regular interval. A set is only processed once its files have stopped changing, so downloads in progress are never touched.
-- **PAR2**: verification and repair through `par2.exe` ([par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) recommended). When there are not enough recovery blocks, the set waits and is retried as soon as new files arrive.
+- **PAR2**: verification and repair through `par2.exe`. The release zip ships [par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) 1.5.0 next to `rar-n-rush.exe`, so it works out of the box. When there are not enough recovery blocks, the set waits and is retried as soon as new files arrive.
 - **SFV**: native CRC32 verification.
 - **RAR**: extraction with the official UnRAR library. Supports multi-volume archives (`.partN.rar`, `.rar` + `.r00`), passwords (a list tried automatically, or typed in the window), encrypted headers and archives nested inside archives.
 - **Data safety**: existing files are never overwritten by default (`name (1).ext` is used instead). Paths that would escape the destination folder are refused. Source files can be sent to the Recycle Bin, never deleted permanently.
@@ -40,7 +40,7 @@ Written in Rust with an [egui](https://github.com/emilk/egui) interface. The con
    gh attestation verify .\rar-n-rush-vX.Y.Z-windows-x64.zip --repo werewolf004/Rar-N-Rush
    ```
 3. Unzip it anywhere and run `rar-n-rush.exe`.
-4. For PAR2 repair, place `par2.exe` next to `rar-n-rush.exe`, add it to your `PATH`, or set its path in the settings.
+4. PAR2 repair uses the `par2.exe` shipped in the zip. To use another build, set its path in the settings (or remove the bundled one and put yours in `PATH`). Rar N Rush never downloads anything.
 
 Requirements: Windows 10 or 11 (64-bit).
 

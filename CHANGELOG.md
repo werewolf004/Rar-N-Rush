@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- The release zip ships `par2.exe` (par2cmdline-turbo 1.5.0, GPL-2.0, unmodified) next to `rar-n-rush.exe`, with its licence; its source archive is attached to the release. PAR2 repair works without installing anything, and Rar N Rush still never downloads anything.
+- End-to-end tests with the real par2 in CI (pinned version, SHA-256 checked): damaged volume, missing volume, not enough blocks, and a set that is repaired and extracted once its recovery volumes arrive.
+
+### Changed
+
+- The `.sha256` file of a release uses a Unix line ending, so `sha256sum -c` works as well as `Get-FileHash`.
+
 ## [0.3.0] - 2026-11-14
 
 Data and security: passwords in the Windows Credential Manager, free-space check and clean-up of failed extractions, a rotated log file, signed release provenance, property tests and fuzzing, plus keyboard navigation of the list and non-blocking notices.

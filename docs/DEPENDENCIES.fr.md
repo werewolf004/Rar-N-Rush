@@ -44,7 +44,7 @@ Utilisées par les tests uniquement ; absentes du binaire.
 
 | Programme | Licence | Rôle |
 |---|---|---|
-| `par2.exe` ([par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) ou par2cmdline) | GPL-2.0 | Vérification et réparation PAR2. Non fourni : lancé comme processus séparé, trouvé à côté de l'exécutable, dans le `PATH` ou au chemin indiqué dans les réglages. |
+| `par2.exe` ([par2cmdline-turbo](https://github.com/animetosho/par2cmdline-turbo) ou par2cmdline) | GPL-2.0 | Vérification et réparation PAR2. par2cmdline-turbo 1.5.0 est fourni sans modification dans le zip de release (`par2.exe`, avec sa licence dans `par2-COPYING.txt`) ; son archive source exacte est jointe à chaque release. Il est lancé comme processus séparé, jamais lié : trouvé au chemin indiqué dans les réglages, à côté de l'exécutable ou dans le `PATH`. Version et SHA-256 sont figés dans `scripts/fetch-par2.ps1`. |
 
 ## Outils de développement
 

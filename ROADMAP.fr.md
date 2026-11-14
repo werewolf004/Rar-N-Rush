@@ -19,8 +19,8 @@ Mots de passe d'archives dans le Gestionnaire d'identifiants Windows (migrés de
 ## v0.4.0 — PAR2 complet
 
 - Reporté de la v0.3.0 : tests de capture pixel par pixel des écrans principaux (ils nécessitent un GPU, absent des machines de CI).
-- Tests de bout en bout avec un vrai `par2` (version et somme de contrôle figées) en CI : fichiers abîmés ou manquants, réparation, blocs insuffisants.
-- Téléchargement optionnel de par2cmdline-turbo depuis les réglages, avec vérification de la somme de contrôle et confirmation de l'utilisateur.
+- ✅ Tests de bout en bout avec un vrai `par2` (version et somme de contrôle figées) en CI : fichiers abîmés ou manquants, réparation, blocs insuffisants.
+- ✅ par2cmdline-turbo fourni dans le zip de release (version et somme de contrôle figées, licence et source incluses) au lieu d'un téléchargement depuis les réglages : l'application reste entièrement hors ligne.
 
 ## v0.5.0 — Intégration Windows
 
