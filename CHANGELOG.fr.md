@@ -6,6 +6,10 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+## [1.3.0] - 2026-11-15
+
+Des fichiers retrouvés sont traités de nouveau par défaut, et les fichiers déjà extraits sont gardés ou écrasés selon les réglages, jamais dupliqués en « nom (1).ext ».
+
 ### Modifié
 
 - Des fichiers déjà traités sont **traités de nouveau par défaut** quand on les retrouve (après un redémarrage, ou recopiés), au lieu d'apparaître « Déjà traité ». Seule une extraction que tu as ignorée reste ignorée.
@@ -175,7 +179,8 @@ Première version publique : toute la chaîne de traitement, des fondations qual
 
 - `#![forbid(unsafe_code)]` sur tout le crate ; `unwrap`, `expect` et `panic` sont interdits hors des tests.
 
-[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.2.0...HEAD
+[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.1...v1.0.0

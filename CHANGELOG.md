@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-15
+
+Files found again are processed again by default, and files already extracted are kept or overwritten as set in the settings, never duplicated as "name (1).ext".
+
 ### Changed
 
 - Files already processed are **processed again by default** when they are found again (after a restart, or copied back), instead of being listed as "Already processed". Only a set you skipped stays skipped.
@@ -175,7 +179,8 @@ First public version: the complete processing chain, a quality foundation and th
 
 - `#![forbid(unsafe_code)]` on the whole crate; `unwrap`, `expect` and `panic` are denied outside tests.
 
-[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.1...v1.0.0
