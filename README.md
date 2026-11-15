@@ -79,6 +79,7 @@ Open **Settings** to change the folders, timings, language, theme and behaviour.
 | Shortcut | Action |
 |---|---|
 | **F5** | Scan the watched folder now |
+| **F1** | About: version, licence and links |
 | **Ctrl+,** | Open the settings |
 | **Esc** | Close the settings (asks first if something changed); in the watched-folder field, cancel the edit |
 | **Enter** | In the watched-folder field, watch the folder typed; in a password field, try the password |

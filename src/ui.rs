@@ -71,6 +71,8 @@ pub struct App {
     show_requests: Option<ShowRequests>,
     /// Fixed times for snapshot tests (see [`App::freeze_clock`]).
     frozen_clock: Option<&'static str>,
+    /// The About window is open.
+    about_open: bool,
 }
 
 /// Pages of the settings window.
@@ -92,6 +94,9 @@ enum Confirm {
     /// Turn on overwriting, which cannot be undone?
     Overwrite,
 }
+
+/// Project page, from `Cargo.toml`.
+const REPO_URL: &str = env!("CARGO_PKG_REPOSITORY");
 
 /// Height taken by the settings window around its page: title bar, tabs,
 /// messages and buttons, plus a margin from the edges of the main window.
@@ -218,6 +223,7 @@ impl App {
             toasts: Vec::new(),
             geometry: settings.window,
             frozen_clock: None,
+            about_open: false,
             show_requests: None,
             autostart: None,
             notifier: None,
@@ -349,7 +355,7 @@ impl App {
 
     /// Keyboard shortcuts of the main window.
     fn shortcuts(&mut self, ctx: &egui::Context, snap: &Snapshot) {
-        let (scan, settings, escape) = ctx.input_mut(|i| {
+        let (scan, settings, escape, about) = ctx.input_mut(|i| {
             (
                 i.consume_key(egui::Modifiers::NONE, egui::Key::F5),
                 i.consume_shortcut(&egui::KeyboardShortcut::new(
@@ -357,8 +363,12 @@ impl App {
                     egui::Key::Comma,
                 )),
                 i.key_pressed(egui::Key::Escape),
+                i.consume_key(egui::Modifiers::NONE, egui::Key::F1),
             )
         });
+        if about {
+            self.about_open = true;
+        }
         // List keys only when nothing else (text field, settings window) has them.
         if self.draft.is_none() && ctx.memory(|m| m.focused().is_none()) {
             self.list_keys(ctx, snap);
@@ -372,6 +382,8 @@ impl App {
         // Esc closes the settings window, unless a text field uses it to cancel editing.
         if escape && self.draft.is_some() && ctx.memory(|m| m.focused().is_none()) {
             self.request_close_settings();
+        } else if escape && self.about_open {
+            self.about_open = false;
         }
     }
 
@@ -621,6 +633,9 @@ impl App {
             if ui.button(t.settings).on_hover_text(t.settings_hint).clicked() {
                 self.open_settings(&snap.settings);
             }
+            if ui.button(t.about).on_hover_text(t.about_hint).clicked() {
+                self.about_open = true;
+            }
             ui.separator();
             if snap.settings.watch_path().is_none() {
                 ui.label(RichText::new(t.no_folder).italics());
@@ -639,6 +654,60 @@ impl App {
         ui.add_space(4.0);
         self.folder_bars(ui, snap);
         ui.add_space(6.0);
+    }
+
+    /// Version shown to the user; fixed in snapshot tests so that a new
+    /// version does not change the reference images.
+    fn version(&self) -> &'static str {
+        if self.frozen_clock.is_some() {
+            "X.Y.Z"
+        } else {
+            env!("CARGO_PKG_VERSION")
+        }
+    }
+
+    /// About window: version, links, licence and credits.
+    fn about_window(&mut self, ctx: &egui::Context) {
+        if !self.about_open {
+            return;
+        }
+        let t = self.texts();
+        let version = format!("{} {}", t.version, self.version());
+        let guide = match self.lang {
+            Lang::Fr => format!("{REPO_URL}/blob/main/docs/USER-GUIDE.fr.md"),
+            Lang::En => format!("{REPO_URL}/blob/main/docs/USER-GUIDE.md"),
+        };
+        let (mut open, mut close) = (true, false);
+        egui::Window::new(t.about_title)
+            .open(&mut open)
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+            .show(ctx, |ui| {
+                ui.set_max_width(440.0);
+                ui.vertical_centered(|ui| {
+                    ui.heading(RichText::new("Rar N Rush").strong());
+                    ui.label(version);
+                });
+                ui.add_space(8.0);
+                ui.label(t.about_description);
+                ui.add_space(8.0);
+                ui.hyperlink_to(t.about_source, REPO_URL);
+                ui.hyperlink_to(t.about_guide, guide);
+                ui.hyperlink_to(t.about_releases, format!("{REPO_URL}/releases"));
+                ui.add_space(8.0);
+                ui.label(t.about_licence);
+                ui.label(t.about_credits);
+                ui.add_space(4.0);
+                ui.weak(t.about_offline);
+                ui.add_space(8.0);
+                if ui.button(t.about_close).clicked() {
+                    close = true;
+                }
+            });
+        if !open || close {
+            self.about_open = false;
+        }
     }
 
     /// Watched-folder and extraction-folder bars: editable path, recent folders,
@@ -732,6 +801,17 @@ impl App {
             {
                 self.export_log(snap);
             }
+            // Version in the bottom-right corner; a click opens About.
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let version = RichText::new(format!("Rar N Rush v{}", self.version())).weak();
+                if ui
+                    .add(egui::Button::new(version).frame(false))
+                    .on_hover_text(t.about_hint)
+                    .clicked()
+                {
+                    self.about_open = true;
+                }
+            });
         });
         egui::ScrollArea::vertical()
             .stick_to_bottom(true)
@@ -889,7 +969,11 @@ impl App {
             }
         }
         match job.status {
-            Status::Failed | Status::RepairImpossible | Status::Skipped | Status::Done => {
+            Status::Failed
+            | Status::RepairImpossible
+            | Status::Skipped
+            | Status::Done
+            | Status::AlreadyProcessed => {
                 if ui.small_button(t.retry).clicked() {
                     actions.push(Command::Retry(job.id));
                 }
@@ -1451,6 +1535,7 @@ impl eframe::App for App {
             }
         });
         self.settings_window(&ctx, dark);
+        self.about_window(&ctx);
         self.show_toasts(&ctx, dark);
     }
 }

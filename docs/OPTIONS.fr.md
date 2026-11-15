@@ -143,7 +143,7 @@ theme = "system"
 
 | Fichier | Contenu |
 |---|---|
-| `rar-n-rush-processed.txt` | Une ligne par jeu déjà traité ou ignoré, pour ne pas le retraiter après un redémarrage. Supprime une ligne (ou le fichier) pour retraiter un jeu. |
+| `rar-n-rush-processed.txt` | Une ligne par jeu déjà traité ou ignoré : sa clé, une tabulation, puis comment il s'est terminé (`done`, `sources-trashed` ou `skipped` ; les lignes écrites avant la version 1.2.0 n'ont pas de tabulation et valent `done`). Un jeu `done` toujours présent s'affiche **Déjà traité** (Réessayer le traite de nouveau) ; un jeu `sources-trashed` retrouvé est une nouvelle copie et il est retraité ; un jeu `skipped` reste ignoré. |
 | `rar-n-rush.lock` | Tenu par le programme en cours, pour qu'un deuxième lancement affiche la fenêtre ouverte au lieu de tourner deux fois avec les mêmes réglages. Libéré automatiquement quand le programme se termine, même après un plantage. `rar-n-rush.show` est la demande éphémère qu'un deuxième lancement lui laisse. |
 | `rar-n-rush.ico` | Icône des notifications Windows (voir `system_notifications`) ; supprimée quand l'option est désactivée. |
 | `rar-n-rush.log`, `rar-n-rush.log.1` … `.3` | Fichier journal et ses copies tournantes (voir `log_to_file`). Le bouton **Exporter…** du journal enregistre les lignes affichées, dans la langue de l'interface, dans le fichier texte de ton choix. |

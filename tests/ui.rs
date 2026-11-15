@@ -653,6 +653,19 @@ fn guide_screenshots(lang: LanguagePref, lang_tag: &str) {
     h.get_by_label(t.cancel).click();
     frames(&mut h, 3);
     save(&mut h, &format!("confirm-discard-{lang_tag}"));
+    drop(h);
+
+    // About window.
+    let mut h = harness(
+        demo.settings(lang, ThemePref::Light),
+        &demo.state_dir("about"),
+        true,
+    );
+    h.state_mut().freeze_clock();
+    settle(&mut h, 4);
+    h.get_by_label(t.about).click();
+    frames(&mut h, 3);
+    save(&mut h, &format!("about-{lang_tag}"));
 }
 
 /// Fixed folder of the snapshot demo: the paths shown on screen must not change
@@ -714,7 +727,40 @@ fn snapshots() {
         h.state_mut().freeze_clock();
         frames(&mut h, 3);
         results.add(h.try_snapshot(format!("onboarding-{tag}")));
+        h.get_by_label(if lang == LanguagePref::English {
+            "ℹ  About"
+        } else {
+            "ℹ  À propos"
+        })
+        .click();
+        frames(&mut h, 3);
+        results.add(h.try_snapshot(format!("about-{tag}")));
     }
+}
+
+#[test]
+fn about_shows_the_version_and_links() {
+    let demo = Demo::new(false);
+    let mut h = harness(
+        demo.settings(LanguagePref::English, ThemePref::Light),
+        &demo.state_dir("about"),
+        false,
+    );
+    frames(&mut h, 2);
+    let version = env!("CARGO_PKG_VERSION");
+
+    h.get_by_label("ℹ  About").click();
+    frames(&mut h, 3);
+    h.get_by_label(&format!("Version {version}"));
+    h.get_by_label("Source code on GitHub");
+    h.get_by_label("Close").click();
+    frames(&mut h, 3);
+    assert!(h.query_by_label("Source code on GitHub").is_none(), "closed");
+
+    // The version in the bottom-right corner opens it too.
+    h.get_by_label(&format!("Rar N Rush v{version}")).click();
+    frames(&mut h, 3);
+    h.get_by_label("Source code on GitHub");
 }
 
 /// Records notifications instead of showing them.

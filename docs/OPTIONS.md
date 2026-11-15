@@ -143,7 +143,7 @@ theme = "system"
 
 | File | Content |
 |---|---|
-| `rar-n-rush-processed.txt` | One line per set already processed or skipped, so it is not processed again after a restart. Delete a line (or the file) to process a set again. |
+| `rar-n-rush-processed.txt` | One line per set already processed or skipped: its key, a tab, then how it ended (`done`, `sources-trashed` or `skipped`; lines written by versions before 1.2.0 have no tab and count as `done`). A `done` set still there is shown as **Already processed** (Retry processes it again); a `sources-trashed` set found again is a new copy and is processed again; a `skipped` set stays skipped. |
 | `rar-n-rush.lock` | Held by the running program, so that a second start shows the open window instead of running twice with the same settings. Released automatically when the program ends, even after a crash. `rar-n-rush.show` is the short-lived request a second start leaves for it. |
 | `rar-n-rush.ico` | Icon of the Windows notifications (see `system_notifications`); removed when the option is off. |
 | `rar-n-rush.log`, `rar-n-rush.log.1` … `.3` | Log file and its rotated copies (see `log_to_file`). The log panel's **Export…** button saves the lines shown, in the interface language, to a text file of your choice. |

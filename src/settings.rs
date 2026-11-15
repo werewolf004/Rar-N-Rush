@@ -9,7 +9,7 @@
 
 use crate::secrets::{SecretError, SecretVault};
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -600,22 +600,27 @@ impl Store {
         }
     }
 
-    /// Loads the keys of already processed sets. A missing file yields an empty set.
-    pub fn load_processed(&self) -> Result<HashSet<String>, SettingsError> {
+    /// Loads the sets already handled and how each one ended. A missing file
+    /// yields an empty map. Each line is `key` (older versions: [`Outcome::Done`])
+    /// or `key<TAB>outcome`; the last line of a key wins.
+    pub fn load_processed(&self) -> Result<HashMap<String, Outcome>, SettingsError> {
         let path = self.dir.join(PROCESSED_FILE);
         match fs::read_to_string(&path) {
             Ok(text) => Ok(text
                 .lines()
                 .filter(|l| !l.is_empty())
-                .map(str::to_owned)
+                .map(|line| match line.split_once('\t') {
+                    Some((key, outcome)) => (key.to_owned(), Outcome::parse(outcome)),
+                    None => (line.to_owned(), Outcome::Done),
+                })
                 .collect()),
-            Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(HashSet::new()),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(HashMap::new()),
             Err(source) => Err(SettingsError::Io { path, source }),
         }
     }
 
-    /// Records a processed set key (append-only).
-    pub fn append_processed(&self, key: &str) -> Result<(), SettingsError> {
+    /// Records how a set ended (append-only).
+    pub fn append_processed(&self, key: &str, outcome: Outcome) -> Result<(), SettingsError> {
         let path = self.dir.join(PROCESSED_FILE);
         let io_err = |source| SettingsError::Io {
             path: path.clone(),
@@ -627,8 +632,15 @@ impl Store {
             .append(true)
             .open(&path)
             .map_err(io_err)?;
-        // Keys never contain line breaks: they come from file names, which cannot.
-        writeln!(file, "{}", key.replace(['\r', '\n'], " ")).map_err(io_err)
+        // Keys never contain line breaks or tabs: they come from file names, which
+        // cannot (they are replaced anyway, so a line always reads back as written).
+        writeln!(
+            file,
+            "{}\t{}",
+            key.replace(['\r', '\n', '\t'], " "),
+            outcome.as_str()
+        )
+        .map_err(io_err)
     }
 
     /// Appends one line to the log file. When the file exceeds [`LOG_MAX_BYTES`],
@@ -696,6 +708,38 @@ fn windows_1252(bytes: &[u8]) -> String {
             _ => char::from(b),
         })
         .collect()
+}
+
+/// How a set ended, as recorded in [`PROCESSED_FILE`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Outcome {
+    /// Processed; its source files were kept. Offered again if it is still there.
+    Done,
+    /// Processed and its source files sent to the Recycle Bin: if the set is
+    /// found again, it is a new copy and is processed again.
+    SourcesTrashed,
+    /// Skipped by the user: never processed again.
+    Skipped,
+}
+
+impl Outcome {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Done => "done",
+            Self::SourcesTrashed => "sources-trashed",
+            Self::Skipped => "skipped",
+        }
+    }
+
+    /// Unknown words (a newer version) read as [`Outcome::Done`], the case
+    /// that only offers the set again.
+    fn parse(s: &str) -> Self {
+        match s.trim() {
+            "sources-trashed" => Self::SourcesTrashed,
+            "skipped" => Self::Skipped,
+            _ => Self::Done,
+        }
+    }
 }
 
 /// Result of [`Store::load`].
@@ -1197,12 +1241,38 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let store = Store::at(dir.path());
         assert!(store.load_processed().unwrap().is_empty());
-        store.append_processed("a|b").unwrap();
-        store.append_processed("c\nd").unwrap();
+        store.append_processed("a|b", Outcome::Done).unwrap();
+        store.append_processed("c\nd", Outcome::Skipped).unwrap();
+        store.append_processed("e\tf", Outcome::SourcesTrashed).unwrap();
         let keys = store.load_processed().unwrap();
-        assert!(keys.contains("a|b"));
-        assert!(keys.contains("c d"));
-        assert_eq!(keys.len(), 2);
+        assert_eq!(keys.get("a|b"), Some(&Outcome::Done));
+        assert_eq!(keys.get("c d"), Some(&Outcome::Skipped));
+        assert_eq!(keys.get("e f"), Some(&Outcome::SourcesTrashed));
+        assert_eq!(keys.len(), 3);
+
+        // The last line of a key wins: a set processed again is recorded again.
+        store.append_processed("a|b", Outcome::SourcesTrashed).unwrap();
+        assert_eq!(
+            store.load_processed().unwrap().get("a|b"),
+            Some(&Outcome::SourcesTrashed)
+        );
+    }
+
+    #[test]
+    fn processed_file_of_older_versions_still_reads() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(
+            dir.path().join(PROCESSED_FILE),
+            "g:\\dl\\x|x\nother|y\tsomething-new\n",
+        )
+        .unwrap();
+        let keys = Store::at(dir.path()).load_processed().unwrap();
+        assert_eq!(keys.get("g:\\dl\\x|x"), Some(&Outcome::Done));
+        assert_eq!(
+            keys.get("other|y"),
+            Some(&Outcome::Done),
+            "unknown outcome: only offered again"
+        );
     }
 
     /// `watch_dir = 'C:\Téléchargements'` as Notepad writes it in "ANSI".

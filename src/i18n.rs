@@ -127,6 +127,18 @@ pub struct Texts {
     pub scan_now: &'static str,
     pub scan_now_hint: &'static str,
     pub settings: &'static str,
+    pub about: &'static str,
+    pub about_hint: &'static str,
+    pub about_title: &'static str,
+    pub about_description: &'static str,
+    pub version: &'static str,
+    pub about_source: &'static str,
+    pub about_guide: &'static str,
+    pub about_releases: &'static str,
+    pub about_licence: &'static str,
+    pub about_credits: &'static str,
+    pub about_offline: &'static str,
+    pub about_close: &'static str,
     pub no_folder: &'static str,
     pub watching: &'static str,
     pub paused: &'static str,
@@ -233,6 +245,18 @@ static EN: Texts = Texts {
     scan_now: "🔄  Scan",
     scan_now_hint: "Scan the folder now (F5)",
     settings: "⚙  Settings",
+    about: "ℹ  About",
+    about_hint: "Version, licence and links (F1)",
+    about_title: "About Rar N Rush",
+    about_description: "Watches a download folder, verifies PAR2/SFV sets, repairs them and extracts RAR archives automatically.",
+    version: "Version",
+    about_source: "Source code on GitHub",
+    about_guide: "User guide",
+    about_releases: "Releases and changelog",
+    about_licence: "Licence: MIT OR Apache-2.0, free and open source.",
+    about_credits: "PAR2 repair: par2cmdline-turbo (GPL-2.0), shipped unmodified. RAR extraction: the UnRAR library by Alexander Roshal.",
+    about_offline: "Rar N Rush never connects to the Internet: these links open in your browser.",
+    about_close: "Close",
     no_folder: "No folder is being watched.",
     watching: "Watching",
     paused: "Paused",
@@ -339,6 +363,18 @@ static FR: Texts = Texts {
     scan_now: "🔄  Analyser",
     scan_now_hint: "Analyse le dossier maintenant (F5)",
     settings: "⚙  Réglages",
+    about: "ℹ  À propos",
+    about_hint: "Version, licence et liens (F1)",
+    about_title: "À propos de Rar N Rush",
+    about_description: "Surveille un dossier de téléchargements, vérifie les jeux PAR2/SFV, les répare et extrait les archives RAR automatiquement.",
+    version: "Version",
+    about_source: "Code source sur GitHub",
+    about_guide: "Guide utilisateur",
+    about_releases: "Versions et journal des modifications",
+    about_licence: "Licence : MIT OR Apache-2.0, libre et gratuit.",
+    about_credits: "Réparation PAR2 : par2cmdline-turbo (GPL-2.0), livré sans modification. Extraction RAR : la bibliothèque UnRAR d'Alexander Roshal.",
+    about_offline: "Rar N Rush ne se connecte jamais à Internet : ces liens s'ouvrent dans ton navigateur.",
+    about_close: "Fermer",
     no_folder: "Aucun dossier surveillé.",
     watching: "Surveillance active",
     paused: "En pause",
@@ -454,6 +490,7 @@ impl Localize for Status {
             Status::NeedPassword => ("Password required", "Mot de passe requis"),
             Status::RepairImpossible => ("Repair impossible", "Réparation impossible"),
             Status::Done => ("Done", "Terminé"),
+            Status::AlreadyProcessed => ("Already processed", "Déjà traité"),
             Status::Failed => ("Error", "Erreur"),
             Status::Skipped => ("Skipped", "Ignoré"),
         };
@@ -640,6 +677,12 @@ impl Localize for Detail {
                 pick(lang, "Verified, nothing to extract", "Vérifié, rien à extraire").into()
             }
             Self::SkippedByUser => pick(lang, "Skipped by the user", "Ignoré par l'utilisateur").into(),
+            Self::AlreadyProcessed => pick(
+                lang,
+                "Processed before: Retry processes it again",
+                "Déjà traité : « Réessayer » le traite de nouveau",
+            )
+            .into(),
             Self::Cancelled => pick(lang, "Cancelled", "Annulé").into(),
             Self::Error(e) => e.localize(lang),
         }
@@ -779,6 +822,18 @@ impl Localize for Notice {
                 format!("{count} dossier(s) vide(s) envoyé(s) à la corbeille.")
             }
             (Self::TidyFailed(e), _) => e.localize(lang),
+            (Self::AlreadyProcessed { name }, En) => {
+                format!("“{name}” was already processed: Retry processes it again.")
+            }
+            (Self::AlreadyProcessed { name }, Fr) => {
+                format!("« {name} » a déjà été traité : « Réessayer » le traite de nouveau.")
+            }
+            (Self::ProcessingAgain { name }, En) => {
+                format!("“{name}” was processed before and its files are back: processing it again.")
+            }
+            (Self::ProcessingAgain { name }, Fr) => {
+                format!("« {name} » a déjà été traité et ses fichiers sont revenus : nouveau traitement.")
+            }
             (Self::Finished { name }, En) => format!("“{name}” done."),
             (Self::Finished { name }, Fr) => format!("« {name} » terminé."),
             (Self::Failed { name, error }, En) => format!("“{name}” failed: {}", error.localize(lang)),
@@ -884,6 +939,7 @@ mod tests {
             Status::NeedPassword,
             Status::RepairImpossible,
             Status::Done,
+            Status::AlreadyProcessed,
             Status::Failed,
             Status::Skipped,
         ];

@@ -6,6 +6,18 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+### Ajouté
+
+- Fenêtre **À propos** (bouton de la barre d'outils, **F1**) : version, licence, crédits, et liens vers le code source, le guide utilisateur et les versions.
+- La version utilisée est affichée en bas à droite de la fenêtre principale ; un clic ouvre **À propos**.
+
+### Corrigé
+
+- Un jeu déjà traité était ignoré **sans rien dire** quand on le retrouvait, donc recopier le même téléchargement semblait ne rien faire. Désormais :
+  - si ses fichiers sont toujours là depuis son traitement, il apparaît **Déjà traité** avec **Réessayer**, et le journal le signale ;
+  - si ses fichiers reviennent après avoir disparu (envoyés à la corbeille, ou supprimés, puis recopiés ou retéléchargés), il est retraité tout seul ;
+  - un jeu que tu as ignoré reste ignoré.
+
 ## [1.1.0] - 2026-11-15
 
 Un dossier d'extraction dans la fenêtre principale, et des archives extraites directement dedans. Si tu utilisais une version précédente, décoche **Extraire dans un sous-dossier au nom du jeu** dans Réglages → Traitement pour avoir le nouveau comportement : tes réglages enregistrés ne sont jamais modifiés à ta place.

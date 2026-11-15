@@ -8,11 +8,11 @@ use crate::extract::{self, ExtractError};
 use crate::i18n::{Lang, Localize};
 use crate::par2::{self, Par2Error};
 use crate::scan::{self, FileSet, ScanError, SetKind, Signature};
-use crate::settings::{Settings, SettingsError, Store};
+use crate::settings::{Outcome, Settings, SettingsError, Store};
 use crate::sfv::{self, SfvError};
 use crate::sync::lock;
 use crate::tidy::{self, NotMoved, TidyError};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -45,6 +45,9 @@ pub enum Status {
     RepairImpossible,
     /// Finished successfully.
     Done,
+    /// Processed before (an earlier session) and its files are still there:
+    /// offered again, processed only on Retry.
+    AlreadyProcessed,
     /// Failed; see the job detail.
     Failed,
     /// Skipped or cancelled by the user.
@@ -110,6 +113,8 @@ pub enum Detail {
     },
     /// Verified; nothing to extract.
     NothingToExtract,
+    /// Processed before; Retry processes it again.
+    AlreadyProcessed,
     /// Skipped by the user.
     SkippedByUser,
     /// Cancelled by the user while running.
@@ -198,6 +203,17 @@ pub enum Notice {
     },
     /// Moving extra files or removing empty folders failed.
     TidyFailed(Arc<TidyError>),
+    /// A set processed before is still there; it is offered again.
+    AlreadyProcessed {
+        /// Set name.
+        name: String,
+    },
+    /// The files of a set processed before are back (a new copy): it is
+    /// processed again.
+    ProcessingAgain {
+        /// Set name.
+        name: String,
+    },
     /// A set finished successfully.
     Finished {
         /// Set name.
@@ -252,6 +268,9 @@ pub struct Job {
     changed_at: SystemTime,
     failed_signature: Option<Signature>,
     password: Option<String>,
+    /// Its files were not found by the last scan. If they come back after it
+    /// was processed, they are a new copy, processed again.
+    missing: bool,
 }
 
 /// One log line.
@@ -326,7 +345,7 @@ impl Engine {
             state: Arc::clone(&state),
             cancel: Arc::clone(&cancel),
             repaint: Box::new(repaint),
-            processed: HashSet::new(),
+            processed: HashMap::new(),
             ignored: HashSet::new(),
             store,
             next_id: 1,
@@ -365,7 +384,8 @@ struct Worker {
     state: Arc<Mutex<EngineState>>,
     cancel: Arc<AtomicBool>,
     repaint: Box<dyn Fn() + Send + Sync>,
-    processed: HashSet<String>,
+    /// Sets handled in this or an earlier session, and how they ended.
+    processed: HashMap<String, Outcome>,
     ignored: HashSet<String>,
     store: Store,
     next_id: u64,
@@ -415,9 +435,9 @@ impl Worker {
         (self.repaint)();
     }
 
-    fn remember(&mut self, key: &str) {
-        self.processed.insert(key.to_owned());
-        if let Err(e) = self.store.append_processed(key) {
+    fn remember(&mut self, key: &str, outcome: Outcome) {
+        self.processed.insert(key.to_owned(), outcome);
+        if let Err(e) = self.store.append_processed(key, outcome) {
             self.notice(Notice::StateError(Arc::new(e)));
         }
     }
@@ -477,7 +497,7 @@ impl Worker {
                     .map(|j| j.set.key.clone());
                 // Persist before showing the new status (see `finish`).
                 if let Some(k) = key {
-                    self.remember(&k);
+                    self.remember(&k, Outcome::Skipped);
                 }
                 self.update(id, |j| {
                     if !j.status.is_active() {
@@ -550,13 +570,25 @@ impl Worker {
 
         let mut state = lock(&self.state);
         let mut seen = HashSet::new();
+        // Written to the log once the state is unlocked.
+        let mut notices = Vec::new();
         for set in found {
             seen.insert(set.key.clone());
             if let Some(job) = state.jobs.iter_mut().find(|j| j.set.key == set.key) {
                 if job.status.is_active() {
                     continue;
                 }
-                if job.set.signature != set.signature {
+                let came_back = std::mem::take(&mut job.missing);
+                if came_back && matches!(job.status, Status::Done | Status::AlreadyProcessed) {
+                    // Its files went away after it was processed: this is a new copy.
+                    job.status = Status::Waiting;
+                    job.detail = Detail::NewFiles;
+                    job.progress = 0.0;
+                    job.changed_at = now;
+                    notices.push(Notice::ProcessingAgain {
+                        name: set.name.clone(),
+                    });
+                } else if job.set.signature != set.signature {
                     job.changed_at = now;
                     let retry = matches!(job.status, Status::Failed | Status::RepairImpossible)
                         && job.failed_signature.is_some_and(|s| s != set.signature);
@@ -566,26 +598,38 @@ impl Worker {
                     }
                 }
                 job.set = set;
-            } else if !self.processed.contains(&set.key) && !self.ignored.contains(&set.key) {
+            } else if !self.ignored.contains(&set.key) {
+                let Some((status, detail, notice)) = first_seen(self.processed.get(&set.key), &set.name)
+                else {
+                    continue;
+                };
+                notices.extend(notice);
                 let id = self.next_id;
                 self.next_id += 1;
                 let changed_at = set.signature.newest.unwrap_or(now).min(now);
                 state.jobs.push(Job {
                     id,
                     set,
-                    status: Status::Waiting,
+                    status,
                     progress: 0.0,
-                    detail: Detail::None,
+                    detail,
                     changed_at,
                     failed_signature: None,
                     password: None,
+                    missing: false,
                 });
             }
         }
-        // Drop waiting sets whose files disappeared.
+        // Drop waiting sets whose files disappeared; remember that the others
+        // are gone, so that their files coming back count as a new copy.
         state
             .jobs
             .retain(|j| seen.contains(&j.set.key) || !matches!(j.status, Status::Waiting | Status::Queued));
+        for job in state.jobs.iter_mut().filter(|j| !j.status.is_active()) {
+            if !seen.contains(&job.set.key) {
+                job.missing = true;
+            }
+        }
         // A set is ready once it has not changed for `stable` seconds.
         for job in state.jobs.iter_mut().filter(|j| j.status == Status::Waiting) {
             let quiet = now.duration_since(job.changed_at).unwrap_or_default();
@@ -600,6 +644,9 @@ impl Worker {
             }
         }
         drop(state);
+        for notice in notices {
+            self.notice(notice);
+        }
         (self.repaint)();
     }
 
@@ -779,11 +826,17 @@ impl Worker {
         {
             self.move_extra_files(set, root, dest, settings.overwrite_existing);
         }
+        let mut outcome = Outcome::Done;
         if settings.delete_after_success {
             // Verified non-RAR files (the useful content) are always kept.
             let sources = tidy::source_files(set);
             match trash::delete_all(&sources) {
-                Ok(()) => self.notice(Notice::SourcesTrashed { count: sources.len() }),
+                Ok(()) => {
+                    if !sources.is_empty() {
+                        outcome = Outcome::SourcesTrashed;
+                    }
+                    self.notice(Notice::SourcesTrashed { count: sources.len() });
+                }
                 Err(e) => self.notice(Notice::TrashFailed(e.to_string())),
             }
         }
@@ -795,7 +848,7 @@ impl Worker {
             }
         }
         // Persist first: if the app stops right after, the set must not be redone.
-        self.remember(&set.key);
+        self.remember(&set.key, outcome);
         self.notice(Notice::Finished {
             name: set.name.clone(),
         });
@@ -871,6 +924,28 @@ impl Worker {
                 });
             }
         }
+    }
+}
+
+/// Status of a set seen for the first time in this session, from how it
+/// ended before (if it did). `None`: skipped by the user, never shown again.
+fn first_seen(before: Option<&Outcome>, name: &str) -> Option<(Status, Detail, Option<Notice>)> {
+    let name = name.to_owned();
+    match before {
+        None => Some((Status::Waiting, Detail::None, None)),
+        Some(Outcome::Skipped) => None,
+        // Its sources went to the Recycle Bin, yet the set is here: a new copy.
+        Some(Outcome::SourcesTrashed) => Some((
+            Status::Waiting,
+            Detail::NewFiles,
+            Some(Notice::ProcessingAgain { name }),
+        )),
+        // Still there since it was processed: offered again, not redone.
+        Some(Outcome::Done) => Some((
+            Status::AlreadyProcessed,
+            Detail::AlreadyProcessed,
+            Some(Notice::AlreadyProcessed { name }),
+        )),
     }
 }
 

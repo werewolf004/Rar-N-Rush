@@ -41,6 +41,7 @@ Click **Choose a folder…**, or type a path in the **Watched folder** field and
 | **⏸ Pause** / **▶ Start** | Suspends or resumes monitoring. A set being processed finishes first. |
 | **🔄 Scan** | Looks at the folder now instead of waiting for the next scan (**F5**). |
 | **⚙ Settings** | Opens the settings (**Ctrl+,**). |
+| **ℹ About** | Version, licence, credits and links to the source code, this guide and the releases (**F1**). |
 | *Watching · scanned 2 s ago* | Current state and time since the last scan. |
 
 **Watched folder bar** (second line): you can change the folder at any time, even while sets are being processed. Type a path and press **Enter** (**Esc** cancels the edit), pick one of the last ten under **Recent folders**, or click **Browse…**. **Open** shows the folder in File Explorer.
@@ -66,12 +67,15 @@ Click **Choose a folder…**, or type a path in the **Watched folder** field and
 | Password required | Type the password in the row and press **Enter** (see [Passwords](#4-passwords)). |
 | Repair impossible | Not enough PAR2 recovery blocks: the set waits and is tried again as soon as new files arrive. |
 | Done | Extracted successfully. |
+| Already processed | Processed during an earlier session and still there: nothing is redone by itself; **Retry** processes it again. |
 | Error | The **Detail** column and the log say why; **Retry** runs it again. |
 | Skipped | Ignored by you; **Retry** processes it anyway. |
 
 Click a row (or use **↑/↓**) to select it: **Del** removes it from the list, **Enter** opens its folder.
 
-**Log** (bottom): one line per event, newest at the bottom. **Errors only** hides the rest. **Export…** saves the lines shown to a text file you choose, for example to attach to a bug report.
+**Log** (bottom): one line per event, newest at the bottom. **Errors only** hides the rest. **Export…** saves the lines shown to a text file you choose, for example to attach to a bug report. The version in use is shown in the bottom-right corner (*Rar N Rush v1.2.0*, for example); click it to open **About**.
+
+![About window](screenshots/about-en.png)
 
 **Notices**: when a set finishes, fails or needs a password, a short notice appears for six seconds in the bottom-right corner, without taking the focus (visible in the screenshots of [section 6](#6-settings)).
 
@@ -88,7 +92,10 @@ The window reopens at the size and position it had when you closed it.
    - If extraction fails or is cancelled, the files it created are removed, so **Retry** starts clean.
 5. **After a successful run** (optional, off by default): the other files of the set (`.nfo`, samples…) follow it to the destination, the source files go to the **Recycle Bin**, and folders left empty go to the Recycle Bin. Nothing is ever deleted permanently.
 
-A processed set is remembered: it is not processed again after a restart. To process it again, click **Retry**.
+A processed set is remembered, so that it is never processed twice by mistake:
+- if its files are still there at the next start, it is shown as **Already processed**, and **Retry** processes it again;
+- if its files come back after they were gone (sent to the Recycle Bin after the run, or deleted, then copied or downloaded again), they are a new copy: it is processed again by itself;
+- a set you skipped (**✕**) stays skipped.
 
 ## 4. Passwords
 
@@ -167,6 +174,7 @@ Click **OK** to hide it. The other cases are handled the same way, without losin
 | Shortcut | Action |
 |---|---|
 | **F5** | Scan the watched folder now |
+| **F1** | About: version, licence and links |
 | **Ctrl+,** | Open the settings |
 | **Esc** | Close the settings (asks first if something changed); in the watched-folder field, cancel the edit |
 | **Enter** | In the watched-folder field, watch the folder typed; in a password field, try the password; with a set selected, open its folder |
@@ -183,7 +191,7 @@ Next to the settings (`%APPDATA%\RarNRush` for the installed program; for the po
 | File | Content |
 |---|---|
 | `rar-n-rush.toml` | Settings ([OPTIONS.md](OPTIONS.md)). |
-| `rar-n-rush-processed.txt` | Sets already processed, so they are not processed again. |
+| `rar-n-rush-processed.txt` | Sets already processed or skipped, and how they ended, so they are never processed twice by mistake. |
 | `rar-n-rush.log`, `.log.1` … `.3` | Log file, if enabled. |
 | `rar-n-rush.lock`, `rar-n-rush.show` | Used to keep a single instance running. |
 | `rar-n-rush.ico` | Icon of the Windows notifications, if enabled. |

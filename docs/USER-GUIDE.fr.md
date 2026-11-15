@@ -41,6 +41,7 @@ Clique sur **Choisir un dossier…**, ou tape un chemin dans le champ **Dossier 
 | **⏸ Pause** / **▶ Démarrer** | Suspend ou reprend la surveillance. Un jeu en cours de traitement se termine d'abord. |
 | **🔄 Analyser** | Regarde le dossier tout de suite au lieu d'attendre la prochaine analyse (**F5**). |
 | **⚙ Réglages** | Ouvre les réglages (**Ctrl+,**). |
+| **ℹ À propos** | Version, licence, crédits et liens vers le code source, ce guide et les versions (**F1**). |
 | *Surveillance active · analysé il y a 2 s* | État actuel et temps depuis la dernière analyse. |
 
 **Barre du dossier surveillé** (deuxième ligne) : tu peux changer de dossier à tout moment, même pendant un traitement. Tape un chemin et valide avec **Entrée** (**Échap** annule la saisie), choisis l'un des dix derniers dans **Dossiers récents**, ou clique sur **Parcourir…**. **Ouvrir** affiche le dossier dans l'Explorateur.
@@ -66,12 +67,15 @@ Clique sur **Choisir un dossier…**, ou tape un chemin dans le champ **Dossier 
 | Mot de passe requis | Saisis le mot de passe dans la ligne et valide avec **Entrée** (voir [Mots de passe](#4-mots-de-passe)). |
 | Réparation impossible | Pas assez de blocs de récupération PAR2 : le jeu attend et repart tout seul dès que de nouveaux fichiers arrivent. |
 | Terminé | Extrait avec succès. |
+| Déjà traité | Traité lors d'une session précédente et toujours là : rien n'est refait tout seul ; **Réessayer** le traite de nouveau. |
 | Erreur | La colonne **Détail** et le journal disent pourquoi ; **Réessayer** le relance. |
 | Ignoré | Ignoré par toi ; **Réessayer** le traite quand même. |
 
 Clique sur une ligne (ou utilise **↑/↓**) pour la sélectionner : **Suppr** la retire de la liste, **Entrée** ouvre son dossier.
 
-**Journal** (en bas) : une ligne par événement, la plus récente en bas. **Erreurs seulement** masque le reste. **Exporter…** enregistre les lignes affichées dans le fichier texte de ton choix, par exemple pour le joindre à un rapport de bug.
+**Journal** (en bas) : une ligne par événement, la plus récente en bas. **Erreurs seulement** masque le reste. **Exporter…** enregistre les lignes affichées dans le fichier texte de ton choix, par exemple pour le joindre à un rapport de bug. La version utilisée est affichée en bas à droite (*Rar N Rush v1.2.0*, par exemple) ; un clic dessus ouvre **À propos**.
+
+![Fenêtre À propos](screenshots/about-fr.png)
 
 **Messages** : quand un jeu se termine, échoue ou demande un mot de passe, un court message apparaît six secondes en bas à droite, sans prendre le focus (visible sur les captures de la [section 6](#6-réglages)).
 
@@ -88,7 +92,10 @@ La fenêtre se rouvre à la taille et à la position qu'elle avait à la fermetu
    - Si l'extraction échoue ou est annulée, les fichiers qu'elle a créés sont supprimés : **Réessayer** repart de zéro.
 5. **Après un traitement réussi** (facultatif, désactivé par défaut) : les autres fichiers du jeu (`.nfo`, extraits…) le suivent dans la destination, les fichiers sources vont à la **corbeille**, et les dossiers restés vides aussi. Rien n'est jamais supprimé définitivement.
 
-Un jeu traité est mémorisé : il n'est pas retraité après un redémarrage. Pour le retraiter, clique sur **Réessayer**.
+Un jeu traité est mémorisé, pour ne jamais être traité deux fois par erreur :
+- si ses fichiers sont toujours là au démarrage suivant, il s'affiche **Déjà traité**, et **Réessayer** le traite de nouveau ;
+- si ses fichiers reviennent après avoir disparu (envoyés à la corbeille après le traitement, ou supprimés, puis recopiés ou retéléchargés), c'est une nouvelle copie : il est retraité tout seul ;
+- un jeu que tu as ignoré (**✕**) reste ignoré.
 
 ## 4. Mots de passe
 
@@ -167,6 +174,7 @@ Clique sur **OK** pour le masquer. Les autres cas sont traités de la même faç
 | Raccourci | Action |
 |---|---|
 | **F5** | Analyser le dossier surveillé maintenant |
+| **F1** | À propos : version, licence et liens |
 | **Ctrl+,** | Ouvrir les réglages |
 | **Échap** | Fermer les réglages (demande d'abord si quelque chose a changé) ; dans le champ du dossier surveillé, annuler la saisie |
 | **Entrée** | Dans le champ du dossier surveillé, surveiller le dossier saisi ; dans un champ de mot de passe, essayer le mot de passe ; avec un jeu sélectionné, ouvrir son dossier |
@@ -183,7 +191,7 @@ Rar N Rush **ne se connecte jamais à Internet** : aucune vérification de mise 
 | Fichier | Contenu |
 |---|---|
 | `rar-n-rush.toml` | Réglages ([OPTIONS.fr.md](OPTIONS.fr.md)). |
-| `rar-n-rush-processed.txt` | Jeux déjà traités, pour ne pas les retraiter. |
+| `rar-n-rush-processed.txt` | Jeux déjà traités ou ignorés, et comment ils se sont terminés, pour ne jamais les traiter deux fois par erreur. |
 | `rar-n-rush.log`, `.log.1` … `.3` | Fichier journal, s'il est activé. |
 | `rar-n-rush.lock`, `rar-n-rush.show` | Servent à garder une seule instance en marche. |
 | `rar-n-rush.ico` | Icône des notifications Windows, si elles sont activées. |

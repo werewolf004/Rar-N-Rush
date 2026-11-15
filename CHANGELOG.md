@@ -6,6 +6,18 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- **About** window (toolbar button, **F1**): version, licence, credits, and links to the source code, the user guide and the releases.
+- The version in use is shown in the bottom-right corner of the main window; a click opens **About**.
+
+### Fixed
+
+- A set processed before was ignored **without a word** when it was found again, so copying the same download back seemed to do nothing. Now:
+  - if its files are still there since it was processed, it is listed as **Already processed** with **Retry**, and the log says so;
+  - if its files come back after they were gone (sent to the Recycle Bin, or deleted, then copied or downloaded again), it is processed again by itself;
+  - a set you skipped stays skipped.
+
 ## [1.1.0] - 2026-11-15
 
 An extraction folder in the main window, and archives extracted straight into it. If you used an earlier version, untick **Extract into a sub-folder named after the set** in Settings → Processing to get the new behaviour: your saved settings are never changed for you.

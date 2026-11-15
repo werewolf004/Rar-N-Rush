@@ -3,7 +3,7 @@
 
 mod common;
 
-use rar_n_rush::engine::{Command, Engine, Status};
+use rar_n_rush::engine::{Command, Engine, Notice, Status};
 use rar_n_rush::settings::{Settings, Store};
 use std::fs;
 use std::path::Path;
@@ -104,14 +104,19 @@ fn processes_a_folder_of_real_archives() {
         "nested archive must be removed after extraction"
     );
 
-    // Processed sets are remembered and not processed again by a new engine.
+    // Processed sets are remembered: a new engine offers them again (they are
+    // still there) but does not process them again by itself.
     let processed = fs::read_to_string(state.join("rar-n-rush-processed.txt")).unwrap();
     assert_eq!(processed.lines().count(), 4, "{processed}");
     drop(engine);
     let engine = Engine::start(settings(&watch, &out), Store::at(&state), || {}).unwrap();
     wait_until(&engine, |e| e.with_state(|s| s.last_scan.is_some()));
     std::thread::sleep(Duration::from_millis(300));
-    assert_eq!(status_of(&engine, "multi"), None);
+    assert_eq!(status_of(&engine, "multi"), Some(Status::AlreadyProcessed));
+    assert!(
+        !out.join("multi").join("payload (1).bin").exists(),
+        "not extracted a second time"
+    );
     assert!(
         status_of(&engine, "corrupt").is_some(),
         "failed sets are retried after a restart"
@@ -210,7 +215,7 @@ fn repair_impossible_waits_for_more_files() {
         e.with_state(|s| {
             s.log
                 .iter()
-                .filter(|l| matches!(l.notice, rar_n_rush::engine::Notice::RepairImpossible { .. }))
+                .filter(|l| matches!(l.notice, Notice::RepairImpossible { .. }))
                 .count()
         })
     };
@@ -339,4 +344,117 @@ fn extra_files_follow_the_extracted_set() {
         "sources stay unless deletion is enabled"
     );
     assert!(watch.join("unrelated.txt").is_file());
+}
+
+/// Number of log lines matching `pred`.
+fn log_count(engine: &Engine, pred: impl Fn(&Notice) -> bool) -> usize {
+    engine.with_state(|s| s.log.iter().filter(|l| pred(&l.notice)).count())
+}
+
+/// Waits for a scan that starts after this call.
+fn wait_for_next_scan(engine: &Engine) {
+    let before = engine.with_state(|s| s.last_scan);
+    engine.send(Command::ScanNow);
+    wait_until(engine, |e| e.with_state(|s| s.last_scan) != before);
+}
+
+#[test]
+fn set_processed_in_an_earlier_session_is_offered_again() {
+    let root = tempfile::tempdir().unwrap();
+    let (watch, out, state) = (
+        root.path().join("watch"),
+        root.path().join("out"),
+        root.path().join("state"),
+    );
+    for d in [&watch, &out, &state] {
+        fs::create_dir_all(d).unwrap();
+    }
+    common::copy_fixtures(&watch, &["plain.rar"]);
+
+    let engine = Engine::start(settings(&watch, &out), Store::at(&state), || {}).unwrap();
+    wait_until(&engine, |e| status_of(e, "plain") == Some(Status::Done));
+    drop(engine);
+
+    // Next start: its files are still there, so it is offered, not redone.
+    let engine = Engine::start(settings(&watch, &out), Store::at(&state), || {}).unwrap();
+    wait_until(&engine, |e| {
+        status_of(e, "plain") == Some(Status::AlreadyProcessed)
+    });
+    assert_eq!(
+        log_count(&engine, |n| matches!(n, Notice::AlreadyProcessed { .. })),
+        1
+    );
+    wait_for_next_scan(&engine);
+    assert_eq!(status_of(&engine, "plain"), Some(Status::AlreadyProcessed));
+
+    // Retry processes it again (the first copy is kept: "hello (1).txt").
+    let id = engine.with_state(|s| s.jobs[0].id);
+    engine.send(Command::Retry(id));
+    wait_until(&engine, |e| status_of(e, "plain") == Some(Status::Done));
+    assert!(out.join("plain").join("hello (1).txt").is_file());
+}
+
+#[test]
+fn set_whose_sources_were_trashed_is_processed_again_when_it_comes_back() {
+    let root = tempfile::tempdir().unwrap();
+    let (watch, out, state) = (
+        root.path().join("watch"),
+        root.path().join("out"),
+        root.path().join("state"),
+    );
+    for d in [&watch, &out, &state] {
+        fs::create_dir_all(d).unwrap();
+    }
+    common::copy_fixtures(&watch, &["plain.rar"]);
+    let engine = Engine::start(settings(&watch, &out), Store::at(&state), || {}).unwrap();
+    wait_until(&engine, |e| status_of(e, "plain") == Some(Status::Done));
+    drop(engine);
+
+    // As if its sources had gone to the Recycle Bin (the tests never use it),
+    // and the same download had been copied back since.
+    let file = state.join("rar-n-rush-processed.txt");
+    let text = fs::read_to_string(&file).unwrap();
+    assert!(text.ends_with("\tdone\n"), "{text:?}");
+    fs::write(&file, text.replace("\tdone", "\tsources-trashed")).unwrap();
+
+    let engine = Engine::start(settings(&watch, &out), Store::at(&state), || {}).unwrap();
+    wait_until(&engine, |e| status_of(e, "plain") == Some(Status::Done));
+    assert_eq!(
+        log_count(&engine, |n| matches!(n, Notice::ProcessingAgain { .. })),
+        1
+    );
+    assert!(out.join("plain").join("hello (1).txt").is_file());
+}
+
+#[test]
+fn files_coming_back_while_running_are_processed_again() {
+    let root = tempfile::tempdir().unwrap();
+    let (watch, out, state, aside) = (
+        root.path().join("watch"),
+        root.path().join("out"),
+        root.path().join("state"),
+        root.path().join("aside"),
+    );
+    for d in [&watch, &out, &state, &aside] {
+        fs::create_dir_all(d).unwrap();
+    }
+    common::copy_fixtures(&watch, &["plain.rar"]);
+    let engine = Engine::start(settings(&watch, &out), Store::at(&state), || {}).unwrap();
+    wait_until(&engine, |e| status_of(e, "plain") == Some(Status::Done));
+
+    // The files go away, then the same download comes back.
+    fs::rename(watch.join("plain.rar"), aside.join("plain.rar")).unwrap();
+    wait_for_next_scan(&engine);
+    assert_eq!(status_of(&engine, "plain"), Some(Status::Done), "still listed");
+    fs::rename(aside.join("plain.rar"), watch.join("plain.rar")).unwrap();
+    wait_for_next_scan(&engine);
+
+    wait_until(&engine, |e| {
+        log_count(e, |n| matches!(n, Notice::Finished { .. })) == 2
+    });
+    assert_eq!(
+        log_count(&engine, |n| matches!(n, Notice::ProcessingAgain { .. })),
+        1
+    );
+    assert!(out.join("plain").join("hello (1).txt").is_file());
 }

@@ -79,6 +79,7 @@ Ouvre **Réglages** pour changer les dossiers, les délais, la langue, le thème
 | Raccourci | Action |
 |---|---|
 | **F5** | Analyser le dossier surveillé maintenant |
+| **F1** | À propos : version, licence et liens |
 | **Ctrl+,** | Ouvrir les réglages |
 | **Échap** | Fermer les réglages (demande d'abord si quelque chose a changé) ; dans le champ du dossier surveillé, annuler la saisie |
 | **Entrée** | Dans le champ du dossier surveillé, surveiller le dossier saisi ; dans un champ de mot de passe, essayer le mot de passe |
