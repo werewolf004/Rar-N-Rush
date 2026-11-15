@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-15
+
+An extraction folder in the main window, and archives extracted straight into it. If you used an earlier version, untick **Extract into a sub-folder named after the set** in Settings → Processing to get the new behaviour: your saved settings are never changed for you.
+
 ### Added
 
 - **Extraction folder** bar in the main window, under the watched folder: type a path, pick a recent one, browse, or open it in File Explorer, at any time. Left empty, it means the watched folder.
@@ -149,7 +153,8 @@ First public version: the complete processing chain, a quality foundation and th
 
 - `#![forbid(unsafe_code)]` on the whole crate; `unwrap`, `expect` and `panic` are denied outside tests.
 
-[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.1...v1.0.0
 [0.5.1]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.4.0...v0.5.0

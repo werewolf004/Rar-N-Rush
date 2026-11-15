@@ -6,6 +6,10 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+## [1.1.0] - 2026-11-15
+
+Un dossier d'extraction dans la fenêtre principale, et des archives extraites directement dedans. Si tu utilisais une version précédente, décoche **Extraire dans un sous-dossier au nom du jeu** dans Réglages → Traitement pour avoir le nouveau comportement : tes réglages enregistrés ne sont jamais modifiés à ta place.
+
 ### Ajouté
 
 - Barre **Dossier d'extraction** dans la fenêtre principale, sous le dossier surveillé : saisis un chemin, choisis un dossier récent, parcours ou ouvre-le dans l'Explorateur, à tout moment. Laissée vide, elle désigne le dossier surveillé.
@@ -149,7 +153,8 @@ Première version publique : toute la chaîne de traitement, des fondations qual
 
 - `#![forbid(unsafe_code)]` sur tout le crate ; `unwrap`, `expect` et `panic` sont interdits hors des tests.
 
-[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.0.0...HEAD
+[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.1...v1.0.0
 [0.5.1]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.4.0...v0.5.0
