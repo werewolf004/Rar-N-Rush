@@ -103,7 +103,7 @@ pub struct Settings {
     /// Also extract RAR archives found inside an extracted archive.
     pub extract_nested: bool,
     /// Overwrite files that already exist in the destination.
-    /// When `false`, a free name such as `file (1).ext` is used instead.
+    /// When `false`, a file already in the extraction folder is kept as it is.
     pub overwrite_existing: bool,
     /// Seconds between two scans of the watched folder.
     pub scan_interval_secs: u64,

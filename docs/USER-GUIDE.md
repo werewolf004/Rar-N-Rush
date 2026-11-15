@@ -67,7 +67,6 @@ Click **Choose a folder…**, or type a path in the **Watched folder** field and
 | Password required | Type the password in the row and press **Enter** (see [Passwords](#4-passwords)). |
 | Repair impossible | Not enough PAR2 recovery blocks: the set waits and is tried again as soon as new files arrive. |
 | Done | Extracted successfully. |
-| Already processed | Processed during an earlier session and still there: nothing is redone by itself; **Retry** processes it again. |
 | Error | The **Detail** column and the log say why; **Retry** runs it again. |
 | Skipped | Ignored by you; **Retry** processes it anyway. |
 
@@ -87,15 +86,12 @@ The window reopens at the size and position it had when you closed it.
 2. **Verification.** With PAR2 files, `par2.exe` (shipped in the zip) checks every file. With an SFV file, the CRC32 of each file is checked. A set with neither goes straight to extraction.
 3. **Repair.** If a file is damaged or missing and there are enough PAR2 recovery blocks, it is rebuilt. If there are not enough, the set shows **Repair impossible** and waits: when more PAR2 volumes arrive, it is tried again by itself.
 4. **Extraction.** The RAR archives (multi-volume `.partN.rar` or `.rar` + `.r00`) are extracted straight into the extraction folder (the watched folder by default). To get one sub-folder per set, tick **Extract into a sub-folder named after the set** in **Settings → Processing**. Archives found inside the archive are extracted too.
-   - Existing files are **never overwritten** by default: `name (1).ext` is used instead.
+   - A file already in the extraction folder is **kept as it is** by default (nothing is written over it, and no second copy is made); with **Overwrite existing files**, it is replaced.
    - The free space is checked first; if it is not enough, nothing is written and the set fails with the sizes needed and available.
    - If extraction fails or is cancelled, the files it created are removed, so **Retry** starts clean.
 5. **After a successful run** (optional, off by default): the other files of the set (`.nfo`, samples…) follow it to the destination, the source files go to the **Recycle Bin**, and folders left empty go to the Recycle Bin. Nothing is ever deleted permanently.
 
-A processed set is remembered, so that it is never processed twice by mistake:
-- if its files are still there at the next start, it is shown as **Already processed**, and **Retry** processes it again;
-- if its files come back after they were gone (sent to the Recycle Bin after the run, or deleted, then copied or downloaded again), they are a new copy: it is processed again by itself;
-- a set you skipped (**✕**) stays skipped.
+Files that were already processed are **processed again** when they are found again: after a restart, or when you copy the same download back. What is already in the extraction folder is kept or overwritten according to **Overwrite existing files**, so nothing is duplicated. Only a set you skipped (**✕**) stays skipped.
 
 ## 4. Passwords
 
@@ -208,7 +204,7 @@ Next to the settings (`%APPDATA%\RarNRush` for the installed program; for the po
 
 **Does it delete my files?** Never permanently. Source files only go to the Recycle Bin, only after a fully successful run, and only if you enable it.
 
-**Can it overwrite files?** Not by default (`name (1).ext` is used). Enabling it asks for confirmation.
+**Can it overwrite files?** Not by default: a file already there is kept as it is. Enabling it asks for confirmation.
 
 **A set does not start.** It waits until its files stop changing; check *Waiting* in the list. **🔄 Scan** (**F5**) looks at the folder now.
 

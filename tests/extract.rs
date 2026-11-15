@@ -28,7 +28,13 @@ fn multi_volume_archive_is_extracted_intact() {
         Options::default(),
     )
     .unwrap();
-    assert_eq!(outcome, Outcome::Extracted(vec![dest.join("payload.bin")]));
+    assert_eq!(
+        outcome,
+        Outcome::Extracted {
+            files: vec![dest.join("payload.bin")],
+            kept: vec![]
+        }
+    );
     assert_eq!(fs::read(dest.join("payload.bin")).unwrap(), common::payload());
 }
 
@@ -58,7 +64,13 @@ fn passwords_are_tried_in_order() {
         Options::default(),
     )
     .unwrap();
-    assert_eq!(outcome, Outcome::Extracted(vec![dest.join("secret.txt")]));
+    assert_eq!(
+        outcome,
+        Outcome::Extracted {
+            files: vec![dest.join("secret.txt")],
+            kept: vec![]
+        }
+    );
     assert_eq!(fs::read_to_string(dest.join("secret.txt")).unwrap(), "secret");
 }
 
@@ -96,7 +108,10 @@ fn encrypted_headers_need_the_password() {
     );
     assert_eq!(
         run(&first, &dest, &["bad", "abc"], Options::default()).unwrap(),
-        Outcome::Extracted(vec![dest.join("secret.txt")])
+        Outcome::Extracted {
+            files: vec![dest.join("secret.txt")],
+            kept: vec![]
+        }
     );
 }
 
@@ -118,9 +133,16 @@ fn existing_files_are_kept_unless_overwrite_is_enabled() {
         },
     )
     .unwrap();
-    assert_eq!(outcome, Outcome::Extracted(vec![dest.join("hello (1).txt")]));
+    // Kept as it is, and no second copy such as "hello (1).txt".
+    assert_eq!(
+        outcome,
+        Outcome::Extracted {
+            files: vec![],
+            kept: vec![dest.join("hello.txt")]
+        }
+    );
     assert_eq!(fs::read_to_string(dest.join("hello.txt")).unwrap(), "precious");
-    assert_eq!(fs::read_to_string(dest.join("hello (1).txt")).unwrap(), "hello");
+    assert_eq!(fs::read_dir(&dest).unwrap().count(), 1, "nothing else written");
 
     run(
         &first,

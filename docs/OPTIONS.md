@@ -59,7 +59,7 @@ The settings window has three pages: **General** (folders, timing, language, the
 | `recursive` | Also scan sub-folders | bool | `true` | Scan sub-folders, up to 8 levels deep. Symbolic links are not followed. |
 | `create_subfolder` | Extract into a sub-folder named after the set | bool | `false` | Off: files are extracted straight into the extraction folder. On: `Holidays.part1.rar` is extracted into `<extraction folder>\Holidays\`. Characters forbidden by Windows are replaced with `_`. |
 | `extract_nested` | Extract RAR archives found inside an archive | bool | `true` | Extracts archives found in an extracted archive (up to 3 levels), then deletes those inner archives. |
-| `overwrite_existing` | Overwrite existing files | bool | `false` | When `false`, an existing file is kept and the extracted copy is named `name (1).ext`, `name (2).ext`… Turning it on asks for confirmation first, because an overwritten file cannot be recovered. |
+| `overwrite_existing` | Overwrite existing files | bool | `false` | When `false`, a file already in the extraction folder is kept as it is: it is not extracted again and no second copy is made. When `true`, it is replaced. Turning it on asks for confirmation first, because an overwritten file cannot be recovered. |
 | `delete_after_success` | Move PAR2/SFV/RAR files to the Recycle Bin after success | bool | `false` | After a successful run, sends the PAR2 files, the SFV, the RAR volumes and par2 backups (`file.1`) to the Recycle Bin. Verified non-RAR files are always kept. |
 | `autostart` | Start monitoring when the app starts | bool | `true` | Starts monitoring on launch when a watched folder is set. |
 
@@ -77,7 +77,7 @@ The settings window has three pages: **General** (folders, timing, language, the
 
 | Key | Window label | Type | Default | Effect |
 |---|---|---|---|---|
-| `move_extra_files` | Move the other files of the set (.nfo, samples…) to the destination | bool | `false` | After extraction, moves the files of the set's folder that are not PAR2/SFV/RAR sources (`.nfo`, `.jpg`, verified non-RAR files…) to the destination. **Only when the set is alone in its own sub-folder** of the watched folder: a set lying directly in the watched folder, or sharing its folder with other sets, keeps its files (the log says why). Nothing is moved when the destination is the set's own folder. An existing file is kept (`name (1).ext`) unless overwriting is enabled. |
+| `move_extra_files` | Move the other files of the set (.nfo, samples…) to the destination | bool | `false` | After extraction, moves the files of the set's folder that are not PAR2/SFV/RAR sources (`.nfo`, `.jpg`, verified non-RAR files…) to the destination. **Only when the set is alone in its own sub-folder** of the watched folder: a set lying directly in the watched folder, or sharing its folder with other sets, keeps its files (the log says why). Nothing is moved when the destination is the set's own folder. A file of the same name already there is kept (the other one stays where it was) unless overwriting is enabled. |
 | `delete_empty_dirs` | Move folders left empty to the Recycle Bin | bool | `false` | After a successful run, sends the set's folder to the Recycle Bin if it is completely empty, then its parents while they are empty. The watched folder itself is never removed. Combine with the two options above to leave nothing behind. |
 
 ## Window *(Window page)*
@@ -143,7 +143,7 @@ theme = "system"
 
 | File | Content |
 |---|---|
-| `rar-n-rush-processed.txt` | One line per set already processed or skipped: its key, a tab, then how it ended (`done`, `sources-trashed` or `skipped`; lines written by versions before 1.2.0 have no tab and count as `done`). A `done` set still there is shown as **Already processed** (Retry processes it again); a `sources-trashed` set found again is a new copy and is processed again; a `skipped` set stays skipped. |
+| `rar-n-rush-processed.txt` | One line per set already processed or skipped: its key, a tab, then how it ended (`done`, `sources-trashed` or `skipped`; lines written by versions before 1.2.0 have no tab and count as `done`). A set found again is processed again, whatever it was; only a `skipped` set stays skipped. |
 | `rar-n-rush.lock` | Held by the running program, so that a second start shows the open window instead of running twice with the same settings. Released automatically when the program ends, even after a crash. `rar-n-rush.show` is the short-lived request a second start leaves for it. |
 | `rar-n-rush.ico` | Icon of the Windows notifications (see `system_notifications`); removed when the option is off. |
 | `rar-n-rush.log`, `rar-n-rush.log.1` … `.3` | Log file and its rotated copies (see `log_to_file`). The log panel's **Export…** button saves the lines shown, in the interface language, to a text file of your choice. |

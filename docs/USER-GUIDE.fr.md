@@ -6,7 +6,7 @@ Ce guide parcourt chaque écran de Rar N Rush. Pour le nom exact, la valeur par 
 
 - [1. Installation et premier lancement](#1-installation-et-premier-lancement)
 - [2. La fenêtre principale](#2-la-fenêtre-principale)
-- [3. Ce qui arrive à un jeu de fichiers](#3-ce-qui-arrive-à-un-jeu-de-fichiers)
+- [3. Comment se passe une extraction](#3-comment-se-passe-une-extraction)
 - [4. Mots de passe](#4-mots-de-passe)
 - [5. Quand quelque chose ne va pas](#5-quand-quelque-chose-ne-va-pas)
 - [6. Réglages](#6-réglages)
@@ -38,7 +38,7 @@ Clique sur **Choisir un dossier…**, ou tape un chemin dans le champ **Dossier 
 
 | Élément | Rôle |
 |---|---|
-| **⏸ Pause** / **▶ Démarrer** | Suspend ou reprend la surveillance. Un jeu en cours de traitement se termine d'abord. |
+| **⏸ Pause** / **▶ Démarrer** | Suspend ou reprend la surveillance. Une extraction en cours se termine d'abord. |
 | **🔄 Analyser** | Regarde le dossier tout de suite au lieu d'attendre la prochaine analyse (**F5**). |
 | **⚙ Réglages** | Ouvre les réglages (**Ctrl+,**). |
 | **ℹ À propos** | Version, licence, crédits et liens vers le code source, ce guide et les versions (**F1**). |
@@ -46,13 +46,13 @@ Clique sur **Choisir un dossier…**, ou tape un chemin dans le champ **Dossier 
 
 **Barre du dossier surveillé** (deuxième ligne) : tu peux changer de dossier à tout moment, même pendant un traitement. Tape un chemin et valide avec **Entrée** (**Échap** annule la saisie), choisis l'un des dix derniers dans **Dossiers récents**, ou clique sur **Parcourir…**. **Ouvrir** affiche le dossier dans l'Explorateur.
 
-**Barre du dossier d'extraction** (troisième ligne) : l'endroit où les archives sont extraites, directement dans ce dossier, sans sous-dossier au nom du jeu. Laissée vide (par défaut, « Identique au dossier surveillé »), les fichiers sont extraits dans le dossier surveillé. Elle fonctionne comme la ligne du dessus : tape un chemin et valide avec **Entrée** (un champ vide revient au dossier surveillé), choisis-en un dans ses propres **Dossiers récents**, ou clique sur **Parcourir…** ; **Ouvrir** l'affiche dans l'Explorateur. Les jeux déjà en cours d'extraction finissent là où ils ont commencé.
+**Barre du dossier d'extraction** (troisième ligne) : l'endroit où les archives sont extraites, directement dans ce dossier, sans sous-dossier au nom de l'archive. Laissée vide (par défaut, « Identique au dossier surveillé »), les fichiers sont extraits dans le dossier surveillé. Elle fonctionne comme la ligne du dessus : tape un chemin et valide avec **Entrée** (un champ vide revient au dossier surveillé), choisis-en un dans ses propres **Dossiers récents**, ou clique sur **Parcourir…** ; **Ouvrir** l'affiche dans l'Explorateur. Les extractions déjà en cours finissent là où elles ont commencé.
 
-**Liste des jeux** : un *jeu* regroupe tout ce qui appartient à un même téléchargement : volumes RAR, fichiers PAR2, fichier SFV. Une ligne par jeu :
+**Liste des extractions** : une ligne regroupe tout ce qui appartient à un même téléchargement : volumes RAR, fichiers PAR2, fichier SFV. Une ligne par extraction :
 
 | Colonne | Contenu |
 |---|---|
-| Nom | Nom du jeu, tiré de ses fichiers (`Vacances.2026.part1.rar` → `Vacances.2026`). |
+| Nom | Nom de l'extraction, tiré de ses fichiers (`Vacances.2026.part1.rar` → `Vacances.2026`). |
 | Type | Ce qui a été trouvé : `RAR`, `SFV + RAR`, `PAR2 + RAR`, `PAR2`, `SFV`. |
 | Statut | Voir le tableau ci-dessous. |
 | Progression | Avancement de l'étape en cours. |
@@ -62,12 +62,11 @@ Clique sur **Choisir un dossier…**, ou tape un chemin dans le champ **Dossier 
 | Statut | Signification |
 |---|---|
 | En attente | Des fichiers arrivent ou changent encore. |
-| Prêt | Complet, attend son tour (les jeux sont traités un par un). |
+| Prêt | Complet, attend son tour (les extractions se font une par une). |
 | Vérification / Réparation / Extraction | En cours de traitement. |
 | Mot de passe requis | Saisis le mot de passe dans la ligne et valide avec **Entrée** (voir [Mots de passe](#4-mots-de-passe)). |
-| Réparation impossible | Pas assez de blocs de récupération PAR2 : le jeu attend et repart tout seul dès que de nouveaux fichiers arrivent. |
+| Réparation impossible | Pas assez de blocs de récupération PAR2 : l'extraction attend et repart toute seule dès que de nouveaux fichiers arrivent. |
 | Terminé | Extrait avec succès. |
-| Déjà traité | Traité lors d'une session précédente et toujours là : rien n'est refait tout seul ; **Réessayer** le traite de nouveau. |
 | Erreur | La colonne **Détail** et le journal disent pourquoi ; **Réessayer** le relance. |
 | Ignoré | Ignoré par toi ; **Réessayer** le traite quand même. |
 
@@ -77,32 +76,29 @@ Clique sur une ligne (ou utilise **↑/↓**) pour la sélectionner : **Suppr** 
 
 ![Fenêtre À propos](screenshots/about-fr.png)
 
-**Messages** : quand un jeu se termine, échoue ou demande un mot de passe, un court message apparaît six secondes en bas à droite, sans prendre le focus (visible sur les captures de la [section 6](#6-réglages)).
+**Messages** : quand une extraction se termine, échoue ou demande un mot de passe, un court message apparaît six secondes en bas à droite, sans prendre le focus (visible sur les captures de la [section 6](#6-réglages)).
 
 La fenêtre se rouvre à la taille et à la position qu'elle avait à la fermeture.
 
-## 3. Ce qui arrive à un jeu de fichiers
+## 3. Comment se passe une extraction
 
-1. **Attente de la fin du téléchargement.** Un jeu n'est touché qu'une fois qu'aucun de ses fichiers n'a changé depuis un moment (10 secondes par défaut). Un téléchargement en cours n'est jamais lu.
-2. **Vérification.** Avec des fichiers PAR2, `par2.exe` (fourni dans le zip) contrôle chaque fichier. Avec un fichier SFV, c'est le CRC32 de chaque fichier qui est contrôlé. Un jeu sans l'un ni l'autre passe directement à l'extraction.
-3. **Réparation.** Si un fichier est abîmé ou manquant et qu'il y a assez de blocs de récupération PAR2, il est reconstruit. S'il n'y en a pas assez, le jeu affiche **Réparation impossible** et attend : quand d'autres volumes PAR2 arrivent, il repart tout seul.
-4. **Extraction.** Les archives RAR (multi-volumes `.partN.rar` ou `.rar` + `.r00`) sont extraites directement dans le dossier d'extraction (le dossier surveillé par défaut). Pour avoir un sous-dossier par jeu, coche **Extraire dans un sous-dossier au nom du jeu** dans **Réglages → Traitement**. Les archives trouvées à l'intérieur sont extraites aussi.
-   - Les fichiers existants ne sont **jamais écrasés** par défaut : `nom (1).ext` est utilisé à la place.
-   - L'espace libre est vérifié d'abord ; s'il ne suffit pas, rien n'est écrit et le jeu échoue en indiquant les tailles nécessaire et disponible.
+1. **Attente de la fin du téléchargement.** Rien n'est touché tant qu'un des fichiers a changé depuis un moment (10 secondes par défaut). Un téléchargement en cours n'est jamais lu.
+2. **Vérification.** Avec des fichiers PAR2, `par2.exe` (fourni dans le zip) contrôle chaque fichier. Avec un fichier SFV, c'est le CRC32 de chaque fichier qui est contrôlé. Sans l'un ni l'autre, on passe directement à l'extraction.
+3. **Réparation.** Si un fichier est abîmé ou manquant et qu'il y a assez de blocs de récupération PAR2, il est reconstruit. S'il n'y en a pas assez, la ligne affiche **Réparation impossible** et attend : quand d'autres volumes PAR2 arrivent, elle repart toute seule.
+4. **Extraction.** Les archives RAR (multi-volumes `.partN.rar` ou `.rar` + `.r00`) sont extraites directement dans le dossier d'extraction (le dossier surveillé par défaut). Pour avoir un sous-dossier par archive, coche **Extraire dans un sous-dossier au nom de l'archive** dans **Réglages → Traitement**. Les archives trouvées à l'intérieur sont extraites aussi.
+   - Un fichier déjà présent dans le dossier d'extraction est **gardé tel quel** par défaut (rien n'est écrit par-dessus, et aucune deuxième copie n'est créée) ; avec **Écraser les fichiers existants**, il est remplacé.
+   - L'espace libre est vérifié d'abord ; s'il ne suffit pas, rien n'est écrit et l'extraction échoue en indiquant les tailles nécessaire et disponible.
    - Si l'extraction échoue ou est annulée, les fichiers qu'elle a créés sont supprimés : **Réessayer** repart de zéro.
-5. **Après un traitement réussi** (facultatif, désactivé par défaut) : les autres fichiers du jeu (`.nfo`, extraits…) le suivent dans la destination, les fichiers sources vont à la **corbeille**, et les dossiers restés vides aussi. Rien n'est jamais supprimé définitivement.
+5. **Après un traitement réussi** (facultatif, désactivé par défaut) : les autres fichiers (`.nfo`, échantillons…) suivent dans le dossier d'extraction, les fichiers sources vont à la **corbeille**, et les dossiers restés vides aussi. Rien n'est jamais supprimé définitivement.
 
-Un jeu traité est mémorisé, pour ne jamais être traité deux fois par erreur :
-- si ses fichiers sont toujours là au démarrage suivant, il s'affiche **Déjà traité**, et **Réessayer** le traite de nouveau ;
-- si ses fichiers reviennent après avoir disparu (envoyés à la corbeille après le traitement, ou supprimés, puis recopiés ou retéléchargés), c'est une nouvelle copie : il est retraité tout seul ;
-- un jeu que tu as ignoré (**✕**) reste ignoré.
+Des fichiers déjà traités sont **traités de nouveau** quand on les retrouve : après un redémarrage, ou quand tu recopies le même téléchargement. Ce qui est déjà dans le dossier d'extraction est gardé ou écrasé selon **Écraser les fichiers existants** : rien n'est donc dupliqué. Seule une extraction que tu as ignorée (**✕**) reste ignorée.
 
 ## 4. Mots de passe
 
 Deux façons, qui se combinent :
 
 - **Une liste essayée automatiquement** : dans **Réglages → Traitement → Mots de passe à essayer**, un par ligne. Chaque mot de passe est essayé à tour de rôle sur chaque archive protégée.
-- **Saisi à la demande** : un jeu dont le mot de passe n'est pas dans la liste affiche **Mot de passe requis**. Tape le mot de passe dans le champ de la ligne et valide avec **Entrée** (ou **OK**). Un mauvais mot de passe est signalé, et tu peux en saisir un autre.
+- **Saisi à la demande** : une archive dont le mot de passe n'est pas dans la liste affiche **Mot de passe requis**. Tape le mot de passe dans le champ de la ligne et valide avec **Entrée** (ou **OK**). Un mauvais mot de passe est signalé, et tu peux en saisir un autre.
 
 La liste est conservée dans le **Gestionnaire d'identifiants Windows**, protégé par ton compte Windows, et non dans le fichier de réglages. Tu peux la voir dans *Panneau de configuration → Gestionnaire d'identification → Informations d'identification Windows*, sous des noms commençant par `passwords` (service `RarNRush`). Les mots de passe n'apparaissent jamais dans le journal ni dans le fichier journal.
 
@@ -113,7 +109,7 @@ Si le Gestionnaire d'identifiants ne peut pas être utilisé, les mots de passe 
 | Ce que tu vois | Que faire |
 |---|---|
 | **Erreur** — *données corrompues (CRC incorrect)* | L'archive est abîmée et il n'y avait pas de PAR2 pour la réparer. Récupère les volumes PAR2 manquants ou retélécharge l'archive, puis **Réessayer**. |
-| **Réparation impossible** | Pas assez de blocs de récupération. Rien à faire : le jeu repart tout seul quand d'autres volumes PAR2 arrivent. |
+| **Réparation impossible** | Pas assez de blocs de récupération. Rien à faire : l'extraction repart toute seule quand d'autres volumes PAR2 arrivent. |
 | **Erreur** — *espace libre insuffisant* | Libère de la place sur le disque de destination (le message donne les tailles), puis **Réessayer**. |
 | **Mot de passe requis** | Voir [Mots de passe](#4-mots-de-passe). **Ignorer** si tu ne l'as pas. |
 | *par2.exe introuvable* | Garde `par2.exe` à côté de `rar-n-rush.exe`, ou indique son chemin dans **Réglages → Général**. |
@@ -152,7 +148,7 @@ La langue et le thème suivent Windows par défaut, et changent en direct quand 
 Tout se règle dans **Réglages → Fenêtre**.
 
 - **Réduire dans la zone de notification** / **Fermer dans la zone de notification** : la fenêtre se cache et une icône reste près de l'horloge. Clique dessus, ou choisis **Afficher Rar N Rush** dans son menu, pour faire revenir la fenêtre ; **Quitter** dans le même menu ferme le programme. La surveillance continue pendant que la fenêtre est cachée.
-- **Notifications Windows quand la fenêtre n'est pas au premier plan** (activé par défaut) : quand un jeu se termine, échoue ou demande un mot de passe alors que la fenêtre est cachée, réduite ou derrière une autre fenêtre, Windows affiche une notification. Clique dessus pour faire revenir la fenêtre. Elles suivent tes réglages Windows (*Ne pas déranger*, et l'interrupteur de Rar N Rush dans *Paramètres → Système → Notifications*).
+- **Notifications Windows quand la fenêtre n'est pas au premier plan** (activé par défaut) : quand une extraction se termine, échoue ou demande un mot de passe alors que la fenêtre est cachée, réduite ou derrière une autre fenêtre, Windows affiche une notification. Clique dessus pour faire revenir la fenêtre. Elles suivent tes réglages Windows (*Ne pas déranger*, et l'interrupteur de Rar N Rush dans *Paramètres → Système → Notifications*).
 - **Démarrer avec Windows (réduit)** (désactivé par défaut) : Rar N Rush démarre à l'ouverture de ta session, réduit, ou seulement en icône si *Réduire dans la zone de notification* est activé. Si tu déplaces le programme, l'entrée le suit au lancement suivant.
 - **Une seule instance à la fois** : relancer Rar N Rush pendant qu'il tourne ramène simplement la fenêtre ouverte au premier plan.
 
@@ -177,9 +173,9 @@ Clique sur **OK** pour le masquer. Les autres cas sont traités de la même faç
 | **F1** | À propos : version, licence et liens |
 | **Ctrl+,** | Ouvrir les réglages |
 | **Échap** | Fermer les réglages (demande d'abord si quelque chose a changé) ; dans le champ du dossier surveillé, annuler la saisie |
-| **Entrée** | Dans le champ du dossier surveillé, surveiller le dossier saisi ; dans un champ de mot de passe, essayer le mot de passe ; avec un jeu sélectionné, ouvrir son dossier |
-| **↑ / ↓** | Sélectionner un jeu dans la liste |
-| **Suppr** | Retirer le jeu sélectionné de la liste (ses fichiers ne sont pas touchés) |
+| **Entrée** | Dans le champ du dossier surveillé, surveiller le dossier saisi ; dans un champ de mot de passe, essayer le mot de passe ; avec une ligne sélectionnée, ouvrir son dossier |
+| **↑ / ↓** | Sélectionner une ligne dans la liste |
+| **Suppr** | Retirer la ligne sélectionnée de la liste (ses fichiers ne sont pas touchés) |
 | **Tab** | Passer d'un contrôle à l'autre (chaque contrôle est accessible et nommé pour les lecteurs d'écran) |
 
 ## 10. Fichiers, vie privée et désinstallation
@@ -191,7 +187,7 @@ Rar N Rush **ne se connecte jamais à Internet** : aucune vérification de mise 
 | Fichier | Contenu |
 |---|---|
 | `rar-n-rush.toml` | Réglages ([OPTIONS.fr.md](OPTIONS.fr.md)). |
-| `rar-n-rush-processed.txt` | Jeux déjà traités ou ignorés, et comment ils se sont terminés, pour ne jamais les traiter deux fois par erreur. |
+| `rar-n-rush-processed.txt` | Extractions déjà faites ou ignorées, et comment elles se sont terminées ; seules celles que tu as ignorées ne sont pas refaites. |
 | `rar-n-rush.log`, `.log.1` … `.3` | Fichier journal, s'il est activé. |
 | `rar-n-rush.lock`, `rar-n-rush.show` | Servent à garder une seule instance en marche. |
 | `rar-n-rush.ico` | Icône des notifications Windows, si elles sont activées. |
@@ -208,9 +204,9 @@ Rar N Rush **ne se connecte jamais à Internet** : aucune vérification de mise 
 
 **Est-ce qu'il supprime mes fichiers ?** Jamais définitivement. Les fichiers sources ne vont qu'à la corbeille, seulement après un traitement entièrement réussi, et seulement si tu l'actives.
 
-**Peut-il écraser des fichiers ?** Pas par défaut (`nom (1).ext` est utilisé). L'activer demande une confirmation.
+**Peut-il écraser des fichiers ?** Pas par défaut : un fichier déjà présent est gardé tel quel. L'activer demande une confirmation.
 
-**Un jeu ne démarre pas.** Il attend que ses fichiers ne changent plus ; vérifie *En attente* dans la liste. **🔄 Analyser** (**F5**) regarde le dossier tout de suite.
+**Une extraction ne démarre pas.** Elle attend que ses fichiers ne changent plus ; vérifie *En attente* dans la liste. **🔄 Analyser** (**F5**) regarde le dossier tout de suite.
 
 **Puis-je surveiller plusieurs dossiers ?** Un à la fois ; on change instantanément depuis la barre **Dossier surveillé**, et **Dossiers récents** garde les dix derniers. Avec **Analyser aussi les sous-dossiers**, un dossier parent couvre tous ses sous-dossiers.
 

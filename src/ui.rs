@@ -969,11 +969,7 @@ impl App {
             }
         }
         match job.status {
-            Status::Failed
-            | Status::RepairImpossible
-            | Status::Skipped
-            | Status::Done
-            | Status::AlreadyProcessed => {
+            Status::Failed | Status::RepairImpossible | Status::Skipped | Status::Done => {
                 if ui.small_button(t.retry).clicked() {
                     actions.push(Command::Retry(job.id));
                 }

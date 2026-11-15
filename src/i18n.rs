@@ -316,7 +316,7 @@ static EN: Texts = Texts {
     recursive: "Also scan sub-folders",
     subfolder: "Extract into a sub-folder named after the set",
     nested: "Extract RAR archives found inside an archive",
-    overwrite: "Overwrite existing files (otherwise use “name (1).ext”)",
+    overwrite: "Overwrite existing files (otherwise they are kept as they are)",
     trash_after: "Move PAR2/SFV/RAR files to the Recycle Bin after success",
     autostart: "Start monitoring when the app starts",
     group_processing: "Processing",
@@ -366,7 +366,7 @@ static FR: Texts = Texts {
     about: "ℹ  À propos",
     about_hint: "Version, licence et liens (F1)",
     about_title: "À propos de Rar N Rush",
-    about_description: "Surveille un dossier de téléchargements, vérifie les jeux PAR2/SFV, les répare et extrait les archives RAR automatiquement.",
+    about_description: "Surveille un dossier de téléchargements, vérifie les fichiers PAR2/SFV, les répare et extrait les archives RAR automatiquement.",
     version: "Version",
     about_source: "Code source sur GitHub",
     about_guide: "Guide utilisateur",
@@ -403,7 +403,7 @@ static FR: Texts = Texts {
     ok: "OK",
     retry: "Réessayer",
     skip: "Ignorer",
-    skip_hint: "Ne pas traiter ce jeu (l'annule s'il est en cours)",
+    skip_hint: "Ne pas faire cette extraction (l'annule si elle est en cours)",
     open: "Ouvrir",
     open_folder: "Ouvrir le dossier dans l'Explorateur",
     remove: "Retirer de la liste (Suppr)",
@@ -417,7 +417,7 @@ static FR: Texts = Texts {
     discard_question: "Abandonner tes modifications ?",
     overwrite_question: "L'écrasement remplace les fichiers existants définitivement, sans copie dans la corbeille. L'activer ?",
     enable: "Activer",
-    show_toasts: "Afficher un court message quand un jeu se termine, échoue ou demande un mot de passe",
+    show_toasts: "Afficher un court message quand une extraction se termine, échoue ou demande un mot de passe",
     discard: "Abandonner",
     keep_editing: "Continuer",
     watch_dir: "Dossier surveillé",
@@ -432,25 +432,25 @@ static FR: Texts = Texts {
     seconds: " s",
     seconds_unchanged: " s sans changement",
     recursive: "Analyser aussi les sous-dossiers",
-    subfolder: "Extraire dans un sous-dossier au nom du jeu",
+    subfolder: "Extraire dans un sous-dossier au nom de l'archive",
     nested: "Extraire les archives RAR contenues dans une archive",
-    overwrite: "Écraser les fichiers existants (sinon « nom (1).ext »)",
+    overwrite: "Écraser les fichiers existants (sinon ils sont gardés tels quels)",
     trash_after: "Envoyer les fichiers PAR2/SFV/RAR à la corbeille après succès",
     autostart: "Démarrer la surveillance au lancement",
     group_processing: "Traitement",
     group_cleanup: "Après un traitement réussi",
     group_window: "Fenêtre",
     delete_empty_dirs: "Envoyer les dossiers restés vides à la corbeille",
-    move_extra_files: "Déplacer les autres fichiers du jeu (.nfo, extraits…) vers la destination",
-    move_extra_files_hint: "Uniquement si le jeu est seul dans son propre sous-dossier.",
-    follow_active: "Garder visible le jeu en cours de traitement",
+    move_extra_files: "Déplacer les autres fichiers (.nfo, échantillons…) vers le dossier d'extraction",
+    move_extra_files_hint: "Uniquement si l'archive est seule dans son propre sous-dossier.",
+    follow_active: "Garder visible l'extraction en cours",
     minimize_to_tray: "Réduire dans la zone de notification",
     close_to_tray: "Fermer dans la zone de notification",
     close_to_tray_hint: "Pour quitter, utilise le menu de l'icône dans la zone de notification.",
     start_with_windows: "Démarrer avec Windows (réduit)",
     start_with_windows_hint: "Démarre à l'ouverture de ta session Windows. Avec « Réduire dans la zone de notification », seule l'icône apparaît.",
     system_notifications: "Notifications Windows quand la fenêtre n'est pas au premier plan",
-    system_notifications_hint: "Quand un jeu se termine, échoue ou demande un mot de passe. Elles suivent les réglages de Windows (Ne pas déranger, Concentration).",
+    system_notifications_hint: "Quand une extraction se termine, échoue ou demande un mot de passe. Elles suivent les réglages de Windows (Ne pas déranger, Concentration).",
     tray_show: "Afficher Rar N Rush",
     tray_quit: "Quitter",
     tray_failed: "Impossible de créer l'icône de la zone de notification :",
@@ -490,7 +490,6 @@ impl Localize for Status {
             Status::NeedPassword => ("Password required", "Mot de passe requis"),
             Status::RepairImpossible => ("Repair impossible", "Réparation impossible"),
             Status::Done => ("Done", "Terminé"),
-            Status::AlreadyProcessed => ("Already processed", "Déjà traité"),
             Status::Failed => ("Error", "Erreur"),
             Status::Skipped => ("Skipped", "Ignoré"),
         };
@@ -669,20 +668,24 @@ impl Localize for Detail {
             }
             Self::EnterPassword => pick(lang, "Type the password", "Saisis le mot de passe").into(),
             Self::WrongPassword => pick(lang, "Wrong password", "Mot de passe incorrect").into(),
-            Self::Extracted { count, dest } => match lang {
+            Self::Extracted { count, kept: 0, dest } => match lang {
                 Lang::En => format!("{count} file(s) extracted to {}", dest.display()),
                 Lang::Fr => format!("{count} fichier(s) extrait(s) dans {}", dest.display()),
+            },
+            Self::Extracted { count, kept, dest } => match lang {
+                Lang::En => format!(
+                    "{count} file(s) extracted to {}, {kept} already there and kept",
+                    dest.display()
+                ),
+                Lang::Fr => format!(
+                    "{count} fichier(s) extrait(s) dans {}, {kept} déjà présent(s) et gardé(s)",
+                    dest.display()
+                ),
             },
             Self::NothingToExtract => {
                 pick(lang, "Verified, nothing to extract", "Vérifié, rien à extraire").into()
             }
             Self::SkippedByUser => pick(lang, "Skipped by the user", "Ignoré par l'utilisateur").into(),
-            Self::AlreadyProcessed => pick(
-                lang,
-                "Processed before: Retry processes it again",
-                "Déjà traité : « Réessayer » le traite de nouveau",
-            )
-            .into(),
             Self::Cancelled => pick(lang, "Cancelled", "Annulé").into(),
             Self::Error(e) => e.localize(lang),
         }
@@ -822,18 +825,18 @@ impl Localize for Notice {
                 format!("{count} dossier(s) vide(s) envoyé(s) à la corbeille.")
             }
             (Self::TidyFailed(e), _) => e.localize(lang),
-            (Self::AlreadyProcessed { name }, En) => {
-                format!("“{name}” was already processed: Retry processes it again.")
-            }
-            (Self::AlreadyProcessed { name }, Fr) => {
-                format!("« {name} » a déjà été traité : « Réessayer » le traite de nouveau.")
-            }
             (Self::ProcessingAgain { name }, En) => {
-                format!("“{name}” was processed before and its files are back: processing it again.")
+                format!("“{name}” was processed before: processing it again.")
             }
             (Self::ProcessingAgain { name }, Fr) => {
-                format!("« {name} » a déjà été traité et ses fichiers sont revenus : nouveau traitement.")
+                format!("« {name} » a déjà été extrait : nouvelle extraction.")
             }
+            (Self::ExistingKept { name, count }, En) => format!(
+                "“{name}”: {count} file(s) already in the extraction folder were kept (overwriting is off)."
+            ),
+            (Self::ExistingKept { name, count }, Fr) => format!(
+                "« {name} » : {count} fichier(s) déjà présent(s) dans le dossier d'extraction gardé(s) (écrasement désactivé)."
+            ),
             (Self::Finished { name }, En) => format!("“{name}” done."),
             (Self::Finished { name }, Fr) => format!("« {name} » terminé."),
             (Self::Failed { name, error }, En) => format!("“{name}” failed: {}", error.localize(lang)),
@@ -885,13 +888,15 @@ fn extra_files_kept(reason: NotMoved, name: &str, lang: Lang) -> String {
             format!("“{name}”: extra files kept in place (set not in a folder of its own).")
         }
         (NotMoved::InWatchedFolder, Fr) => {
-            format!("« {name} » : fichiers annexes laissés en place (jeu sans dossier à lui).")
+            format!("« {name} » : fichiers annexes laissés en place (archive sans dossier à elle).")
         }
         (NotMoved::SharedFolder, En) => {
             format!("“{name}”: extra files kept in place (folder shared with other sets).")
         }
         (NotMoved::SharedFolder, Fr) => {
-            format!("« {name} » : fichiers annexes laissés en place (dossier partagé avec d'autres jeux).")
+            format!(
+                "« {name} » : fichiers annexes laissés en place (dossier partagé avec d'autres archives)."
+            )
         }
         (NotMoved::SameFolder, En) => {
             format!("“{name}”: extra files kept in place (extracted into the same folder).")
@@ -939,7 +944,6 @@ mod tests {
             Status::NeedPassword,
             Status::RepairImpossible,
             Status::Done,
-            Status::AlreadyProcessed,
             Status::Failed,
             Status::Skipped,
         ];

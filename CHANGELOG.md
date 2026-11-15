@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Changed
+
+- Files already processed are **processed again by default** when they are found again (after a restart, or copied back), instead of being listed as "Already processed". Only a set you skipped stays skipped.
+- With **Overwrite existing files** off, a file already in the extraction folder is now **kept as it is**: it is not extracted again, and no second copy (`name (1).ext`) is made any more. The log and the Detail column say how many were kept. Moving the other files (.nfo, samples) follows the same rule.
+- French texts speak of "extraction" or "archive" instead of "jeu".
+
 ## [1.2.0] - 2026-11-15
 
 A download copied back after it was processed is processed again, and the version is now shown in the window, with an About window. Recommended for everyone.

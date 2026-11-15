@@ -6,7 +6,6 @@
 //! downloads are never touched. Folders are only removed when they are completely
 //! empty, never above or at the watched folder, and always to the recycle bin.
 
-use crate::extract::free_path;
 use crate::scan::{self, FileSet};
 use std::collections::HashSet;
 use std::fs;
@@ -115,9 +114,10 @@ pub fn extra_files(
     Ok(Ok(extras))
 }
 
-/// Moves `file` into `dest_dir`. An existing file is kept (a free name such as
-/// `name (1).ext` is used) unless `overwrite` is set. Returns the new path.
-pub fn move_file(file: &Path, dest_dir: &Path, overwrite: bool) -> Result<PathBuf, TidyError> {
+/// Moves `file` into `dest_dir`. A file of the same name already there is
+/// replaced only when `overwrite` is set; otherwise nothing moves and `None`
+/// is returned. Returns the new path.
+pub fn move_file(file: &Path, dest_dir: &Path, overwrite: bool) -> Result<Option<PathBuf>, TidyError> {
     let move_error = |to: &Path, source: io::Error| TidyError::Move {
         from: file.to_path_buf(),
         to: to.to_path_buf(),
@@ -125,9 +125,11 @@ pub fn move_file(file: &Path, dest_dir: &Path, overwrite: bool) -> Result<PathBu
     };
     fs::create_dir_all(dest_dir).map_err(|e| move_error(dest_dir, e))?;
     let target = dest_dir.join(file.file_name().unwrap_or_default());
-    let target = if overwrite { target } else { free_path(&target) };
+    if !overwrite && target.exists() {
+        return Ok(None);
+    }
     if fs::rename(file, &target).is_ok() {
-        return Ok(target);
+        return Ok(Some(target));
     }
     // Different drive: copy, then remove the original. If the original cannot be
     // removed, the copy is deleted so the file never ends up in two places.
@@ -136,7 +138,7 @@ pub fn move_file(file: &Path, dest_dir: &Path, overwrite: bool) -> Result<PathBu
         let _ = fs::remove_file(&target);
         return Err(move_error(&target, e));
     }
-    Ok(target)
+    Ok(Some(target))
 }
 
 /// Sends `start` to the recycle bin if it is empty, then each empty parent,
@@ -208,11 +210,11 @@ mod tests {
         fs::write(src.join("info.nfo"), b"new").unwrap();
         fs::write(dest.join("info.nfo"), b"old").unwrap();
 
-        let moved = move_file(&src.join("info.nfo"), &dest, false).unwrap();
-        assert_eq!(moved, dest.join("info (1).nfo"));
+        // Overwrite off: the file already there is kept, the other one stays put.
+        assert_eq!(move_file(&src.join("info.nfo"), &dest, false).unwrap(), None);
         assert_eq!(fs::read(dest.join("info.nfo")).unwrap(), b"old");
-        assert_eq!(fs::read(&moved).unwrap(), b"new");
-        assert!(!src.join("info.nfo").exists());
+        assert_eq!(fs::read(src.join("info.nfo")).unwrap(), b"new");
+        assert_eq!(fs::read_dir(&dest).unwrap().count(), 1, "no second copy");
     }
 
     #[test]
@@ -222,7 +224,9 @@ mod tests {
         let dest = tmp.path().join("out");
         fs::create_dir_all(&dest).unwrap();
         fs::write(dest.join("a.txt"), b"old").unwrap();
-        let moved = move_file(&tmp.path().join("a.txt"), &dest, true).unwrap();
+        let moved = move_file(&tmp.path().join("a.txt"), &dest, true)
+            .unwrap()
+            .unwrap();
         assert_eq!(moved, dest.join("a.txt"));
         assert_eq!(fs::read(&moved).unwrap(), b"new");
     }

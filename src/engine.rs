@@ -45,9 +45,6 @@ pub enum Status {
     RepairImpossible,
     /// Finished successfully.
     Done,
-    /// Processed before (an earlier session) and its files are still there:
-    /// offered again, processed only on Retry.
-    AlreadyProcessed,
     /// Failed; see the job detail.
     Failed,
     /// Skipped or cancelled by the user.
@@ -108,13 +105,13 @@ pub enum Detail {
     Extracted {
         /// Number of files extracted.
         count: usize,
+        /// Files already in the destination, kept as they were (overwrite off).
+        kept: usize,
         /// Destination folder.
         dest: PathBuf,
     },
     /// Verified; nothing to extract.
     NothingToExtract,
-    /// Processed before; Retry processes it again.
-    AlreadyProcessed,
     /// Skipped by the user.
     SkippedByUser,
     /// Cancelled by the user while running.
@@ -203,16 +200,18 @@ pub enum Notice {
     },
     /// Moving extra files or removing empty folders failed.
     TidyFailed(Arc<TidyError>),
-    /// A set processed before is still there; it is offered again.
-    AlreadyProcessed {
-        /// Set name.
-        name: String,
-    },
-    /// The files of a set processed before are back (a new copy): it is
-    /// processed again.
+    /// A set processed before is found again: it is processed again (files
+    /// already extracted are kept or overwritten, as set in the settings).
     ProcessingAgain {
         /// Set name.
         name: String,
+    },
+    /// Files already in the destination were kept (overwriting is off).
+    ExistingKept {
+        /// Set name.
+        name: String,
+        /// Number of files kept.
+        count: usize,
     },
     /// A set finished successfully.
     Finished {
@@ -579,7 +578,7 @@ impl Worker {
                     continue;
                 }
                 let came_back = std::mem::take(&mut job.missing);
-                if came_back && matches!(job.status, Status::Done | Status::AlreadyProcessed) {
+                if came_back && job.status == Status::Done {
                     // Its files went away after it was processed: this is a new copy.
                     job.status = Status::Waiting;
                     job.detail = Detail::NewFiles;
@@ -690,7 +689,7 @@ impl Worker {
             .cloned()
             .collect();
 
-        let mut count = 0;
+        let (mut count, mut kept) = (0, 0);
         for first in &firsts {
             self.update(id, |j| {
                 j.status = Status::Extracting;
@@ -698,11 +697,20 @@ impl Worker {
                 j.detail = Detail::ExtractingTo(dest.clone());
             });
             match self.extract_tree(id, first, &dest, &passwords, &settings, 0) {
-                Ok(n) => count += n,
+                Ok((n, k)) => {
+                    count += n;
+                    kept += k;
+                }
                 Err(stop) => return self.stop(job, stop),
             }
         }
-        self.finish(job, Detail::Extracted { count, dest }, &settings);
+        if kept > 0 {
+            self.notice(Notice::ExistingKept {
+                name: set.name.clone(),
+                count: kept,
+            });
+        }
+        self.finish(job, Detail::Extracted { count, kept, dest }, &settings);
     }
 
     /// Runs PAR2 or SFV verification. `Ok(false)` means "stop here, status already set".
@@ -774,6 +782,7 @@ impl Worker {
     }
 
     /// Extracts an archive, then the RAR archives it contains (if enabled).
+    /// Returns the number of files written and of existing files kept.
     fn extract_tree(
         &self,
         id: u64,
@@ -782,7 +791,7 @@ impl Worker {
         passwords: &[String],
         settings: &Settings,
         depth: u32,
-    ) -> Result<usize, Stop> {
+    ) -> Result<(usize, usize), Stop> {
         let options = extract::Options {
             overwrite_existing: settings.overwrite_existing,
         };
@@ -790,8 +799,8 @@ impl Worker {
             self.update(id, |j| j.progress = p);
         })
         .map_err(|e| Stop::Failed(JobError::Extract(Arc::new(e))))?;
-        let files = match outcome {
-            extract::Outcome::Extracted(files) => files,
+        let (files, mut kept) = match outcome {
+            extract::Outcome::Extracted { files, kept } => (files, kept.len()),
             extract::Outcome::NeedPassword => return Err(Stop::NeedPassword),
             extract::Outcome::Cancelled => return Err(Stop::Cancelled),
         };
@@ -804,7 +813,9 @@ impl Worker {
                 self.notice(Notice::NestedArchive {
                     file: scan::file_name(&inner),
                 });
-                let extracted = self.extract_tree(id, &inner, &inner_dir, passwords, settings, depth + 1)?;
+                let (extracted, inner_kept) =
+                    self.extract_tree(id, &inner, &inner_dir, passwords, settings, depth + 1)?;
+                kept += inner_kept;
                 if let Some((base, _)) = scan::rar_part_info(&scan::file_name(&inner)) {
                     for volume in scan::rar_volumes_on_disk(&inner_dir, &base) {
                         if std::fs::remove_file(volume).is_ok() {
@@ -815,7 +826,7 @@ impl Worker {
                 count += extracted;
             }
         }
-        Ok(count)
+        Ok((count, kept))
     }
 
     fn finish(&mut self, job: &Job, detail: Detail, settings: &Settings) {
@@ -874,11 +885,14 @@ impl Worker {
         };
         let mut count = 0;
         for file in &extras {
-            if let Err(e) = tidy::move_file(file, dest, overwrite) {
-                self.notice(Notice::TidyFailed(Arc::new(e)));
-                break;
+            match tidy::move_file(file, dest, overwrite) {
+                Ok(Some(_)) => count += 1,
+                Ok(None) => {} // already there, kept (overwrite off)
+                Err(e) => {
+                    self.notice(Notice::TidyFailed(Arc::new(e)));
+                    break;
+                }
             }
-            count += 1;
         }
         if count > 0 {
             self.notice(Notice::ExtraFilesMoved {
@@ -928,23 +942,18 @@ impl Worker {
 }
 
 /// Status of a set seen for the first time in this session, from how it
-/// ended before (if it did). `None`: skipped by the user, never shown again.
+/// ended before (if it did). Every set is processed, even one processed
+/// before; only a set the user skipped is left alone (`None`).
 fn first_seen(before: Option<&Outcome>, name: &str) -> Option<(Status, Detail, Option<Notice>)> {
-    let name = name.to_owned();
     match before {
         None => Some((Status::Waiting, Detail::None, None)),
         Some(Outcome::Skipped) => None,
-        // Its sources went to the Recycle Bin, yet the set is here: a new copy.
-        Some(Outcome::SourcesTrashed) => Some((
+        Some(Outcome::Done | Outcome::SourcesTrashed) => Some((
             Status::Waiting,
             Detail::NewFiles,
-            Some(Notice::ProcessingAgain { name }),
-        )),
-        // Still there since it was processed: offered again, not redone.
-        Some(Outcome::Done) => Some((
-            Status::AlreadyProcessed,
-            Detail::AlreadyProcessed,
-            Some(Notice::AlreadyProcessed { name }),
+            Some(Notice::ProcessingAgain {
+                name: name.to_owned(),
+            }),
         )),
     }
 }

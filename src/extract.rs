@@ -22,23 +22,27 @@ use unrar::error::{Code, UnrarError};
 use crate::sync::lock;
 
 const PROGRESS_INTERVAL: Duration = Duration::from_millis(250);
-/// Upper bound when looking for a free `name (n).ext`.
-const MAX_RENAME_ATTEMPTS: u32 = 10_000;
 /// Free space kept in reserve on the destination drive, on top of the archive size.
 pub const SPACE_MARGIN: u64 = 64 * 1024 * 1024;
 
 /// Options for [`extract`].
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Options {
-    /// Overwrite files that already exist in the destination.
+    /// Overwrite files that already exist in the destination. When `false`,
+    /// they are kept as they are and not extracted again.
     pub overwrite_existing: bool,
 }
 
 /// Successful end states of an extraction.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Outcome {
-    /// Paths of the extracted files.
-    Extracted(Vec<PathBuf>),
+    /// The archive was extracted.
+    Extracted {
+        /// Paths of the files written.
+        files: Vec<PathBuf>,
+        /// Files already in the destination, kept as they were (overwrite off).
+        kept: Vec<PathBuf>,
+    },
     /// The archive is protected and none of the given passwords works.
     NeedPassword,
     /// The user cancelled the run.
@@ -116,6 +120,7 @@ pub enum ExtractError {
 }
 
 struct Entry {
+    name: PathBuf,
     size: u64,
     is_dir: bool,
     encrypted: bool,
@@ -132,26 +137,6 @@ pub fn is_safe_relative(p: &Path) -> bool {
             .all(|c| matches!(c, Component::Normal(_) | Component::CurDir))
 }
 
-/// First free path: `path`, then `stem (1).ext`, `stem (2).ext`, …
-pub fn free_path(path: &Path) -> PathBuf {
-    if !path.exists() {
-        return path.to_path_buf();
-    }
-    let stem = path
-        .file_stem()
-        .map(|s| s.to_string_lossy().into_owned())
-        .unwrap_or_default();
-    let ext = path
-        .extension()
-        .map(|e| format!(".{}", e.to_string_lossy()))
-        .unwrap_or_default();
-    let parent = path.parent().unwrap_or_else(|| Path::new(""));
-    (1..MAX_RENAME_ATTEMPTS)
-        .map(|n| parent.join(format!("{stem} ({n}){ext}")))
-        .find(|p| !p.exists())
-        .unwrap_or_else(|| path.to_path_buf())
-}
-
 fn list(first: &Path, password: Option<&str>) -> Result<Vec<Entry>, UnrarError> {
     let archive = match password {
         Some(pw) => Archive::with_password(first, pw),
@@ -161,6 +146,7 @@ fn list(first: &Path, password: Option<&str>) -> Result<Vec<Entry>, UnrarError> 
         .open_for_listing()?
         .map(|h| {
             h.map(|h| Entry {
+                name: h.filename.clone(),
                 size: h.unpacked_size,
                 is_dir: h.is_directory(),
                 encrypted: h.is_encrypted(),
@@ -192,11 +178,13 @@ fn check_space(dest: &Path, size: u64) -> Result<(), ExtractError> {
     Ok(())
 }
 
-/// A file written by an attempt.
+/// A file met by an attempt: written, or already there and kept.
 struct Created {
     path: PathBuf,
-    /// The file was already there (overwrite enabled): never removed.
+    /// The file was already there (overwritten or kept): never removed.
     existed: bool,
+    /// Already there and kept as it was (overwrite off): not written.
+    kept: bool,
 }
 
 /// Removes the files an attempt created (not those it overwrote), then the
@@ -250,20 +238,34 @@ pub fn extract(
     };
 
     for password in candidates {
+        let listed;
         let entries = match (&plain_entries, password) {
-            (Some(entries), None) => entries.iter().map(|e| (e.size, e.is_dir)).collect(),
+            (Some(entries), None) => entries,
             _ => match list(first, password) {
-                Ok(entries) => entries.iter().map(|e| (e.size, e.is_dir)).collect::<Vec<_>>(),
+                Ok(entries) => {
+                    listed = entries;
+                    &listed
+                }
                 Err(e) if is_password_error(&e) || e.code == Code::BadData => continue,
                 Err(e) => return Err(archive_err(e.code.into())),
             },
         };
-        let total: u64 = entries.iter().filter(|(_, dir)| !dir).map(|(s, _)| s).sum();
+        // Files kept because they already exist take no new space.
+        let total: u64 = entries
+            .iter()
+            .filter(|e| !e.is_dir)
+            .filter(|e| options.overwrite_existing || !dest.join(&e.name).exists())
+            .map(|e| e.size)
+            .sum();
         check_space(dest, total)?;
         let (result, created) = extract_once(first, dest, password, total, options, cancel, &progress);
         match result {
             Ok(Attempt::Done) => {
-                return Ok(Outcome::Extracted(created.into_iter().map(|c| c.path).collect()));
+                let (kept, files): (Vec<Created>, Vec<Created>) = created.into_iter().partition(|c| c.kept);
+                return Ok(Outcome::Extracted {
+                    files: files.into_iter().map(|c| c.path).collect(),
+                    kept: kept.into_iter().map(|c| c.path).collect(),
+                });
             }
             // Remove what the wrong password produced, then try the next one.
             Ok(Attempt::WrongPassword) => remove_created(&created, dest),
@@ -377,9 +379,17 @@ fn run_entries(
             open = header.skip().map_err(|e| err(Some(&rel), e.code))?;
             continue;
         }
-        let mut target = dest.join(&rel);
-        if !options.overwrite_existing {
-            target = free_path(&target);
+        let target = dest.join(&rel);
+        if !options.overwrite_existing && target.exists() {
+            // Already there and overwriting is off: kept as it is.
+            created.push(Created {
+                path: target,
+                existed: true,
+                kept: true,
+            });
+            shared.done_bytes.fetch_add(size, Ordering::Relaxed);
+            open = header.skip().map_err(|e| err(Some(&rel), e.code))?;
+            continue;
         }
         if let Some(parent) = target.parent() {
             fs::create_dir_all(parent).map_err(|source| ExtractError::CreateDir {
@@ -391,6 +401,7 @@ fn run_entries(
         created.push(Created {
             existed: target.exists(),
             path: target.clone(),
+            kept: false,
         });
         open = match header.extract_to(&target) {
             Ok(a) => a,
@@ -451,29 +462,17 @@ mod tests {
             Created {
                 path: dest.join("kept.txt"),
                 existed: true,
+                kept: false,
             },
             Created {
                 path: dest.join("sub").join("new.txt"),
                 existed: false,
+                kept: false,
             },
         ];
         remove_created(&created, &dest);
         assert!(dest.join("kept.txt").is_file());
         assert!(!dest.join("sub").exists());
         assert!(dest.is_dir(), "the destination itself stays");
-    }
-
-    #[test]
-    fn free_path_never_overwrites() {
-        let dir = tempfile::tempdir().unwrap();
-        let p = dir.path().join("a.txt");
-        assert_eq!(free_path(&p), p);
-        fs::write(&p, b"x").unwrap();
-        assert_eq!(free_path(&p), dir.path().join("a (1).txt"));
-        fs::write(dir.path().join("a (1).txt"), b"x").unwrap();
-        assert_eq!(free_path(&p), dir.path().join("a (2).txt"));
-        let no_ext = dir.path().join("README");
-        fs::write(&no_ext, b"x").unwrap();
-        assert_eq!(free_path(&no_ext), dir.path().join("README (1)"));
     }
 }

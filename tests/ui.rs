@@ -219,7 +219,7 @@ fn settings_window_opens_and_closes() {
     h.get_by_label("Processing").click();
     frames(&mut h, 2);
     for label in [
-        "Overwrite existing files (otherwise use “name (1).ext”)",
+        "Overwrite existing files (otherwise they are kept as they are)",
         "Move the other files of the set (.nfo, samples…) to the destination",
         "Move folders left empty to the Recycle Bin",
         "Passwords to try (one per line)",
@@ -519,7 +519,7 @@ fn turning_on_overwrite_asks_first() {
     frames(&mut h, 3);
     h.get_by_label("Processing").click();
     frames(&mut h, 2);
-    h.get_by_label("Overwrite existing files (otherwise use “name (1).ext”)")
+    h.get_by_label("Overwrite existing files (otherwise they are kept as they are)")
         .click();
     frames(&mut h, 2);
     h.get_by_label("Save").click();

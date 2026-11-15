@@ -6,6 +6,12 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+### Modifié
+
+- Des fichiers déjà traités sont **traités de nouveau par défaut** quand on les retrouve (après un redémarrage, ou recopiés), au lieu d'apparaître « Déjà traité ». Seule une extraction que tu as ignorée reste ignorée.
+- Avec **Écraser les fichiers existants** décoché, un fichier déjà présent dans le dossier d'extraction est désormais **gardé tel quel** : il n'est pas extrait de nouveau, et aucune deuxième copie (`nom (1).ext`) n'est plus créée. Le journal et la colonne Détail indiquent combien ont été gardés. Le déplacement des autres fichiers (.nfo, échantillons) suit la même règle.
+- Les textes en français parlent d'« extraction » ou d'« archive » au lieu de « jeu ».
+
 ## [1.2.0] - 2026-11-15
 
 Un téléchargement recopié après son traitement est de nouveau traité, et la version est désormais affichée dans la fenêtre, avec une fenêtre À propos. Recommandée pour tout le monde.

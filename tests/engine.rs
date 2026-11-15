@@ -104,18 +104,21 @@ fn processes_a_folder_of_real_archives() {
         "nested archive must be removed after extraction"
     );
 
-    // Processed sets are remembered: a new engine offers them again (they are
-    // still there) but does not process them again by itself.
+    // Processed sets are remembered, but a new engine processes the files
+    // still there again; what is already extracted is kept (overwrite is off),
+    // never duplicated as "name (1).ext".
     let processed = fs::read_to_string(state.join("rar-n-rush-processed.txt")).unwrap();
     assert_eq!(processed.lines().count(), 4, "{processed}");
     drop(engine);
     let engine = Engine::start(settings(&watch, &out), Store::at(&state), || {}).unwrap();
-    wait_until(&engine, |e| e.with_state(|s| s.last_scan.is_some()));
-    std::thread::sleep(Duration::from_millis(300));
-    assert_eq!(status_of(&engine, "multi"), Some(Status::AlreadyProcessed));
+    wait_until(&engine, |e| status_of(e, "multi") == Some(Status::Done));
     assert!(
         !out.join("multi").join("payload (1).bin").exists(),
-        "not extracted a second time"
+        "no second copy"
+    );
+    assert_eq!(
+        fs::read(out.join("multi").join("payload.bin")).unwrap(),
+        common::payload()
     );
     assert!(
         status_of(&engine, "corrupt").is_some(),
@@ -359,7 +362,7 @@ fn wait_for_next_scan(engine: &Engine) {
 }
 
 #[test]
-fn set_processed_in_an_earlier_session_is_offered_again() {
+fn set_processed_in_an_earlier_session_is_processed_again() {
     let root = tempfile::tempdir().unwrap();
     let (watch, out, state) = (
         root.path().join("watch"),
@@ -370,28 +373,40 @@ fn set_processed_in_an_earlier_session_is_offered_again() {
         fs::create_dir_all(d).unwrap();
     }
     common::copy_fixtures(&watch, &["plain.rar"]);
+    let extracted = out.join("plain").join("hello.txt");
 
     let engine = Engine::start(settings(&watch, &out), Store::at(&state), || {}).unwrap();
     wait_until(&engine, |e| status_of(e, "plain") == Some(Status::Done));
     drop(engine);
+    fs::write(&extracted, "edited by the user").unwrap();
 
-    // Next start: its files are still there, so it is offered, not redone.
+    // Next start, overwrite off: processed again, the existing file is kept.
     let engine = Engine::start(settings(&watch, &out), Store::at(&state), || {}).unwrap();
-    wait_until(&engine, |e| {
-        status_of(e, "plain") == Some(Status::AlreadyProcessed)
-    });
+    wait_until(&engine, |e| status_of(e, "plain") == Some(Status::Done));
     assert_eq!(
-        log_count(&engine, |n| matches!(n, Notice::AlreadyProcessed { .. })),
+        log_count(&engine, |n| matches!(n, Notice::ProcessingAgain { .. })),
         1
     );
-    wait_for_next_scan(&engine);
-    assert_eq!(status_of(&engine, "plain"), Some(Status::AlreadyProcessed));
+    assert_eq!(
+        log_count(&engine, |n| matches!(n, Notice::ExistingKept { count: 1, .. })),
+        1
+    );
+    assert_eq!(fs::read_to_string(&extracted).unwrap(), "edited by the user");
+    assert!(
+        !out.join("plain").join("hello (1).txt").exists(),
+        "no second copy"
+    );
+    drop(engine);
 
-    // Retry processes it again (the first copy is kept: "hello (1).txt").
-    let id = engine.with_state(|s| s.jobs[0].id);
-    engine.send(Command::Retry(id));
+    // Overwrite on: processed again and the file is replaced.
+    let s = Settings {
+        overwrite_existing: true,
+        ..settings(&watch, &out)
+    };
+    let engine = Engine::start(s, Store::at(&state), || {}).unwrap();
     wait_until(&engine, |e| status_of(e, "plain") == Some(Status::Done));
-    assert!(out.join("plain").join("hello (1).txt").is_file());
+    assert_eq!(fs::read_to_string(&extracted).unwrap(), "hello");
+    assert_eq!(fs::read_dir(out.join("plain")).unwrap().count(), 1);
 }
 
 #[test]
@@ -423,7 +438,10 @@ fn set_whose_sources_were_trashed_is_processed_again_when_it_comes_back() {
         log_count(&engine, |n| matches!(n, Notice::ProcessingAgain { .. })),
         1
     );
-    assert!(out.join("plain").join("hello (1).txt").is_file());
+    assert!(
+        !out.join("plain").join("hello (1).txt").exists(),
+        "no second copy"
+    );
 }
 
 #[test]
@@ -456,5 +474,8 @@ fn files_coming_back_while_running_are_processed_again() {
         log_count(&engine, |n| matches!(n, Notice::ProcessingAgain { .. })),
         1
     );
-    assert!(out.join("plain").join("hello (1).txt").is_file());
+    assert!(
+        !out.join("plain").join("hello (1).txt").exists(),
+        "no second copy"
+    );
 }
