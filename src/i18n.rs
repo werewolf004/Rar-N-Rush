@@ -219,6 +219,9 @@ pub struct Texts {
     pub save: &'static str,
     pub cancel: &'static str,
     pub pick_watch_dir: &'static str,
+    pub pick_extract_dir: &'static str,
+    pub extract_hint: &'static str,
+    pub extract_apply_hint: &'static str,
     pub program_filter: &'static str,
 }
 
@@ -276,8 +279,8 @@ static EN: Texts = Texts {
     discard: "Discard",
     keep_editing: "Keep editing",
     watch_dir: "Watched folder",
-    destination: "Destination",
-    destination_hint: "same folder as the files",
+    destination: "Extraction folder",
+    destination_hint: "same as the watched folder",
     par2_exe: "par2.exe",
     par2_auto: "automatic lookup",
     par2_missing: "par2.exe not found: PAR2 repair is unavailable.",
@@ -322,6 +325,9 @@ static EN: Texts = Texts {
     save: "Save",
     cancel: "Cancel",
     pick_watch_dir: "Folder to watch",
+    pick_extract_dir: "Folder to extract into",
+    extract_hint: "Same as the watched folder",
+    extract_apply_hint: "Press Enter to extract into this folder (empty: the watched folder), Esc to cancel",
     program_filter: "Program",
 };
 
@@ -379,8 +385,8 @@ static FR: Texts = Texts {
     discard: "Abandonner",
     keep_editing: "Continuer",
     watch_dir: "Dossier surveillé",
-    destination: "Destination",
-    destination_hint: "même dossier que les fichiers",
+    destination: "Dossier d'extraction",
+    destination_hint: "identique au dossier surveillé",
     par2_exe: "par2.exe",
     par2_auto: "recherche automatique",
     par2_missing: "par2.exe introuvable : la réparation PAR2 est indisponible.",
@@ -425,6 +431,9 @@ static FR: Texts = Texts {
     save: "Enregistrer",
     cancel: "Annuler",
     pick_watch_dir: "Dossier à surveiller",
+    pick_extract_dir: "Dossier où extraire",
+    extract_hint: "Identique au dossier surveillé",
+    extract_apply_hint: "Entrée pour extraire dans ce dossier (vide : le dossier surveillé), Échap pour annuler",
     program_filter: "Programme",
 };
 

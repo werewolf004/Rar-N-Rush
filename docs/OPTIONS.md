@@ -39,7 +39,8 @@ The settings window has three pages: **General** (folders, timing, language, the
 |---|---|---|---|---|
 | `watch_dir` | Watched folder | path | *(empty)* | Folder scanned for new sets. Empty means monitoring cannot start. Also editable at any time in the **Watched folder** bar of the main window: type a path and press Enter, pick one under **Recent folders**, or use **Browse…**. A folder that does not exist is refused. |
 | `recent_watch_dirs` | Recent folders *(main window)* | list of paths | `[]` | Folders watched recently, most recent first, offered by **Recent folders**. Kept up to date automatically, at most 10 entries, duplicates removed (case-insensitive). |
-| `extract_dir` | Destination | path | *(empty)* | Where archives are extracted. Empty means "next to the source files". When it is inside the watched folder, it is excluded from scans. |
+| `extract_dir` | Extraction folder | path | *(empty)* | Where archives are extracted. Empty means the watched folder. Also editable at any time in the **Extraction folder** bar of the main window, like the watched folder (an empty field goes back to the watched folder). When it is inside the watched folder, it is excluded from scans. |
+| `recent_extract_dirs` | Recent folders *(main window, extraction folder)* | list of paths | `[]` | Extraction folders used recently, most recent first. Same rules as `recent_watch_dirs`. |
 | `par2_path` | par2.exe | path | *(empty)* | Path to `par2.exe`. Empty means automatic lookup: next to `rar-n-rush.exe`, then in `PATH`. The window shows the resolved path, or a warning if none is found. |
 
 ## Timing *(General page)*
@@ -56,7 +57,7 @@ The settings window has three pages: **General** (folders, timing, language, the
 | Key | Window label | Type | Default | Effect |
 |---|---|---|---|---|
 | `recursive` | Also scan sub-folders | bool | `true` | Scan sub-folders, up to 8 levels deep. Symbolic links are not followed. |
-| `create_subfolder` | Extract into a sub-folder named after the set | bool | `true` | Extracts `Holidays.part1.rar` into `<destination>\Holidays\`. Characters forbidden by Windows are replaced with `_`. |
+| `create_subfolder` | Extract into a sub-folder named after the set | bool | `false` | Off: files are extracted straight into the extraction folder. On: `Holidays.part1.rar` is extracted into `<extraction folder>\Holidays\`. Characters forbidden by Windows are replaced with `_`. |
 | `extract_nested` | Extract RAR archives found inside an archive | bool | `true` | Extracts archives found in an extracted archive (up to 3 levels), then deletes those inner archives. |
 | `overwrite_existing` | Overwrite existing files | bool | `false` | When `false`, an existing file is kept and the extracted copy is named `name (1).ext`, `name (2).ext`… Turning it on asks for confirmation first, because an overwritten file cannot be recovered. |
 | `delete_after_success` | Move PAR2/SFV/RAR files to the Recycle Bin after success | bool | `false` | After a successful run, sends the PAR2 files, the SFV, the RAR volumes and par2 backups (`file.1`) to the Recycle Bin. Verified non-RAR files are always kept. |
@@ -107,7 +108,8 @@ The settings window has three pages: **General** (folders, timing, language, the
 watch_dir = 'D:\Downloads'
 recent_watch_dirs = ['D:\Downloads', 'E:\Usenet']
 extract_dir = 'D:\Extracted'
-create_subfolder = true
+recent_extract_dirs = ['D:\Extracted']
+create_subfolder = false
 recursive = true
 par2_path = ''
 delete_after_success = false

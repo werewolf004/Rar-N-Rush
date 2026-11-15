@@ -39,7 +39,8 @@ La fenêtre des réglages a trois pages : **Général** (dossiers, délais, lang
 |---|---|---|---|---|
 | `watch_dir` | Dossier surveillé | chemin | *(vide)* | Dossier analysé pour trouver de nouveaux jeux. Vide : la surveillance ne peut pas démarrer. Modifiable à tout moment dans la barre **Dossier surveillé** de la fenêtre principale : saisis un chemin et valide avec Entrée, choisis-en un dans **Dossiers récents**, ou utilise **Parcourir…**. Un dossier inexistant est refusé. |
 | `recent_watch_dirs` | Dossiers récents *(fenêtre principale)* | liste de chemins | `[]` | Dossiers surveillés récemment, du plus récent au plus ancien, proposés par **Dossiers récents**. Tenue à jour automatiquement, 10 entrées au plus, sans doublon (casse ignorée). |
-| `extract_dir` | Destination | chemin | *(vide)* | Dossier d'extraction. Vide : à côté des fichiers sources. S'il se trouve dans le dossier surveillé, il est exclu des analyses. |
+| `extract_dir` | Dossier d'extraction | chemin | *(vide)* | Dossier où les archives sont extraites. Vide : le dossier surveillé. Modifiable aussi à tout moment dans la barre **Dossier d'extraction** de la fenêtre principale, comme le dossier surveillé (un champ vide revient au dossier surveillé). S'il se trouve dans le dossier surveillé, il est exclu des analyses. |
+| `recent_extract_dirs` | Dossiers récents *(fenêtre principale, dossier d'extraction)* | liste de chemins | `[]` | Dossiers d'extraction utilisés récemment, du plus récent au plus ancien. Mêmes règles que `recent_watch_dirs`. |
 | `par2_path` | par2.exe | chemin | *(vide)* | Chemin de `par2.exe`. Vide : recherche automatique, d'abord à côté de `rar-n-rush.exe`, puis dans le `PATH`. La fenêtre affiche le chemin trouvé, ou un avertissement. |
 
 ## Délais *(page Général)*
@@ -56,7 +57,7 @@ La fenêtre des réglages a trois pages : **Général** (dossiers, délais, lang
 | Clé | Libellé dans la fenêtre | Type | Défaut | Effet |
 |---|---|---|---|---|
 | `recursive` | Analyser aussi les sous-dossiers | booléen | `true` | Analyse les sous-dossiers, jusqu'à 8 niveaux. Les liens symboliques ne sont pas suivis. |
-| `create_subfolder` | Extraire dans un sous-dossier au nom du jeu | booléen | `true` | Extrait `Vacances.part1.rar` dans `<destination>\Vacances\`. Les caractères interdits par Windows sont remplacés par `_`. |
+| `create_subfolder` | Extraire dans un sous-dossier au nom du jeu | booléen | `false` | Désactivé : les fichiers sont extraits directement dans le dossier d'extraction. Activé : `Vacances.part1.rar` est extrait dans `<dossier d'extraction>\Vacances\`. Les caractères interdits par Windows sont remplacés par `_`. |
 | `extract_nested` | Extraire les archives RAR contenues dans une archive | booléen | `true` | Extrait les archives trouvées dans une archive extraite (jusqu'à 3 niveaux), puis supprime ces archives internes. |
 | `overwrite_existing` | Écraser les fichiers existants | booléen | `false` | À `false`, un fichier existant est conservé et la copie extraite est nommée `nom (1).ext`, `nom (2).ext`… L'activer demande d'abord une confirmation, car un fichier écrasé ne peut pas être récupéré. |
 | `delete_after_success` | Envoyer les fichiers PAR2/SFV/RAR à la corbeille après succès | booléen | `false` | Après un traitement réussi, envoie à la corbeille les fichiers PAR2, le SFV, les volumes RAR et les sauvegardes de par2 (`fichier.1`). Les fichiers vérifiés qui ne sont pas des RAR sont toujours conservés. |
@@ -107,7 +108,8 @@ La fenêtre des réglages a trois pages : **Général** (dossiers, délais, lang
 watch_dir = 'D:\Telechargements'
 recent_watch_dirs = ['D:\Telechargements', 'E:\Usenet']
 extract_dir = 'D:\Extraits'
-create_subfolder = true
+recent_extract_dirs = ['D:\Extraits']
+create_subfolder = false
 recursive = true
 par2_path = ''
 delete_after_success = false

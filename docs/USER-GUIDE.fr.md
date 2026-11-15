@@ -45,6 +45,8 @@ Clique sur **Choisir un dossier…**, ou tape un chemin dans le champ **Dossier 
 
 **Barre du dossier surveillé** (deuxième ligne) : tu peux changer de dossier à tout moment, même pendant un traitement. Tape un chemin et valide avec **Entrée** (**Échap** annule la saisie), choisis l'un des dix derniers dans **Dossiers récents**, ou clique sur **Parcourir…**. **Ouvrir** affiche le dossier dans l'Explorateur.
 
+**Barre du dossier d'extraction** (troisième ligne) : l'endroit où les archives sont extraites, directement dans ce dossier, sans sous-dossier au nom du jeu. Laissée vide (par défaut, « Identique au dossier surveillé »), les fichiers sont extraits dans le dossier surveillé. Elle fonctionne comme la ligne du dessus : tape un chemin et valide avec **Entrée** (un champ vide revient au dossier surveillé), choisis-en un dans ses propres **Dossiers récents**, ou clique sur **Parcourir…** ; **Ouvrir** l'affiche dans l'Explorateur. Les jeux déjà en cours d'extraction finissent là où ils ont commencé.
+
 **Liste des jeux** : un *jeu* regroupe tout ce qui appartient à un même téléchargement : volumes RAR, fichiers PAR2, fichier SFV. Une ligne par jeu :
 
 | Colonne | Contenu |
@@ -80,7 +82,7 @@ La fenêtre se rouvre à la taille et à la position qu'elle avait à la fermetu
 1. **Attente de la fin du téléchargement.** Un jeu n'est touché qu'une fois qu'aucun de ses fichiers n'a changé depuis un moment (10 secondes par défaut). Un téléchargement en cours n'est jamais lu.
 2. **Vérification.** Avec des fichiers PAR2, `par2.exe` (fourni dans le zip) contrôle chaque fichier. Avec un fichier SFV, c'est le CRC32 de chaque fichier qui est contrôlé. Un jeu sans l'un ni l'autre passe directement à l'extraction.
 3. **Réparation.** Si un fichier est abîmé ou manquant et qu'il y a assez de blocs de récupération PAR2, il est reconstruit. S'il n'y en a pas assez, le jeu affiche **Réparation impossible** et attend : quand d'autres volumes PAR2 arrivent, il repart tout seul.
-4. **Extraction.** Les archives RAR (multi-volumes `.partN.rar` ou `.rar` + `.r00`) sont extraites dans le dossier de destination, par défaut dans un sous-dossier au nom du jeu. Les archives trouvées à l'intérieur sont extraites aussi.
+4. **Extraction.** Les archives RAR (multi-volumes `.partN.rar` ou `.rar` + `.r00`) sont extraites directement dans le dossier d'extraction (le dossier surveillé par défaut). Pour avoir un sous-dossier par jeu, coche **Extraire dans un sous-dossier au nom du jeu** dans **Réglages → Traitement**. Les archives trouvées à l'intérieur sont extraites aussi.
    - Les fichiers existants ne sont **jamais écrasés** par défaut : `nom (1).ext` est utilisé à la place.
    - L'espace libre est vérifié d'abord ; s'il ne suffit pas, rien n'est écrit et le jeu échoue en indiquant les tailles nécessaire et disponible.
    - Si l'extraction échoue ou est annulée, les fichiers qu'elle a créés sont supprimés : **Réessayer** repart de zéro.

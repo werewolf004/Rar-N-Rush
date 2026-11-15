@@ -630,7 +630,8 @@ impl Worker {
             return self.stop(job, Stop::Failed(JobError::FirstVolumeMissing));
         }
 
-        let mut dest = settings.extract_path().unwrap_or_else(|| set.dir.clone());
+        // Straight into the extraction folder (the watched folder by default).
+        let mut dest = settings.extract_root().unwrap_or_else(|| set.dir.clone());
         if settings.create_subfolder {
             dest.push(sanitize_folder_name(&set.name));
         }

@@ -87,9 +87,12 @@ pub struct Settings {
     pub watch_dir: String,
     /// Recently watched folders, most recent first (offered in the main window).
     pub recent_watch_dirs: Vec<String>,
-    /// Extraction folder. Empty means "next to the source files".
+    /// Extraction folder. Empty means the watched folder.
     pub extract_dir: String,
-    /// Extract each set into a sub-folder named after the set.
+    /// Recently used extraction folders, most recent first (offered in the main window).
+    pub recent_extract_dirs: Vec<String>,
+    /// Extract each set into a sub-folder named after the set (off by default:
+    /// files go straight into the extraction folder).
     pub create_subfolder: bool,
     /// Also scan sub-folders of the watched folder.
     pub recursive: bool,
@@ -217,7 +220,8 @@ impl Default for Settings {
             watch_dir: String::new(),
             recent_watch_dirs: Vec::new(),
             extract_dir: String::new(),
-            create_subfolder: true,
+            recent_extract_dirs: Vec::new(),
+            create_subfolder: false,
             recursive: true,
             par2_path: String::new(),
             delete_after_success: false,
@@ -263,6 +267,12 @@ impl Settings {
                 .map(|d| d.trim())
                 .filter(|d| !d.is_empty()),
         );
+        self.recent_extract_dirs = dedup_paths(
+            std::mem::take(&mut self.recent_extract_dirs)
+                .iter()
+                .map(|d| d.trim())
+                .filter(|d| !d.is_empty()),
+        );
         self
     }
 
@@ -275,6 +285,24 @@ impl Settings {
             self.recent_watch_dirs.insert(0, dir.to_owned());
         }
         self.validated()
+    }
+
+    /// Returns a copy extracting into `dir` (empty: the watched folder), with
+    /// `dir` moved to the front of the recent extraction folders.
+    #[must_use]
+    pub fn with_extract_dir(mut self, dir: &str) -> Self {
+        let dir = dir.trim();
+        dir.clone_into(&mut self.extract_dir);
+        if !dir.is_empty() {
+            self.recent_extract_dirs.insert(0, dir.to_owned());
+        }
+        self.validated()
+    }
+
+    /// Where sets are extracted: the extraction folder, or the watched folder
+    /// when none is set.
+    pub fn extract_root(&self) -> Option<PathBuf> {
+        self.extract_path().or_else(|| self.watch_path())
     }
 
     /// Watched folder, if one is configured.
@@ -1089,7 +1117,8 @@ mod tests {
             watch_dir: "D:\\in".into(),
             recent_watch_dirs: vec!["D:\\in".into(), "D:\\old".into()],
             extract_dir: "E:\\out".into(),
-            create_subfolder: false,
+            recent_extract_dirs: vec!["E:\\out".into(), "E:\\old".into()],
+            create_subfolder: true,
             recursive: false,
             par2_path: "C:\\tools\\par2.exe".into(),
             delete_after_success: true,

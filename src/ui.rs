@@ -13,7 +13,7 @@ use crate::tray::{self, Request, Tray, WindowAction, WindowInput};
 use eframe::egui::{self, Color32, RichText};
 use egui_extras::{Column, TableBuilder};
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 /// Main application.
@@ -28,12 +28,10 @@ pub struct App {
     password_inputs: HashMap<u64, String>,
     errors_only: bool,
     settings_error: Option<String>,
-    /// Text of the watched-folder field in the main window.
-    watch_input: String,
-    /// `true` while the user edits the watched-folder field (not yet applied).
-    watch_dirty: bool,
-    /// Why the last watched-folder change was refused.
-    watch_error: Option<String>,
+    /// Watched-folder field of the main window.
+    watch: FolderField,
+    /// Extraction-folder field of the main window.
+    extract: FolderField,
     /// Problem found in the settings file at start-up, shown until dismissed.
     load_issue: Option<LoadIssue>,
     /// Warning raised while running (e.g. passwords kept in the file), shown in
@@ -203,9 +201,8 @@ impl App {
             password_inputs: HashMap::new(),
             errors_only: false,
             settings_error: None,
-            watch_input: settings.watch_dir.clone(),
-            watch_dirty: false,
-            watch_error: None,
+            watch: FolderField::new(&settings.watch_dir),
+            extract: FolderField::new(&settings.extract_dir),
             load_issue,
             warning: None,
             followed: None,
@@ -542,11 +539,7 @@ impl App {
 
     /// Opens the folder picker, starting from the current folder when it exists.
     fn pick_watch_dir(&self, current: &Settings) -> Option<String> {
-        let mut dialog = rfd::FileDialog::new().set_title(self.texts().pick_watch_dir);
-        if let Some(dir) = current.watch_path().filter(|d| d.is_dir()) {
-            dialog = dialog.set_directory(dir);
-        }
-        dialog.pick_folder().map(|d| d.to_string_lossy().into_owned())
+        pick_folder(self.texts().pick_watch_dir, current.watch_path().as_deref())
     }
 
     /// Watches `dir` from now on. Refused (with a message) when it is not an existing
@@ -555,28 +548,46 @@ impl App {
     fn set_watch_dir(&mut self, ctx: &egui::Context, current: &Settings, dir: &str) {
         let dir = dir.trim();
         if !Path::new(dir).is_dir() {
-            dir.clone_into(&mut self.watch_input);
-            self.watch_dirty = true;
-            self.watch_error = Some(self.texts().folder_missing.to_owned());
+            self.watch.refuse(dir, self.texts().folder_missing);
             return;
         }
         let first_folder = current.watch_path().is_none();
         let settings = current.clone().with_watch_dir(dir);
         match self.apply_settings(ctx, settings.clone()) {
             Ok(()) => {
-                self.watch_input = settings.watch_dir;
-                self.watch_dirty = false;
-                self.watch_error = None;
+                self.watch.applied(&settings.watch_dir);
                 // An open settings window must not put the old folder back on save.
                 if let Some(draft) = &mut self.draft {
-                    draft.watch_dir.clone_from(&self.watch_input);
+                    draft.watch_dir.clone_from(&settings.watch_dir);
                     draft.recent_watch_dirs = settings.recent_watch_dirs;
                 }
                 if first_folder {
                     self.engine.send(Command::SetRunning(true));
                 }
             }
-            Err(e) => self.watch_error = Some(e),
+            Err(e) => self.watch.error = Some(e),
+        }
+    }
+
+    /// Extracts into `dir` from now on; empty means the watched folder. Refused
+    /// (with a message) when it is not an existing folder. Sets already being
+    /// extracted finish where they started.
+    fn set_extract_dir(&mut self, ctx: &egui::Context, current: &Settings, dir: &str) {
+        let dir = dir.trim();
+        if !dir.is_empty() && !Path::new(dir).is_dir() {
+            self.extract.refuse(dir, self.texts().folder_missing);
+            return;
+        }
+        let settings = current.clone().with_extract_dir(dir);
+        match self.apply_settings(ctx, settings.clone()) {
+            Ok(()) => {
+                self.extract.applied(&settings.extract_dir);
+                if let Some(draft) = &mut self.draft {
+                    draft.extract_dir.clone_from(&settings.extract_dir);
+                    draft.recent_extract_dirs = settings.recent_extract_dirs;
+                }
+            }
+            Err(e) => self.extract.error = Some(e),
         }
     }
 
@@ -626,63 +637,59 @@ impl App {
             }
         });
         ui.add_space(4.0);
-        self.watch_bar(ui, snap);
+        self.folder_bars(ui, snap);
         ui.add_space(6.0);
     }
 
-    /// Watched-folder bar: editable path, recent folders, browse and open buttons.
-    /// The folder can be changed at any time, even while sets are being processed.
-    fn watch_bar(&mut self, ui: &mut egui::Ui, snap: &Snapshot) {
+    /// Watched-folder and extraction-folder bars: editable path, recent folders,
+    /// browse and open buttons. Both can be changed at any time, even while sets
+    /// are being processed.
+    fn folder_bars(&mut self, ui: &mut egui::Ui, snap: &Snapshot) {
         let t = self.texts();
         let dark = ui.visuals().dark_mode;
-        if !self.watch_dirty {
-            self.watch_input.clone_from(&snap.settings.watch_dir);
+        let s = &snap.settings;
+        if !self.watch.dirty {
+            self.watch.input.clone_from(&s.watch_dir);
         }
-        let mut chosen: Option<String> = None;
-        ui.horizontal(|ui| {
-            let label = ui.label(t.watch_dir);
-            let width = (ui.available_width() - 300.0).clamp(160.0, 640.0);
-            let field = ui
-                .add(
-                    egui::TextEdit::singleline(&mut self.watch_input)
-                        .hint_text(t.watch_hint)
-                        .desired_width(width),
-                )
-                .labelled_by(label.id);
-            if field.changed() {
-                self.watch_dirty = true;
-                self.watch_error = None;
-            }
-            if field.lost_focus() {
-                if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
-                    self.watch_dirty = false;
-                    self.watch_error = None;
-                } else if self.watch_dirty && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                    chosen = Some(self.watch_input.clone());
-                }
-            }
-            if self.watch_dirty && ui.button(t.ok).on_hover_text(t.watch_apply_hint).clicked() {
-                chosen = Some(self.watch_input.clone());
-            }
-            if let Some(dir) = recent_folders_menu(ui, &snap.settings, t) {
-                chosen = Some(dir);
-            }
-            if ui.button(t.browse).on_hover_text(t.pick_watch_dir).clicked()
-                && let Some(dir) = self.pick_watch_dir(&snap.settings)
-            {
-                chosen = Some(dir);
-            }
-            if let Some(dir) = snap.settings.watch_path()
-                && ui.button(t.open).on_hover_text(t.open_in_explorer).clicked()
-            {
-                open_in_explorer(&dir);
-            }
-        });
-        if let Some(e) = &self.watch_error {
+        if !self.extract.dirty {
+            self.extract.input.clone_from(&s.extract_dir);
+        }
+        let watch_bar = FolderBar {
+            label: t.watch_dir,
+            hint: t.watch_hint,
+            apply_hint: t.watch_apply_hint,
+            pick_title: t.pick_watch_dir,
+            recents: &s.recent_watch_dirs,
+            current: &s.watch_dir,
+            folder: s.watch_path(),
+        };
+        let extract_bar = FolderBar {
+            label: t.destination,
+            hint: t.extract_hint,
+            apply_hint: t.extract_apply_hint,
+            pick_title: t.pick_extract_dir,
+            recents: &s.recent_extract_dirs,
+            current: &s.extract_dir,
+            folder: s.extract_root(),
+        };
+        let (mut watch_chosen, mut extract_chosen) = (None, None);
+        egui::Grid::new("folder_bars")
+            .num_columns(2)
+            .spacing([8.0, 4.0])
+            .show(ui, |ui| {
+                watch_chosen = folder_bar(ui, &mut self.watch, &watch_bar, t);
+                ui.end_row();
+                extract_chosen = folder_bar(ui, &mut self.extract, &extract_bar, t);
+                ui.end_row();
+            });
+        for e in [&self.watch.error, &self.extract.error].into_iter().flatten() {
             ui.colored_label(status_color(Status::Failed, dark), e);
         }
-        if let Some(dir) = chosen {
-            self.set_watch_dir(ui.ctx(), &snap.settings, &dir);
+        // One change per frame: each starts from the settings shown this frame.
+        if let Some(dir) = watch_chosen {
+            self.set_watch_dir(ui.ctx(), s, &dir);
+        } else if let Some(dir) = extract_chosen {
+            self.set_extract_dir(ui.ctx(), s, &dir);
         }
     }
 
@@ -1137,13 +1144,112 @@ fn settings_grid(ui: &mut egui::Ui, draft: &mut Settings, t: &Texts, lang: Lang,
     ui.end_row();
 }
 
-/// Drop-down listing the recently watched folders. Returns the folder picked, if any.
-fn recent_folders_menu(ui: &mut egui::Ui, settings: &Settings, t: &Texts) -> Option<String> {
-    let recents: Vec<&String> = settings
-        .recent_watch_dirs
-        .iter()
-        .filter(|d| **d != settings.watch_dir)
-        .collect();
+/// Editable folder field of the main window (watched or extraction folder).
+#[derive(Debug, Default)]
+struct FolderField {
+    /// Text of the field.
+    input: String,
+    /// `true` while the user edits the field (not yet applied).
+    dirty: bool,
+    /// Why the last change was refused.
+    error: Option<String>,
+}
+
+impl FolderField {
+    fn new(value: &str) -> Self {
+        Self {
+            input: value.to_owned(),
+            ..Self::default()
+        }
+    }
+
+    /// Keeps `dir` in the field, marked as not applied, with the reason.
+    fn refuse(&mut self, dir: &str, why: &str) {
+        dir.clone_into(&mut self.input);
+        self.dirty = true;
+        self.error = Some(why.to_owned());
+    }
+
+    /// The change was saved: the field shows the saved value again.
+    fn applied(&mut self, value: &str) {
+        value.clone_into(&mut self.input);
+        self.dirty = false;
+        self.error = None;
+    }
+}
+
+/// What a folder bar shows and offers.
+struct FolderBar<'a> {
+    label: &'a str,
+    hint: &'a str,
+    apply_hint: &'a str,
+    pick_title: &'a str,
+    recents: &'a [String],
+    /// Saved value (left out of the recent folders).
+    current: &'a str,
+    /// Folder used now: start of the folder picker, and target of "Open".
+    folder: Option<PathBuf>,
+}
+
+/// One row of the folder grid: label, then field, OK, recent folders, browse
+/// and open. Returns the folder chosen (typed, picked or recent), if any.
+fn folder_bar(ui: &mut egui::Ui, field: &mut FolderField, bar: &FolderBar<'_>, t: &Texts) -> Option<String> {
+    let mut chosen = None;
+    let label = ui.label(bar.label);
+    ui.horizontal(|ui| {
+        let width = (ui.available_width() - 300.0).clamp(160.0, 640.0);
+        let response = ui
+            .add(
+                egui::TextEdit::singleline(&mut field.input)
+                    .hint_text(bar.hint)
+                    .desired_width(width),
+            )
+            .labelled_by(label.id);
+        if response.changed() {
+            field.dirty = true;
+            field.error = None;
+        }
+        if response.lost_focus() {
+            if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                field.dirty = false;
+                field.error = None;
+            } else if field.dirty && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                chosen = Some(field.input.clone());
+            }
+        }
+        if field.dirty && ui.button(t.ok).on_hover_text(bar.apply_hint).clicked() {
+            chosen = Some(field.input.clone());
+        }
+        if let Some(dir) = recent_folders_menu(ui, bar.recents, bar.current, t) {
+            chosen = Some(dir);
+        }
+        if ui.button(t.browse).on_hover_text(bar.pick_title).clicked()
+            && let Some(dir) = pick_folder(bar.pick_title, bar.folder.as_deref())
+        {
+            chosen = Some(dir);
+        }
+        if let Some(dir) = bar.folder.as_ref().filter(|d| d.is_dir())
+            && ui.button(t.open).on_hover_text(t.open_in_explorer).clicked()
+        {
+            open_in_explorer(dir);
+        }
+    });
+    chosen
+}
+
+/// Opens the folder picker titled `title`, starting from `start` when it exists.
+fn pick_folder(title: &str, start: Option<&Path>) -> Option<String> {
+    let mut dialog = rfd::FileDialog::new().set_title(title);
+    if let Some(dir) = start.filter(|d| d.is_dir()) {
+        dialog = dialog.set_directory(dir);
+    }
+    dialog.pick_folder().map(|d| d.to_string_lossy().into_owned())
+}
+
+/// Drop-down listing recent folders other than `current`. Returns the folder
+/// picked, if any.
+fn recent_folders_menu(ui: &mut egui::Ui, recents: &[String], current: &str, t: &Texts) -> Option<String> {
+    let recents: Vec<&String> = recents.iter().filter(|d| d.as_str() != current).collect();
     let mut picked = None;
     ui.add_enabled_ui(!recents.is_empty(), |ui| {
         ui.menu_button(t.recent_folders, |ui| {

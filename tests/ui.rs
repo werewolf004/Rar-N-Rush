@@ -213,7 +213,8 @@ fn settings_window_opens_and_closes() {
     h.step();
     h.get_by_label("⚙  Settings").click();
     frames(&mut h, 3);
-    h.get_by_label("Destination");
+    // In the main window and in the settings window.
+    assert_eq!(h.get_all_by_label("Extraction folder").count(), 2);
     h.get_by_label("Follow Windows");
     h.get_by_label("Processing").click();
     frames(&mut h, 2);
@@ -350,7 +351,8 @@ fn recent_folder_is_picked_from_the_drop_down() {
     let mut h = harness(settings, &state, false);
     frames(&mut h, 2);
 
-    h.get_by_label("Recent folders").click();
+    // The first "Recent folders" menu is the watched folder's.
+    h.get_all_by_label("Recent folders").next().unwrap().click();
     frames(&mut h, 3);
     h.get_by_label(&other.display().to_string()).click();
     frames(&mut h, 3);
@@ -358,6 +360,29 @@ fn recent_folder_is_picked_from_the_drop_down() {
     let saved = Store::at(&state).load_settings().unwrap();
     assert_eq!(saved.watch_dir, other.display().to_string());
     assert_eq!(saved.recent_watch_dirs[0], other.display().to_string());
+}
+
+#[test]
+fn extraction_folder_is_picked_from_its_own_recent_folders() {
+    let demo = Demo::new(false);
+    let state = demo.state_dir("recent-extract");
+    let other = demo.root.join("Elsewhere");
+    fs::create_dir_all(&other).unwrap();
+    let mut settings = demo.settings(LanguagePref::English, ThemePref::Light);
+    let watched = settings.watch_dir.clone();
+    settings.recent_extract_dirs = vec![other.display().to_string()];
+    let mut h = harness(settings, &state, false);
+    frames(&mut h, 2);
+
+    // The second "Recent folders" menu is the extraction folder's.
+    h.get_all_by_label("Recent folders").nth(1).unwrap().click();
+    frames(&mut h, 3);
+    h.get_by_label(&other.display().to_string()).click();
+    frames(&mut h, 3);
+
+    let saved = Store::at(&state).load_settings().unwrap();
+    assert_eq!(saved.extract_dir, other.display().to_string());
+    assert_eq!(saved.watch_dir, watched, "the watched folder is unchanged");
 }
 
 #[test]

@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- **Extraction folder** bar in the main window, under the watched folder: type a path, pick a recent one, browse, or open it in File Explorer, at any time. Left empty, it means the watched folder.
+
+### Changed
+
+- Archives are extracted **straight into the extraction folder**, without a sub-folder named after the set. Tick **Extract into a sub-folder named after the set** (Settings → Processing) to get the previous behaviour; a settings file that already has this option keeps its value.
+- With no extraction folder set, archives are extracted into the **watched folder** (previously next to the source files, which differed for sets found in sub-folders).
+- The **Destination** setting is now called **Extraction folder**.
+
 ## [1.0.0] - 2026-11-14
 
 First stable version: a per-user installer joins the portable zip. The zip keeps working as before. To switch from the zip to the installer, copy `rar-n-rush.toml` and `rar-n-rush-processed.txt` from the zip folder to `%APPDATA%\RarNRush` (if they are not already there); passwords stored in the Credential Manager are found again.

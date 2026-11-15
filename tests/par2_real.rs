@@ -162,6 +162,7 @@ fn engine_settings(exe: &Path, watch: &Path, out: &Path) -> Settings {
     Settings {
         watch_dir: watch.display().to_string(),
         extract_dir: out.display().to_string(),
+        create_subfolder: true,
         par2_path: exe.display().to_string(),
         stable_secs: 0,
         scan_interval_secs: 2,

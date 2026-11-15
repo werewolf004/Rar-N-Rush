@@ -6,6 +6,16 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+### Ajouté
+
+- Barre **Dossier d'extraction** dans la fenêtre principale, sous le dossier surveillé : saisis un chemin, choisis un dossier récent, parcours ou ouvre-le dans l'Explorateur, à tout moment. Laissée vide, elle désigne le dossier surveillé.
+
+### Modifié
+
+- Les archives sont extraites **directement dans le dossier d'extraction**, sans sous-dossier au nom du jeu. Coche **Extraire dans un sous-dossier au nom du jeu** (Réglages → Traitement) pour retrouver l'ancien comportement ; un fichier de réglages qui contient déjà cette option garde sa valeur.
+- Sans dossier d'extraction, les archives sont extraites dans le **dossier surveillé** (avant : à côté des fichiers sources, ce qui différait pour les jeux trouvés dans des sous-dossiers).
+- Le réglage **Destination** s'appelle maintenant **Dossier d'extraction**.
+
 ## [1.0.0] - 2026-11-14
 
 Première version stable : un installateur par utilisateur rejoint le zip portable. Le zip fonctionne comme avant. Pour passer du zip à l'installateur, copie `rar-n-rush.toml` et `rar-n-rush-processed.txt` du dossier du zip vers `%APPDATA%\RarNRush` (s'ils n'y sont pas déjà) ; les mots de passe enregistrés dans le Gestionnaire d'identifiants sont retrouvés.

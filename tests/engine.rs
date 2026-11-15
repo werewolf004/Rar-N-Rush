@@ -15,6 +15,8 @@ fn settings(watch: &Path, out: &Path) -> Settings {
     Settings {
         watch_dir: watch.display().to_string(),
         extract_dir: out.display().to_string(),
+        // One folder per set keeps the assertions below apart.
+        create_subfolder: true,
         stable_secs: 0,
         scan_interval_secs: 2,
         passwords: vec!["wrong".into(), "abc".into()],
@@ -270,6 +272,36 @@ fn skip_marks_the_set_and_remembers_it() {
         fs::read_to_string(out.join("plain").join("hello.txt")).unwrap(),
         "hello"
     );
+}
+
+#[test]
+fn extracts_straight_into_the_watched_folder_by_default() {
+    let root = tempfile::tempdir().unwrap();
+    let (watch, state) = (root.path().join("watch"), root.path().join("state"));
+    let release = watch.join("Release");
+    for d in [&release, &state] {
+        fs::create_dir_all(d).unwrap();
+    }
+    common::copy_fixtures(&release, &["plain.rar"]);
+
+    // No extraction folder and default options: even a set found in a
+    // sub-folder is extracted at the root of the watched folder, without a
+    // folder named after the set.
+    let s = Settings {
+        watch_dir: watch.display().to_string(),
+        recursive: true,
+        stable_secs: 0,
+        scan_interval_secs: 2,
+        ..Settings::default()
+    };
+    assert!(s.extract_dir.is_empty() && !s.create_subfolder);
+    let engine = Engine::start(s, Store::at(&state), || {}).unwrap();
+    engine.send(Command::SetRunning(true));
+    wait_until(&engine, |e| status_of(e, "plain") == Some(Status::Done));
+
+    assert_eq!(fs::read_to_string(watch.join("hello.txt")).unwrap(), "hello");
+    assert!(!watch.join("plain").exists(), "no folder named after the set");
+    assert!(!release.join("hello.txt").exists());
 }
 
 #[test]

@@ -45,6 +45,8 @@ Click **Choose a folder…**, or type a path in the **Watched folder** field and
 
 **Watched folder bar** (second line): you can change the folder at any time, even while sets are being processed. Type a path and press **Enter** (**Esc** cancels the edit), pick one of the last ten under **Recent folders**, or click **Browse…**. **Open** shows the folder in File Explorer.
 
+**Extraction folder bar** (third line): where the archives are extracted, straight into that folder, without a sub-folder named after the set. Left empty (the default, "Same as the watched folder"), files are extracted into the watched folder. It works like the line above: type a path and press **Enter** (an empty field goes back to the watched folder), pick one under its own **Recent folders**, or click **Browse…**; **Open** shows it in File Explorer. Sets already being extracted finish where they started.
+
 **List of sets**: a *set* is everything that belongs to one download: RAR volumes, PAR2 files, SFV file. One row per set:
 
 | Column | Content |
@@ -80,7 +82,7 @@ The window reopens at the size and position it had when you closed it.
 1. **Waiting for the download to end.** A set is only touched once none of its files has changed for a while (10 seconds by default). Downloads in progress are never read.
 2. **Verification.** With PAR2 files, `par2.exe` (shipped in the zip) checks every file. With an SFV file, the CRC32 of each file is checked. A set with neither goes straight to extraction.
 3. **Repair.** If a file is damaged or missing and there are enough PAR2 recovery blocks, it is rebuilt. If there are not enough, the set shows **Repair impossible** and waits: when more PAR2 volumes arrive, it is tried again by itself.
-4. **Extraction.** The RAR archives (multi-volume `.partN.rar` or `.rar` + `.r00`) are extracted to the destination folder, in a sub-folder named after the set by default. Archives found inside the archive are extracted too.
+4. **Extraction.** The RAR archives (multi-volume `.partN.rar` or `.rar` + `.r00`) are extracted straight into the extraction folder (the watched folder by default). To get one sub-folder per set, tick **Extract into a sub-folder named after the set** in **Settings → Processing**. Archives found inside the archive are extracted too.
    - Existing files are **never overwritten** by default: `name (1).ext` is used instead.
    - The free space is checked first; if it is not enough, nothing is written and the set fails with the sizes needed and available.
    - If extraction fails or is cancelled, the files it created are removed, so **Retry** starts clean.
