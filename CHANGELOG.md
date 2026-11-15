@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-15
+
+A download copied back after it was processed is processed again, and the version is now shown in the window, with an About window. Recommended for everyone.
+
 ### Added
 
 - **About** window (toolbar button, **F1**): version, licence, credits, and links to the source code, the user guide and the releases.
@@ -165,7 +169,8 @@ First public version: the complete processing chain, a quality foundation and th
 
 - `#![forbid(unsafe_code)]` on the whole crate; `unwrap`, `expect` and `panic` are denied outside tests.
 
-[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.1...v1.0.0
 [0.5.1]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.0...v0.5.1

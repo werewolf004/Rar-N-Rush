@@ -6,6 +6,10 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+## [1.2.0] - 2026-11-15
+
+Un téléchargement recopié après son traitement est de nouveau traité, et la version est désormais affichée dans la fenêtre, avec une fenêtre À propos. Recommandée pour tout le monde.
+
 ### Ajouté
 
 - Fenêtre **À propos** (bouton de la barre d'outils, **F1**) : version, licence, crédits, et liens vers le code source, le guide utilisateur et les versions.
@@ -165,7 +169,8 @@ Première version publique : toute la chaîne de traitement, des fondations qual
 
 - `#![forbid(unsafe_code)]` sur tout le crate ; `unwrap`, `expect` et `panic` sont interdits hors des tests.
 
-[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.1.0...HEAD
+[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.1...v1.0.0
 [0.5.1]: https://github.com/werewolf004/Rar-N-Rush/compare/v0.5.0...v0.5.1
