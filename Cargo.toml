@@ -75,3 +75,6 @@ codegen-units = 1
 [patch.crates-io]
 unrar = { path = "vendor/unrar" }
 
+[build-dependencies]
+embed-resource = "3.0.12"
+

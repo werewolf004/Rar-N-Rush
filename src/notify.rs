@@ -20,8 +20,6 @@ pub const APP_ID: &str = "RarNRush.App";
 pub const IDENTITY_ROOT: &str = r"Software\Classes\AppUserModelId";
 /// Icon file written in the settings folder for the notifications.
 pub const ICON_FILE: &str = "rar-n-rush.ico";
-/// Size of that icon, in pixels.
-const ICON_SIZE: u32 = 64;
 
 /// Errors raised while registering or showing a notification.
 #[derive(Debug, thiserror::Error)]
@@ -87,7 +85,7 @@ impl WindowsNotifier {
     /// Writes the icon and the identity, if they are not already there.
     pub fn register(&self) -> Result<(), NotifyError> {
         let icon = self.icon_path();
-        let bytes = crate::icon::ico(ICON_SIZE);
+        let bytes = crate::icon::ico(&crate::icon::ICO_SIZES);
         if fs::read(&icon).ok().as_deref() != Some(bytes.as_slice()) {
             fs::write(&icon, &bytes).map_err(|source| NotifyError::Icon {
                 path: icon.clone(),
@@ -165,7 +163,10 @@ mod tests {
         assert_eq!(key.get_string("DisplayName").unwrap(), "Rar N Rush");
         let icon = PathBuf::from(key.get_string("IconUri").unwrap());
         assert_eq!(icon, dir.path().join(ICON_FILE));
-        assert_eq!(fs::read(&icon).unwrap(), crate::icon::ico(ICON_SIZE));
+        assert_eq!(
+            fs::read(&icon).unwrap(),
+            crate::icon::ico(&crate::icon::ICO_SIZES)
+        );
         n.register().unwrap(); // idempotent
 
         n.set_enabled(false).unwrap();

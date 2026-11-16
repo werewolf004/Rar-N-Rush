@@ -6,6 +6,14 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+### Modifié
+
+- Nouvelle icône : une caisse d'archive sombre avec un éclair sur un carré ambre, dessinée à toutes les tailles utilisées par Windows (16 à 256 px), avec un éclair plus épais aux petites tailles. Elle remplace la flèche blanche sur fond bleu dans la fenêtre, la barre des tâches, la zone de notification, les notifications Windows et le menu Démarrer.
+
+### Ajouté
+
+- L'icône et les informations de version sont intégrées dans `rar-n-rush.exe` : l'Explorateur, un bouton épinglé dans la barre des tâches et le Gestionnaire des tâches affichent désormais l'icône, le nom et la version de Rar N Rush au lieu de l'icône générique.
+
 ## [1.3.0] - 2026-11-15
 
 Des fichiers retrouvés sont traités de nouveau par défaut, et les fichiers déjà extraits sont gardés ou écrasés selon les réglages, jamais dupliqués en « nom (1).ext ».

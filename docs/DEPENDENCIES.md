@@ -42,6 +42,14 @@ Used by the tests only; not shipped in the binary.
 | [`tempfile`](https://crates.io/crates/tempfile) | 3 | MIT OR Apache-2.0 | Temporary folders for tests, removed automatically. |
 | [`egui_kittest`](https://crates.io/crates/egui_kittest) | 0.37 | MIT OR Apache-2.0 | Headless UI tests through the accessibility tree, and off-screen rendering of the documentation screenshots. |
 
+## Build dependencies
+
+Used by `build.rs` while compiling; not shipped in the binary.
+
+| Crate | Version | Licence | Why |
+|---|---|---|---|
+| [`embed-resource`](https://crates.io/crates/embed-resource) | 3 | MIT | Compiles the resource script that embeds the icon and the version details in `rar-n-rush.exe` (File Explorer, taskbar pin, Task Manager), with the Windows SDK resource compiler `rc.exe`. The icon itself is drawn by the program's own code. |
+
 ## External programs
 
 | Program | Licence | Why |

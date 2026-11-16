@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Changed
+
+- New application icon: a dark archive box with a lightning bolt on an amber square, drawn at every size Windows uses (16 to 256 px), with a bolder bolt at small sizes. It replaces the white arrow on blue in the window, taskbar, notification area, Windows notifications and Start menu.
+
+### Added
+
+- The icon and version details are embedded in `rar-n-rush.exe`: File Explorer, a pinned taskbar button and Task Manager now show the Rar N Rush icon, name and version instead of the generic program icon.
+
 ## [1.3.0] - 2026-11-15
 
 Files found again are processed again by default, and files already extracted are kept or overwritten as set in the settings, never duplicated as "name (1).ext".

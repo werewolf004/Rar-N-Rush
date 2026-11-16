@@ -12,7 +12,7 @@ fn main() -> ExitCode {
         eprintln!("usage: write_icon <file.ico>");
         return ExitCode::FAILURE;
     };
-    match std::fs::write(&path, rar_n_rush::icon::ico(64)) {
+    match std::fs::write(&path, rar_n_rush::icon::ico(&rar_n_rush::icon::ICO_SIZES)) {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("{}: {e}", path.display());

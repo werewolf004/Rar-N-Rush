@@ -42,6 +42,14 @@ Utilisées par les tests uniquement ; absentes du binaire.
 | [`tempfile`](https://crates.io/crates/tempfile) | 3 | MIT OR Apache-2.0 | Dossiers temporaires pour les tests, supprimés automatiquement. |
 | [`egui_kittest`](https://crates.io/crates/egui_kittest) | 0.37 | MIT OR Apache-2.0 | Tests d'interface sans fenêtre via l'arbre d'accessibilité, et rendu hors écran des captures de la documentation. |
 
+## Dépendances de compilation
+
+Utilisées par `build.rs` pendant la compilation ; non livrées dans le binaire.
+
+| Crate | Version | Licence | Rôle |
+|---|---|---|---|
+| [`embed-resource`](https://crates.io/crates/embed-resource) | 3 | MIT | Compile le script de ressources qui intègre l'icône et les informations de version dans `rar-n-rush.exe` (Explorateur, épingle de la barre des tâches, Gestionnaire des tâches), avec le compilateur de ressources du SDK Windows `rc.exe`. L'icône elle-même est dessinée par le code du programme. |
+
 ## Programmes externes
 
 | Programme | Licence | Rôle |

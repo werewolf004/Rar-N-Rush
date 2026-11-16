@@ -54,7 +54,7 @@ cargo deny check
 | `src/ui.rs` | Interface egui |
 | `src/secrets.rs` | Mots de passe d'archives dans le Gestionnaire d'identifiants Windows |
 | `src/tidy.rs` | Déplacement des fichiers annexes, suppression des dossiers vides |
-| `src/tray.rs`, `src/icon.rs` | Icône de la zone de notification, icône de l'application |
+| `src/tray.rs`, `src/icon.rs`, `src/icon/art.rs`, `build.rs` | Icône de la zone de notification, icône de l'application (dessinée par le code), icône et version intégrées à l'exécutable |
 | `src/instance.rs`, `src/autostart.rs`, `src/notify.rs` | Une seule instance, démarrage avec Windows, notifications Windows |
 | `src/uninstall.rs` | Nettoyage du registre lancé par l'installateur à la désinstallation |
 | `installer/rar-n-rush.wxs`, `scripts/*-msi.ps1`, `scripts/fetch-wix.ps1` | Paquet Windows Installer (WiX 5) : source, construction, test de bout en bout |

@@ -54,7 +54,7 @@ cargo deny check
 | `src/ui.rs` | egui interface |
 | `src/secrets.rs` | Archive passwords in the Windows Credential Manager |
 | `src/tidy.rs` | Moving extra files, removing empty folders |
-| `src/tray.rs`, `src/icon.rs` | Notification-area icon, application icon |
+| `src/tray.rs`, `src/icon.rs`, `src/icon/art.rs`, `build.rs` | Notification-area icon, application icon (drawn in code), icon and version embedded in the executable |
 | `src/instance.rs`, `src/autostart.rs`, `src/notify.rs` | One instance at a time, start with Windows, Windows notifications |
 | `src/uninstall.rs` | Registry clean-up run by the installer on removal |
 | `installer/rar-n-rush.wxs`, `scripts/*-msi.ps1`, `scripts/fetch-wix.ps1` | Windows Installer package (WiX 5): source, build, end-to-end test |
