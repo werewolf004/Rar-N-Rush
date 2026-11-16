@@ -6,6 +6,10 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+## [1.4.0] - 2026-11-16
+
+Une nouvelle icône, désormais affichée aussi par l'Explorateur et la barre des tâches pour `rar-n-rush.exe` lui-même.
+
 ### Modifié
 
 - Nouvelle icône : une caisse d'archive sombre avec un éclair sur un carré ambre, dessinée à toutes les tailles utilisées par Windows (16 à 256 px), avec un éclair plus épais aux petites tailles. Elle remplace la flèche blanche sur fond bleu dans la fenêtre, la barre des tâches, la zone de notification, les notifications Windows et le menu Démarrer.
@@ -187,7 +191,8 @@ Première version publique : toute la chaîne de traitement, des fondations qual
 
 - `#![forbid(unsafe_code)]` sur tout le crate ; `unwrap`, `expect` et `panic` sont interdits hors des tests.
 
-[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.3.0...HEAD
+[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.0.0...v1.1.0
