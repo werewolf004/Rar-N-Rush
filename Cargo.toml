@@ -25,7 +25,7 @@ crc32fast = "1"
 eframe = "0.37"
 egui = { version = "0.37", features = ["monochrome_emoji_fonts"] }
 egui_extras = "0.37"
-fs4 = { version = "0.13", default-features = false, features = ["sync"] }
+fs4 = { version = "1.1", default-features = false, features = ["sync"] }
 keyring-core = "1.0.1"
 rfd = "0.18"
 serde = { version = "1", features = ["derive"] }
