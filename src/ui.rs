@@ -849,10 +849,7 @@ impl App {
 
     fn export_log(&mut self, snap: &Snapshot) {
         let t = self.texts();
-        let name = format!(
-            "rar-n-rush-log-{}.txt",
-            chrono::Local::now().format("%Y%m%d-%H%M%S")
-        );
+        let name = format!("rar-n-rush-log-{}.txt", crate::clock::now().stamp());
         let Some(path) = rfd::FileDialog::new()
             .set_file_name(name)
             .add_filter(t.text_filter, &["txt"])

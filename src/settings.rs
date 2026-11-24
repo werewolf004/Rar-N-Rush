@@ -523,7 +523,7 @@ impl Store {
 
     /// Copies `path` to `rar-n-rush.toml.<date-time>.bak`. `None` if the copy failed.
     fn backup(&self, path: &Path) -> Option<PathBuf> {
-        let stamp = chrono::Local::now().format("%Y%m%d-%H%M%S");
+        let stamp = crate::clock::now().stamp();
         let backup = self.dir.join(format!("{SETTINGS_FILE}.{stamp}.bak"));
         fs::copy(path, &backup).ok().map(|_| backup)
     }
@@ -593,7 +593,7 @@ impl Store {
             Ok(_) => Ok(()),
             Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(()),
             Err(source) => {
-                let stamp = chrono::Local::now().format("%Y%m%d-%H%M%S");
+                let stamp = crate::clock::now().stamp();
                 let aside = self.dir.join(format!("{SETTINGS_FILE}.{stamp}.unreadable"));
                 fs::rename(&path, &aside).map_err(|_| SettingsError::KeptUnreadable { path, source })
             }

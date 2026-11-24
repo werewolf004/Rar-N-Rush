@@ -2,7 +2,7 @@
 
 [English](DEPENDENCIES.md) · **Français**
 
-Chaque dépendance directe est listée ci-dessous avec la raison de sa présence. La liste complète des 229 crates compilés dans le binaire, avec leurs licences, est générée dans [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) (`python scripts/third-party.py`).
+Chaque dépendance directe est listée ci-dessous avec la raison de sa présence. La liste complète des 234 crates compilés dans le binaire, avec leurs licences, est générée dans [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) (`python scripts/third-party.py`).
 
 Règles appliquées aux dépendances :
 
@@ -25,7 +25,7 @@ Règles appliquées aux dépendances :
 | [`serde`](https://crates.io/crates/serde) | 1 | MIT OR Apache-2.0 | (Dé)sérialisation des réglages. |
 | [`toml`](https://crates.io/crates/toml) | 1 | MIT OR Apache-2.0 | Fichier de réglages lisible. |
 | [`thiserror`](https://crates.io/crates/thiserror) | 2 | MIT OR Apache-2.0 | Énumérations d'erreurs typées. |
-| [`chrono`](https://crates.io/crates/chrono) | 0.4 | MIT OR Apache-2.0 | Heure locale des lignes du journal. Seule la fonctionnalité `clock` est activée. |
+| [`time`](https://crates.io/crates/time) | 0.3 | MIT OR Apache-2.0 | Date et heure locales des lignes du journal et des noms de fichiers de sauvegarde et d'export. Remplace `chrono`, qui n'est plus maintenue (RUSTSEC-2026-0543). Fonctionnalités par défaut désactivées ; seulement `std`, `local-offset`, `formatting` et `macros`. |
 | [`sys-locale`](https://crates.io/crates/sys-locale) | 0.3 | MIT OR Apache-2.0 | Lit la langue d'affichage de Windows pour choisir français ou anglais. |
 | [`tray-icon`](https://crates.io/crates/tray-icon) | 0.26 | MIT OR Apache-2.0 | Icône et menu dans la zone de notification (créés seulement si une option de zone de notification est activée). Fonctionnalités par défaut désactivées : sous Windows, n'ajoute que `muda` (menu), `windows-sys` et `crossbeam-channel`. |
 | [`fs4`](https://crates.io/crates/fs4) | 0.13 | MIT OR Apache-2.0 | Espace libre du disque de destination, vérifié avant chaque extraction. Seule la fonctionnalité `sync` est activée. |

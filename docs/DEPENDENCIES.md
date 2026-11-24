@@ -2,7 +2,7 @@
 
 **English** · [Français](DEPENDENCIES.fr.md)
 
-Every direct dependency is listed below with the reason it is needed. The complete list of the 229 crates compiled into the release binary, with their licences, is generated in [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) (`python scripts/third-party.py`).
+Every direct dependency is listed below with the reason it is needed. The complete list of the 234 crates compiled into the release binary, with their licences, is generated in [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) (`python scripts/third-party.py`).
 
 Rules applied to dependencies:
 
@@ -25,7 +25,7 @@ Rules applied to dependencies:
 | [`serde`](https://crates.io/crates/serde) | 1 | MIT OR Apache-2.0 | Settings (de)serialisation. |
 | [`toml`](https://crates.io/crates/toml) | 1 | MIT OR Apache-2.0 | Human-readable settings file. |
 | [`thiserror`](https://crates.io/crates/thiserror) | 2 | MIT OR Apache-2.0 | Typed error enums. |
-| [`chrono`](https://crates.io/crates/chrono) | 0.4 | MIT OR Apache-2.0 | Local time of log lines. Only the `clock` feature is enabled. |
+| [`time`](https://crates.io/crates/time) | 0.3 | MIT OR Apache-2.0 | Local date and time of log lines and of backup and export file names. Replaces `chrono`, which is no longer maintained (RUSTSEC-2026-0543). Default features off; only `std`, `local-offset`, `formatting` and `macros`. |
 | [`sys-locale`](https://crates.io/crates/sys-locale) | 0.3 | MIT OR Apache-2.0 | Reads the Windows display language to pick English or French. |
 | [`tray-icon`](https://crates.io/crates/tray-icon) | 0.26 | MIT OR Apache-2.0 | Icon and menu in the notification area (only created when a tray option is enabled). Default features off: on Windows it only pulls `muda` (menu), `windows-sys` and `crossbeam-channel`. |
 | [`fs4`](https://crates.io/crates/fs4) | 0.13 | MIT OR Apache-2.0 | Free space of the destination drive, checked before each extraction. Only the `sync` feature is enabled. |

@@ -399,19 +399,16 @@ enum Stop {
 
 impl Worker {
     fn notice(&self, notice: Notice) {
-        let now = chrono::Local::now();
+        let now = crate::clock::now();
         // The file gets English text: it is meant to be attached to bug reports.
         // Notices never carry a password, so none can reach the file.
-        let file_line = lock(&self.state).settings.log_to_file.then(|| {
-            format!(
-                "{}  {}",
-                now.format("%Y-%m-%d %H:%M:%S"),
-                notice.localize(Lang::En)
-            )
-        });
+        let file_line = lock(&self.state)
+            .settings
+            .log_to_file
+            .then(|| format!("{}  {}", now.log_line(), notice.localize(Lang::En)));
         let mut state = lock(&self.state);
         state.log.push(LogLine {
-            time: now.format("%H:%M:%S").to_string(),
+            time: now.time_of_day(),
             notice,
         });
         let excess = state.log.len().saturating_sub(LOG_CAPACITY);

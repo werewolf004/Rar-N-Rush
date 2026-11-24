@@ -15,10 +15,12 @@
 //! - [`ui`]: the egui desktop interface.
 //! - [`instance`]: keeps a single instance running per settings folder.
 //! - [`notify`]: Windows notifications while the window is not in front.
+//! - [`clock`]: local date and time for the log and file names.
 //! - [`autostart`]: optional start with Windows (current user's `Run` key).
 //! - [`uninstall`]: registry clean-up run by the installer package on removal.
 
 pub mod autostart;
+pub mod clock;
 pub mod engine;
 pub mod extract;
 pub mod i18n;

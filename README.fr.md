@@ -101,7 +101,7 @@ La fenêtre se rouvre à la taille et à la position qu'elle avait à la fermetu
 | [docs/USER-GUIDE.fr.md](docs/USER-GUIDE.fr.md) | Guide utilisateur : chaque écran, pas à pas, avec captures |
 | [docs/OPTIONS.fr.md](docs/OPTIONS.fr.md) | Chaque réglage : nom, valeur par défaut, plage, effet |
 | [docs/DEPENDENCIES.fr.md](docs/DEPENDENCIES.fr.md) | Chaque dépendance et son rôle |
-| [docs/THIRD-PARTY-LICENSES.md](docs/THIRD-PARTY-LICENSES.md) | Les 229 crates du binaire, avec leurs licences |
+| [docs/THIRD-PARTY-LICENSES.md](docs/THIRD-PARTY-LICENSES.md) | Les 234 crates du binaire, avec leurs licences |
 | [CHANGELOG.fr.md](CHANGELOG.fr.md) | Les changements de chaque version |
 | [ROADMAP.fr.md](ROADMAP.fr.md) | La suite prévue |
 | [CONTRIBUTING.fr.md](CONTRIBUTING.fr.md) | Compiler, tester et contribuer |

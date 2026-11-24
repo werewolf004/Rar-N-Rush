@@ -6,6 +6,11 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+### Sécurité
+
+- `chrono`, qui n'est plus maintenue (RUSTSEC-2026-0543), est remplacée par `time` pour l'heure locale du journal et des noms de fichiers ; rien ne change à l'écran ni dans les fichiers.
+- `url` passe en 2.5.9 (RUSTSEC-2026-0592, débordement de pile sur des URL `blob:` imbriquées). Elle ne sert qu'à la bibliothèque graphique pour ouvrir les liens fixes de la fenêtre À propos : Rar N Rush n'y était pas exposé en pratique.
+
 ## [1.4.0] - 2026-11-16
 
 Une nouvelle icône, désormais affichée aussi par l'Explorateur et la barre des tâches pour `rar-n-rush.exe` lui-même.
