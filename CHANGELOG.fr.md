@@ -6,6 +6,10 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+## [1.4.1] - 2026-11-24
+
+Mises à jour de dépendances pour deux alertes de sécurité ; rien ne change à l'écran.
+
 ### Sécurité
 
 - `chrono`, qui n'est plus maintenue (RUSTSEC-2026-0543), est remplacée par `time` pour l'heure locale du journal et des noms de fichiers ; rien ne change à l'écran ni dans les fichiers.
@@ -200,7 +204,8 @@ Première version publique : toute la chaîne de traitement, des fondations qual
 
 - `#![forbid(unsafe_code)]` sur tout le crate ; `unwrap`, `expect` et `panic` sont interdits hors des tests.
 
-[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.0...HEAD
+[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.1.0...v1.2.0

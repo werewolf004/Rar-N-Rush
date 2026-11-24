@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-11-24
+
+Dependency updates for two security advisories; nothing changes on screen.
+
 ### Security
 
 - `chrono`, no longer maintained (RUSTSEC-2026-0543), is replaced by `time` for the local time of the log and of file names; nothing changes on screen or in the files.
@@ -200,7 +204,8 @@ First public version: the complete processing chain, a quality foundation and th
 
 - `#![forbid(unsafe_code)]` on the whole crate; `unwrap`, `expect` and `panic` are denied outside tests.
 
-[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.1.0...v1.2.0
