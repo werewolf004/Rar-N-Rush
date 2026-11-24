@@ -2,7 +2,7 @@
 
 **English** · [Français](DEPENDENCIES.fr.md)
 
-Every direct dependency is listed below with the reason it is needed. The complete list of the 234 crates compiled into the release binary, with their licences, is generated in [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) (`python scripts/third-party.py`).
+Every direct dependency is listed below with the reason it is needed. The complete list of the 233 crates compiled into the release binary, with their licences, is generated in [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) (`python scripts/third-party.py`).
 
 Rules applied to dependencies:
 
@@ -28,7 +28,7 @@ Rules applied to dependencies:
 | [`time`](https://crates.io/crates/time) | 0.3 | MIT OR Apache-2.0 | Local date and time of log lines and of backup and export file names. Replaces `chrono`, which is no longer maintained (RUSTSEC-2026-0543). Default features off; only `std`, `local-offset`, `formatting` and `macros`. |
 | [`sys-locale`](https://crates.io/crates/sys-locale) | 0.3 | MIT OR Apache-2.0 | Reads the Windows display language to pick English or French. |
 | [`tray-icon`](https://crates.io/crates/tray-icon) | 0.26 | MIT OR Apache-2.0 | Icon and menu in the notification area (only created when a tray option is enabled). Default features off: on Windows it only pulls `muda` (menu), `windows-sys` and `crossbeam-channel`. |
-| [`fs4`](https://crates.io/crates/fs4) | 0.13 | MIT OR Apache-2.0 | Free space of the destination drive, checked before each extraction. Only the `sync` feature is enabled. |
+| [`fs4`](https://crates.io/crates/fs4) | 1 | MIT OR Apache-2.0 | Free space of the destination drive, checked before each extraction. Only the `sync` feature is enabled. |
 | [`keyring-core`](https://crates.io/crates/keyring-core) and [`windows-native-keyring-store`](https://crates.io/crates/windows-native-keyring-store) | 1 | MIT OR Apache-2.0 | Archive passwords in the Windows Credential Manager. Default features of the store are off (no `regex`). |
 | [`windows-registry`](https://crates.io/crates/windows-registry) | 0.6 | MIT OR Apache-2.0 | Safe access to the current user's registry: start with Windows (`Run` key) and the identity of the Windows notifications. Shares the `windows-*` 0.62 family already pulled by other dependencies. |
 | [`tauri-winrt-notification`](https://crates.io/crates/tauri-winrt-notification) | 0.8 | MIT OR Apache-2.0 | Windows notifications (WinRT toasts). Uses the `windows` 0.62 crate already in the tree; adds only `windows-version`. |
