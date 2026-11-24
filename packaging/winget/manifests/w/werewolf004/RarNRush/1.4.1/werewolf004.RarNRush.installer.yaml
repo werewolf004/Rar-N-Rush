@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.28.0.schema.json
+
+PackageIdentifier: werewolf004.RarNRush
+PackageVersion: 1.4.1
+MinimumOSVersion: 10.0.17763.0
+InstallerType: msi
+Scope: user
+InstallModes:
+- interactive
+- silent
+- silentWithProgress
+UpgradeBehavior: install
+ProductCode: '{13E99BF8-51AD-449A-8676-0E641E5F3A87}'
+ReleaseDate: 2026-11-24
+AppsAndFeaturesEntries:
+- DisplayName: Rar N Rush
+  Publisher: Rar N Rush contributors
+  ProductCode: '{13E99BF8-51AD-449A-8676-0E641E5F3A87}'
+  UpgradeCode: '{D56A2825-92AE-42C5-8A0C-EE6C467607DA}'
+Installers:
+- Architecture: x64
+  InstallerUrl: https://github.com/werewolf004/Rar-N-Rush/releases/download/v1.4.1/rar-n-rush-v1.4.1-windows-x64.msi
+  InstallerSha256: 4B277E454C87920BE7E03CCE91AA137B75CDEAD7291BD049CD523731013EEB75
+ManifestType: installer
+ManifestVersion: 1.28.0
