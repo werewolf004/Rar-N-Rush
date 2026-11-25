@@ -993,7 +993,10 @@ fn settings_can_be_saved_while_the_watched_folder_is_unavailable() {
     h.get_by_label("⚙  Settings").click();
     frames(&mut h, 3);
     h.get_by_label_contains("Watched folder not found right now");
-    assert!(h.query_by_label("Watched folder: this folder does not exist.").is_none());
+    assert!(
+        h.query_by_label("Watched folder: this folder does not exist.")
+            .is_none()
+    );
     h.get_by_label("Check for updates").click();
     frames(&mut h, 2);
     h.get_by_label("Save").click();
