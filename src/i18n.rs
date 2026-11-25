@@ -107,6 +107,14 @@ impl Lang {
         }
     }
 
+    /// A newer release exists (banner and Windows notification).
+    pub fn update_available(self, latest: &str, current: &str) -> String {
+        match self {
+            Self::En => format!("Rar N Rush {latest} is available (you have {current})."),
+            Self::Fr => format!("Rar N Rush {latest} est disponible (tu as la {current})."),
+        }
+    }
+
     /// Tooltip of a set name: folder and number of files.
     pub fn set_tooltip(self, dir: &str, files: usize) -> String {
         match self {
@@ -235,6 +243,14 @@ pub struct Texts {
     pub extract_hint: &'static str,
     pub extract_apply_hint: &'static str,
     pub program_filter: &'static str,
+    pub updates: &'static str,
+    pub check_updates: &'static str,
+    pub check_updates_hint: &'static str,
+    pub daily: &'static str,
+    pub weekly: &'static str,
+    pub monthly: &'static str,
+    pub update_release: &'static str,
+    pub update_later: &'static str,
 }
 
 static EN: Texts = Texts {
@@ -255,7 +271,7 @@ static EN: Texts = Texts {
     about_releases: "Releases and changelog",
     about_licence: "Licence: MIT OR Apache-2.0, free and open source.",
     about_credits: "PAR2 repair: par2cmdline-turbo (GPL-2.0), shipped unmodified. RAR extraction: the UnRAR library by Alexander Roshal.",
-    about_offline: "Rar N Rush never connects to the Internet: these links open in your browser.",
+    about_offline: "Rar N Rush only goes online to check for updates, and only if you turn it on in the settings. These links open in your browser.",
     about_close: "Close",
     no_folder: "No folder is being watched.",
     watching: "Watching",
@@ -353,6 +369,14 @@ static EN: Texts = Texts {
     extract_hint: "Same as the watched folder",
     extract_apply_hint: "Press Enter to extract into this folder (empty: the watched folder), Esc to cancel",
     program_filter: "Program",
+    updates: "Updates",
+    check_updates: "Check for updates",
+    check_updates_hint: "About a minute after start-up, asks GitHub for the number of the latest release. Nothing else is sent, and nothing is downloaded or installed: you choose when to update.",
+    daily: "Every day",
+    weekly: "Once a week",
+    monthly: "Once a month",
+    update_release: "See the release",
+    update_later: "Later",
 };
 
 static FR: Texts = Texts {
@@ -373,7 +397,7 @@ static FR: Texts = Texts {
     about_releases: "Versions et journal des modifications",
     about_licence: "Licence : MIT OR Apache-2.0, libre et gratuit.",
     about_credits: "Réparation PAR2 : par2cmdline-turbo (GPL-2.0), livré sans modification. Extraction RAR : la bibliothèque UnRAR d'Alexander Roshal.",
-    about_offline: "Rar N Rush ne se connecte jamais à Internet : ces liens s'ouvrent dans ton navigateur.",
+    about_offline: "Rar N Rush ne se connecte à Internet que pour vérifier les mises à jour, et seulement si tu l'actives dans les réglages. Ces liens s'ouvrent dans ton navigateur.",
     about_close: "Fermer",
     no_folder: "Aucun dossier surveillé.",
     watching: "Surveillance active",
@@ -471,6 +495,14 @@ static FR: Texts = Texts {
     extract_hint: "Identique au dossier surveillé",
     extract_apply_hint: "Entrée pour extraire dans ce dossier (vide : le dossier surveillé), Échap pour annuler",
     program_filter: "Programme",
+    updates: "Mises à jour",
+    check_updates: "Vérifier les mises à jour",
+    check_updates_hint: "Environ une minute après le lancement, demande à GitHub le numéro de la dernière version. Rien d'autre n'est envoyé, et rien n'est téléchargé ni installé : tu choisis quand mettre à jour.",
+    daily: "Tous les jours",
+    weekly: "Une fois par semaine",
+    monthly: "Une fois par mois",
+    update_release: "Voir la release",
+    update_later: "Plus tard",
 };
 
 /// Values that can be shown to the user in several languages.

@@ -33,10 +33,12 @@ Rar N Rush processes files downloaded from the Internet, which must be treated a
 - Source files are sent to the **Recycle Bin**, never deleted permanently, and only after a fully successful run.
 - `par2.exe` is started without a shell, with arguments passed separately (no command injection), without a console window, and only from the path set by the user, the program folder or `PATH`. The `par2.exe` shipped in the release zip is the official par2cmdline-turbo build, checked against a pinned SHA-256 before it is tested and packaged, and covered by the release provenance attestation.
 
-### No network access
+### Network access: only the optional update check
 
-- Rar N Rush never connects to the Internet: **no update check**, no telemetry, no crash reporting.
-- This is enforced by `cargo deny`: HTTP, TLS and async networking crates (`reqwest`, `hyper`, `rustls`, `tokio`, `self_update`…) are banned, so CI fails if one ever enters the dependency graph.
+- No telemetry, no crash reporting. By default Rar N Rush makes **no network request at all**.
+- The only exception is the update check, **off by default** (Settings → General → Updates). When it is on, about a minute after start-up and then at most once a day, week or month, the program asks `https://api.github.com/repos/werewolf004/Rar-N-Rush/releases/latest` for the number of the latest release. The request carries nothing but a `rar-n-rush/<version>` user agent: no identifier, no statistics. Nothing is downloaded or installed; the window shows a link to the release page and you decide.
+- The request goes through `%SystemRoot%\System32\curl.exe`, shipped with Windows 10 and 11 (never a copy found through `PATH`), HTTPS only, redirects included, with a 30-second time limit and a 1 MB size limit. Only a strict `vX.Y.Z` release number is read from the answer; the link shown is built from that number, never taken from the answer.
+- The program itself still carries no network code, enforced by `cargo deny`: HTTP, TLS and async networking crates (`reqwest`, `hyper`, `rustls`, `tokio`, `self_update`…) are banned, so CI fails if one ever enters the dependency graph. Tests never go online (a fake answers instead).
 
 ### Persistent data
 

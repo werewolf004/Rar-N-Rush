@@ -33,3 +33,4 @@ Notification-area icon (brought forward to v0.2.0); one instance per settings fo
 ## After v1.0.0
 
 - winget package (`winget install`), pointing to the published installer: manifests for v1.0.0 are ready and validated in [packaging/winget](packaging/winget/); under review in [microsoft/winget-pkgs#480402](https://github.com/microsoft/winget-pkgs/pull/480402).
+- ✅ Optional update check (off by default): asks GitHub for the latest release number every day, week or month, through the `curl.exe` shipped with Windows; never downloads anything.

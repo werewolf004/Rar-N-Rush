@@ -11,6 +11,7 @@ use rar_n_rush::secrets::ChunkedVault;
 use rar_n_rush::settings::Store;
 use rar_n_rush::ui::App;
 use rar_n_rush::uninstall;
+use rar_n_rush::update::{Checker, Curl};
 use std::sync::Arc;
 
 fn main() -> eframe::Result {
@@ -74,7 +75,10 @@ fn main() -> eframe::Result {
             let ctx = cc.egui_ctx.clone();
             let engine = Engine::start(loaded.settings, store.clone(), move || ctx.request_repaint())?;
             let notifier = WindowsNotifier::new(store.dir());
-            let mut app = App::new(&cc.egui_ctx, engine, store, loaded.issue).with_notifier(notifier);
+            // Goes online only when the user turned the update check on.
+            let mut app = App::new(&cc.egui_ctx, engine, store, loaded.issue)
+                .with_notifier(notifier)
+                .with_update_check(Checker::new(Curl));
             if let Ok(exe) = std::env::current_exe() {
                 app = app.with_autostart(Autostart::current_user(&exe));
             }

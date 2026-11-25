@@ -7,9 +7,10 @@ use crate::instance::ShowRequests;
 use crate::notify::Notifier;
 use crate::settings::{
     LanguagePref, LoadIssue, SCAN_INTERVAL_RANGE, STABLE_RANGE, Settings, SettingsError, Store, ThemePref,
-    WindowGeometry, is_writable,
+    UpdateFrequency, WindowGeometry, is_writable,
 };
 use crate::tray::{self, Request, Tray, WindowAction, WindowInput};
+use crate::update::{self, Checker, Schedule, Version};
 use eframe::egui::{self, Color32, RichText};
 use egui_extras::{Column, TableBuilder};
 use std::collections::HashMap;
@@ -73,6 +74,10 @@ pub struct App {
     frozen_clock: Option<&'static str>,
     /// The About window is open.
     about_open: bool,
+    /// Update checks; `None` in tests, which never go online.
+    updates: Option<Checker>,
+    /// Newer release found by the last check, shown until dismissed.
+    update_available: Option<Version>,
 }
 
 /// Pages of the settings window.
@@ -224,6 +229,8 @@ impl App {
             geometry: settings.window,
             frozen_clock: None,
             about_open: false,
+            updates: None,
+            update_available: None,
             show_requests: None,
             autostart: None,
             notifier: None,
@@ -268,6 +275,13 @@ impl App {
     #[must_use]
     pub fn with_show_requests(mut self, requests: ShowRequests) -> Self {
         self.show_requests = Some(requests);
+        self
+    }
+
+    /// Checks for a newer release through `checker`, when the option is on.
+    #[must_use]
+    pub fn with_update_check(mut self, checker: Checker) -> Self {
+        self.updates = Some(checker);
         self
     }
 
@@ -478,6 +492,76 @@ impl App {
         self.toasts.drain(..excess);
     }
 
+    /// Runs the update check when it is due. A failed check is silent (tried
+    /// again later); a newer release is shown in a banner and, while the window
+    /// is not in front, in a Windows notification.
+    fn poll_updates(&mut self, ctx: &egui::Context) {
+        let Some(checker) = &mut self.updates else {
+            return;
+        };
+        let schedule = self.engine.with_state(|s| Schedule {
+            enabled: s.settings.check_updates,
+            frequency: s.settings.update_frequency,
+            last: s.settings.last_update_check,
+        });
+        if schedule.enabled {
+            ctx.request_repaint_after(checker.wait().max(Duration::from_secs(1)));
+        }
+        let wake = ctx.clone();
+        let Some(Ok(latest)) = checker.poll(schedule, move || wake.request_repaint()) else {
+            return;
+        };
+        let mut settings = self.engine.with_state(|s| s.settings.clone());
+        settings.last_update_check = Some(update::unix_now());
+        // Best effort: if the date cannot be saved, the next start checks again.
+        match self.store.save_settings(&settings) {
+            Ok(()) | Err(SettingsError::PasswordsNotStored(_)) => {
+                self.engine.send(Command::UpdateSettings(settings.clone()));
+            }
+            Err(_) => {}
+        }
+        let current = Version::current();
+        if latest <= current {
+            return;
+        }
+        self.update_available = Some(latest);
+        let in_front = self.window == WindowState::Shown && ctx.input(|i| i.viewport().focused == Some(true));
+        if settings.system_notifications
+            && !in_front
+            && let Some(notifier) = &self.notifier
+            && let Err(e) = notifier.notify(
+                "Rar N Rush",
+                &self
+                    .lang
+                    .update_available(&latest.to_string(), &current.to_string()),
+            )
+        {
+            self.warning = Some(self.lang.notify_failed(&e.to_string()));
+        }
+    }
+
+    /// Banner shown when a newer release exists: link to its page, or dismiss
+    /// until the next check.
+    fn update_banner(&mut self, ui: &mut egui::Ui, dark: bool) {
+        let Some(latest) = self.update_available else {
+            return;
+        };
+        let t = self.texts();
+        let text = self.lang.update_available(&latest.to_string(), self.version());
+        let mut dismiss = false;
+        ui.add_space(4.0);
+        ui.horizontal_wrapped(|ui| {
+            ui.colored_label(status_color(Status::Done, dark), RichText::new("⬆").strong());
+            ui.label(RichText::new(text).color(status_color(Status::Done, dark)));
+            ui.hyperlink_to(t.update_release, latest.release_url());
+            dismiss = ui.button(t.update_later).clicked();
+        });
+        ui.add_space(4.0);
+        if dismiss {
+            self.update_available = None;
+        }
+    }
+
     /// Draws the notices in the bottom-right corner, newest at the bottom.
     fn show_toasts(&self, ctx: &egui::Context, dark: bool) {
         if self.toasts.is_empty() {
@@ -519,7 +603,10 @@ impl App {
     /// Saves the settings, then applies them. Nothing is applied when saving fails,
     /// so what the user sees always matches the file. Returns the localised error.
     fn apply_settings(&mut self, ctx: &egui::Context, settings: Settings) -> Result<(), String> {
-        let settings = settings.validated();
+        let mut settings = settings.validated();
+        // Recorded in the background while the settings window may be open:
+        // the copy being saved may hold an older value.
+        settings.last_update_check = self.engine.with_state(|s| s.settings.last_update_check);
         match self.store.save_settings(&settings) {
             Ok(()) => {}
             // Saved, with the passwords in the file: apply, and say so.
@@ -1219,6 +1306,29 @@ fn settings_grid(ui: &mut egui::Ui, draft: &mut Settings, t: &Texts, lang: Lang,
         ui.selectable_value(&mut draft.theme, ThemePref::Dark, t.dark);
     });
     ui.end_row();
+
+    let label = ui.label(t.updates);
+    ui.horizontal(|ui| {
+        ui.checkbox(&mut draft.check_updates, t.check_updates)
+            .on_hover_text(t.check_updates_hint);
+        ui.add_enabled_ui(draft.check_updates, |ui| {
+            let frequency = &mut draft.update_frequency;
+            egui::ComboBox::from_id_salt("update_frequency")
+                .selected_text(match *frequency {
+                    UpdateFrequency::Daily => t.daily,
+                    UpdateFrequency::Weekly => t.weekly,
+                    UpdateFrequency::Monthly => t.monthly,
+                })
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(frequency, UpdateFrequency::Daily, t.daily);
+                    ui.selectable_value(frequency, UpdateFrequency::Weekly, t.weekly);
+                    ui.selectable_value(frequency, UpdateFrequency::Monthly, t.monthly);
+                })
+                .response
+                .labelled_by(label.id);
+        });
+    });
+    ui.end_row();
 }
 
 /// Editable folder field of the main window (watched or extraction folder).
@@ -1429,6 +1539,7 @@ impl eframe::App for App {
             .with_state(|s| (s.settings.minimize_to_tray, s.settings.close_to_tray));
         self.sync_tray(ctx, minimize_to_tray || close_to_tray);
         self.collect_events(ctx);
+        self.poll_updates(ctx);
         if self.window == WindowState::Starting {
             if self.tray.is_some() && minimize_to_tray {
                 self.hide_window(ctx);
@@ -1491,6 +1602,9 @@ impl eframe::App for App {
         egui::Panel::top("toolbar").show(root, |ui| self.toolbar(ui, &snap));
         if self.load_issue.is_some() || self.warning.is_some() {
             egui::Panel::top("load_issue").show(root, |ui| self.load_issue_banner(ui, dark));
+        }
+        if self.update_available.is_some() {
+            egui::Panel::top("update").show(root, |ui| self.update_banner(ui, dark));
         }
         egui::Panel::bottom("log")
             .resizable(true)

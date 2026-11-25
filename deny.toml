@@ -29,7 +29,8 @@ confidence-threshold = 0.9
 multiple-versions = "allow"
 wildcards = "deny"
 allow-wildcard-paths = true
-# Rar N Rush never goes online: no update check, no telemetry. Any HTTP/TLS/async
+# No networking code in the program: no telemetry, and the optional update check
+# (off by default) goes through Windows' own curl.exe. Any HTTP/TLS/async
 # networking crate entering the dependency graph fails the build.
 deny = [
     { crate = "reqwest", reason = "no network access by design" },

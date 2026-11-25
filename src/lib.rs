@@ -18,6 +18,7 @@
 //! - [`clock`]: local date and time for the log and file names.
 //! - [`autostart`]: optional start with Windows (current user's `Run` key).
 //! - [`uninstall`]: registry clean-up run by the installer package on removal.
+//! - [`update`]: optional check for a newer release on GitHub (off by default).
 
 pub mod autostart;
 pub mod clock;
@@ -37,3 +38,4 @@ pub mod tidy;
 pub mod tray;
 pub mod ui;
 pub mod uninstall;
+pub mod update;

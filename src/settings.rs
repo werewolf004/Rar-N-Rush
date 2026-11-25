@@ -140,6 +140,13 @@ pub struct Settings {
     pub show_toasts: bool,
     /// Show a Windows notification for the same events while the window is not in front.
     pub system_notifications: bool,
+    /// Ask GitHub now and then whether a newer release exists (off by default:
+    /// no network access at all until the user turns it on).
+    pub check_updates: bool,
+    /// How often to check for a newer release.
+    pub update_frequency: UpdateFrequency,
+    /// Last successful update check, in seconds since 1970.
+    pub last_update_check: Option<u64>,
     /// Last size and position of the main window (saved on exit).
     pub window: Option<WindowGeometry>,
 }
@@ -214,6 +221,31 @@ pub enum ThemePref {
     Dark,
 }
 
+/// How often to check for a newer release.
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum UpdateFrequency {
+    /// Once a day.
+    Daily,
+    /// Once a week.
+    #[default]
+    Weekly,
+    /// Once a month (30 days).
+    Monthly,
+}
+
+impl UpdateFrequency {
+    /// Time between two checks.
+    pub fn period(self) -> std::time::Duration {
+        let days = match self {
+            Self::Daily => 1,
+            Self::Weekly => 7,
+            Self::Monthly => 30,
+        };
+        std::time::Duration::from_secs(days * 24 * 60 * 60)
+    }
+}
+
 impl Default for Settings {
     fn default() -> Self {
         Self {
@@ -242,6 +274,9 @@ impl Default for Settings {
             log_to_file: true,
             show_toasts: true,
             system_notifications: true,
+            check_updates: false,
+            update_frequency: UpdateFrequency::Weekly,
+            last_update_check: None,
             window: None,
         }
     }
@@ -1071,6 +1106,7 @@ mod tests {
         let text = toml::to_string(&s).unwrap();
         assert!(text.contains("language = \"french\""));
         assert!(text.contains("theme = \"dark\""));
+        assert!(text.contains("update_frequency = \"weekly\""));
     }
 
     #[test]
@@ -1183,6 +1219,9 @@ mod tests {
             log_to_file: false,
             show_toasts: false,
             system_notifications: false,
+            check_updates: true,
+            update_frequency: UpdateFrequency::Monthly,
+            last_update_check: Some(1_795_000_000),
             window: Some(WindowGeometry {
                 x: -8,
                 y: 30,

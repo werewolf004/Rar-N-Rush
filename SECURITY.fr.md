@@ -33,10 +33,12 @@ Rar N Rush traite des fichiers téléchargés depuis Internet, qu'il faut consid
 - Les fichiers sources sont envoyés à la **corbeille**, jamais supprimés définitivement, et seulement après un traitement entièrement réussi.
 - `par2.exe` est lancé sans shell, avec des arguments passés séparément (pas d'injection de commande), sans fenêtre console, et uniquement depuis le chemin choisi par l'utilisateur, le dossier du programme ou le `PATH`. Le `par2.exe` fourni dans le zip de release est le build officiel de par2cmdline-turbo, vérifié contre un SHA-256 figé avant d'être testé et empaqueté, et couvert par l'attestation de provenance de la release.
 
-### Aucun accès réseau
+### Accès réseau : uniquement la vérification des mises à jour, facultative
 
-- Rar N Rush ne se connecte jamais à Internet : **aucune vérification de mise à jour**, aucune télémétrie, aucun rapport de plantage.
-- C'est imposé par `cargo deny` : les crates HTTP, TLS et réseau asynchrone (`reqwest`, `hyper`, `rustls`, `tokio`, `self_update`…) sont interdits, la CI échoue si l'un d'eux entre dans les dépendances.
+- Aucune télémétrie, aucun rapport de plantage. Par défaut, Rar N Rush ne fait **aucune requête réseau**.
+- Seule exception : la vérification des mises à jour, **désactivée par défaut** (Réglages → Général → Mises à jour). Quand elle est activée, environ une minute après le lancement puis au plus une fois par jour, semaine ou mois, le programme demande à `https://api.github.com/repos/werewolf004/Rar-N-Rush/releases/latest` le numéro de la dernière version. La requête ne contient qu'un agent utilisateur `rar-n-rush/<version>` : aucun identifiant, aucune statistique. Rien n'est téléchargé ni installé ; la fenêtre affiche un lien vers la page de la release et tu décides.
+- La requête passe par `%SystemRoot%\System32\curl.exe`, fourni avec Windows 10 et 11 (jamais une copie trouvée via le `PATH`), en HTTPS uniquement, redirections comprises, avec une limite de 30 secondes et de 1 Mo. Seul un numéro de version strict `vX.Y.Z` est lu dans la réponse ; le lien affiché est construit à partir de ce numéro, jamais repris de la réponse.
+- Le programme lui-même ne contient toujours aucun code réseau, ce qu'impose `cargo deny` : les crates HTTP, TLS et réseau asynchrone (`reqwest`, `hyper`, `rustls`, `tokio`, `self_update`…) sont interdits, la CI échoue si l'un d'eux entre dans les dépendances. Les tests ne vont jamais sur Internet (une fausse réponse les remplace).
 
 ### Données persistantes
 

@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- Optional update check (Settings → General → **Check for updates**), off by default. About a minute after start-up, then every day, week or month as chosen, Rar N Rush asks GitHub for the number of the latest release; when a newer one exists, a banner links to its release page, with a Windows notification while the window is not in front. Nothing is downloaded or installed. The request goes through the `curl.exe` shipped with Windows: no network code is added to the program.
+
+### Fixed
+
+- The example settings file in the settings reference put `language` and `theme` under `[window]`.
+
 ## [1.4.1] - 2026-11-24
 
 Dependency updates for two security advisories; nothing changes on screen.

@@ -27,7 +27,7 @@ Rar N Rush surveille ton dossier de téléchargements. Pour chaque téléchargem
 - **Rangement** (facultatif) : les autres fichiers (`.nfo`, échantillons…) suivent dans le dossier d'extraction, et les dossiers restés vides partent à la corbeille.
 - **Installateur ou portable** : un installateur pour ton compte (sans droits administrateur) ou un zip à lancer de n'importe où.
 - **Réglages fiables** : un seul fichier, retrouvé même si tu déplaces le programme ; une valeur invalide est remise par défaut individuellement (jamais tout le fichier) après une copie de sauvegarde, et tu en es averti.
-- **Hors ligne** : aucune vérification de mise à jour, aucune télémétrie, aucun accès réseau. La mise à jour reste ton choix : télécharge une nouvelle release quand tu le veux.
+- **Hors ligne par défaut** : aucune télémétrie, et aucun accès réseau tant que tu n'actives pas la vérification des mises à jour, qui demande seulement à GitHub le numéro de la dernière version (chaque jour, semaine ou mois) et ne télécharge jamais rien. La mise à jour reste ton choix.
 
 ## Installation
 

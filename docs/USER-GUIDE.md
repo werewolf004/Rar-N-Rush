@@ -180,7 +180,7 @@ Click **OK** to hide it. The other cases are handled the same way, without losin
 
 ## 10. Files, privacy and removal
 
-Rar N Rush **never connects to the Internet**: no update check, no telemetry. To update, download a newer release when you want one: run the new installer (it replaces the installed version and keeps everything), or replace the files of the portable copy. To switch from the portable zip to the installer, copy `rar-n-rush.toml` and `rar-n-rush-processed.txt` from the zip folder to `%APPDATA%\RarNRush` before the first start.
+Rar N Rush sends **no telemetry** and, by default, **never connects to the Internet**. If you turn on **Check for updates** (Settings → General), it asks GitHub for the number of the latest release about a minute after start-up, then once a day, week or month as you choose; when a newer one exists, a banner (and a Windows notification while the window is not in front) links to its page. Nothing is downloaded on its own. To update, download the new release when you want: run the new installer (it replaces the installed version and keeps everything), or replace the files of the portable copy. To switch from the portable zip to the installer, copy `rar-n-rush.toml` and `rar-n-rush-processed.txt` from the zip folder to `%APPDATA%\RarNRush` before the first start.
 
 Next to the settings (`%APPDATA%\RarNRush` for the installed program; for the portable zip, `rar-n-rush.exe`'s folder, or `%APPDATA%\RarNRush`):
 

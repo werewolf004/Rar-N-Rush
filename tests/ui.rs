@@ -255,7 +255,7 @@ fn saving_settings_switches_language_live() {
     h.step();
     h.get_by_label("⚙  Settings").click();
     frames(&mut h, 3);
-    h.get_by_role(egui::accesskit::Role::ComboBox).click(); // language
+    h.get_by_label("Language").click();
     frames(&mut h, 3);
     h.get_by_label("Français").click();
     frames(&mut h, 3);
@@ -832,4 +832,136 @@ fn no_windows_notification_when_turned_off() {
     settle(&mut h, 4);
     assert_eq!(*fake.enabled.lock().unwrap(), vec![false], "registration removed");
     assert!(fake.shown.lock().unwrap().is_empty());
+}
+
+/// Answers update checks with a fixed release number, without going online.
+struct FakeGitHub {
+    tag: &'static str,
+    calls: std::sync::Arc<std::sync::Mutex<usize>>,
+}
+
+impl rar_n_rush::update::Fetch for FakeGitHub {
+    fn get(&self, url: &str) -> Result<String, rar_n_rush::update::UpdateError> {
+        assert_eq!(url, rar_n_rush::update::LATEST_URL);
+        *self.calls.lock().unwrap() += 1;
+        Ok(format!(r#"{{"tag_name":"{}"}}"#, self.tag))
+    }
+}
+
+/// App checking for updates against a fake GitHub answering `tag`.
+fn update_harness(
+    check_updates: bool,
+    tag: &'static str,
+) -> (
+    Demo,
+    Store,
+    Harness<'static, App>,
+    FakeNotifier,
+    std::sync::Arc<std::sync::Mutex<usize>>,
+) {
+    let demo = Demo::new(false);
+    let store = Store::at(demo.state_dir("update"));
+    let settings = Settings {
+        check_updates,
+        ..demo.settings(LanguagePref::English, ThemePref::Light)
+    };
+    let (fake, calls) = (FakeNotifier::default(), std::sync::Arc::default());
+    let (for_app, store_for_app) = (fake.clone(), store.clone());
+    let github = FakeGitHub {
+        tag,
+        calls: std::sync::Arc::clone(&calls),
+    };
+    let h = Harness::builder()
+        .with_size(SIZE)
+        .with_render_cursor(false)
+        .build_eframe(move |cc| {
+            let ctx = cc.egui_ctx.clone();
+            let store = store_for_app;
+            let engine = Engine::start(settings, store.clone(), move || ctx.request_repaint()).unwrap();
+            App::new(&cc.egui_ctx, engine, store, None)
+                .with_notifier(for_app)
+                .with_update_check(rar_n_rush::update::Checker::with_delay(github, Duration::ZERO))
+        });
+    (demo, store, h, fake, calls)
+}
+
+/// Steps the UI until `done` holds (at most 10 s).
+fn step_until(h: &mut Harness<'static, App>, mut done: impl FnMut(&mut Harness<'static, App>) -> bool) {
+    let start = Instant::now();
+    while !done(h) {
+        assert!(start.elapsed() < Duration::from_secs(10), "timed out");
+        h.step();
+        std::thread::sleep(Duration::from_millis(20));
+    }
+}
+
+#[test]
+fn a_newer_release_is_announced_once() {
+    let (_demo, store, mut h, fake, calls) = update_harness(true, "v99.0.0");
+    let current = env!("CARGO_PKG_VERSION");
+    let text = format!("Rar N Rush 99.0.0 is available (you have {current}).");
+    step_until(&mut h, |h| h.query_by_label(&text).is_some());
+    h.get_by_label("See the release");
+    // Windows notification (the test window is never in front).
+    assert_eq!(
+        *fake.shown.lock().unwrap(),
+        vec![("Rar N Rush".to_owned(), text.clone())]
+    );
+    // The date of the check is saved, so the next start does not ask again.
+    let saved = store.load_settings().unwrap().last_update_check;
+    assert!(saved.is_some_and(|t| t > 1_700_000_000), "{saved:?}");
+    frames(&mut h, 20);
+    assert_eq!(*calls.lock().unwrap(), 1, "one request");
+    // "Later" hides the banner.
+    h.get_by_label("Later").click();
+    frames(&mut h, 3);
+    assert!(h.query_by_label(&text).is_none());
+}
+
+#[test]
+fn no_banner_when_up_to_date() {
+    let (_demo, store, mut h, fake, calls) = update_harness(true, concat!("v", env!("CARGO_PKG_VERSION")));
+    step_until(&mut h, |_| *calls.lock().unwrap() == 1);
+    step_until(&mut h, |_| {
+        store.load_settings().unwrap().last_update_check.is_some()
+    });
+    frames(&mut h, 5);
+    assert!(h.query_by_label("See the release").is_none());
+    assert!(fake.shown.lock().unwrap().is_empty());
+}
+
+#[test]
+fn nothing_is_checked_while_the_option_is_off() {
+    let (_demo, store, mut h, _fake, calls) = update_harness(false, "v99.0.0");
+    for _ in 0..30 {
+        h.step();
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    assert_eq!(*calls.lock().unwrap(), 0, "no request");
+    assert_eq!(store.load_settings().unwrap().last_update_check, None);
+    assert!(h.query_by_label("See the release").is_none());
+}
+
+#[test]
+fn update_option_in_the_settings() {
+    let demo = Demo::new(false);
+    let dir = demo.state_dir("update-option");
+    let mut h = harness(demo.settings(LanguagePref::French, ThemePref::Light), &dir, false);
+    frames(&mut h, 2);
+    h.get_by_label("⚙  Réglages").click();
+    frames(&mut h, 3);
+    h.get_by_label("Vérifier les mises à jour").click();
+    frames(&mut h, 2);
+    h.get_by_label("Mises à jour").click();
+    frames(&mut h, 2);
+    h.get_by_label("Une fois par mois").click();
+    frames(&mut h, 2);
+    h.get_by_label("Enregistrer").click();
+    frames(&mut h, 3);
+    let saved = Store::at(&dir).load_settings().unwrap();
+    assert!(saved.check_updates);
+    assert_eq!(
+        saved.update_frequency,
+        rar_n_rush::settings::UpdateFrequency::Monthly
+    );
 }

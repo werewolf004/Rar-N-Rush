@@ -26,7 +26,7 @@ Tes réglages ne sont jamais perdus en silence :
 - un fichier totalement illisible (verrouillé, droits) n'est jamais remplacé : les valeurs par défaut sont utilisées pour la session, et l'enregistrement le met d'abord de côté ou, si cela échoue aussi, n'écrit rien ;
 - dès qu'une valeur est remise par défaut, le fichier d'origine est d'abord copié sous `rar-n-rush.toml.<date-heure>.bak`, et un bandeau en haut de la fenêtre indique les clés concernées et l'emplacement de la copie.
 
-La fenêtre des réglages a trois pages : **Général** (dossiers, délais, langue, thème), **Traitement** (comportement, nettoyage, mots de passe) et **Fenêtre**. Elle s'ouvre avec **Réglages** ou **Ctrl+,**.
+La fenêtre des réglages a trois pages : **Général** (dossiers, délais, langue, thème, mises à jour), **Traitement** (comportement, nettoyage, mots de passe) et **Fenêtre**. Elle s'ouvre avec **Réglages** ou **Ctrl+,**.
 
 - **Enregistrer** est désactivé tant qu'une valeur est fausse ; le problème s'affiche juste au-dessus (dossier surveillé inexistant, destination qui est un fichier ou où l'on ne peut pas écrire, chemin de `par2.exe` sans fichier). Une destination qui n'existe pas encore est acceptée : elle est créée à la première extraction.
 - **Annuler**, le ✕ de la fenêtre et **Échap** la ferment ; s'il y a des modifications non enregistrées, ils demandent d'abord **Abandonner tes modifications ?** (**Abandonner** ou **Continuer**).
@@ -102,6 +102,14 @@ La fenêtre des réglages a trois pages : **Général** (dossiers, délais, lang
 | `language` | Langue | `system`, `english`, `french` | `system` | Langue de l'interface. `system` suit la langue d'affichage de Windows (français si elle commence par `fr`, anglais sinon). |
 | `theme` | Thème | `system`, `light`, `dark` | `system` | `system` suit le réglage clair/foncé de Windows, en direct. |
 
+## Mises à jour *(page Général)*
+
+| Clé | Libellé dans la fenêtre | Valeurs | Défaut | Effet |
+|---|---|---|---|---|
+| `check_updates` | Vérifier les mises à jour | booléen | `false` | Environ une minute après le lancement, demande à GitHub le numéro de la dernière version, puis de nouveau une fois par `update_frequency`. Si elle est plus récente, un bandeau donne le lien vers sa page (plus une notification Windows si la fenêtre n'est pas au premier plan). Rien n'est téléchargé ni installé. Désactivée : aucun accès réseau. Une vérification qui échoue est silencieuse et refaite une heure plus tard. Voir [SECURITY.fr.md](../SECURITY.fr.md). |
+| `update_frequency` | (liste à côté) | `daily`, `weekly`, `monthly` | `weekly` | Temps entre deux vérifications : 1, 7 ou 30 jours. |
+| `last_update_check` | — | secondes depuis 1970 | aucune | Date de la dernière vérification réussie, écrite par le programme. |
+
 ## Exemple de fichier
 
 ```toml
@@ -128,6 +136,10 @@ start_with_windows = false
 log_to_file = true
 show_toasts = true
 system_notifications = true
+language = "system"
+theme = "system"
+check_updates = false
+update_frequency = "weekly"
 
 [window]
 x = 120
@@ -135,8 +147,6 @@ y = 80
 width = 1100
 height = 680
 maximized = false
-language = "system"
-theme = "system"
 ```
 
 ## Autres fichiers

@@ -26,7 +26,7 @@ Your settings are never silently lost:
 - a file that cannot be read at all (locked, permissions) is never replaced: the defaults are used for the session, and saving moves it aside first or, if that fails too, writes nothing;
 - whenever something is reset, the original file is first copied to `rar-n-rush.toml.<date-time>.bak`, and a banner at the top of the window says which keys were reset and where the copy is.
 
-The settings window has three pages: **General** (folders, timing, language, theme), **Processing** (behaviour, clean-up, passwords) and **Window**. It opens with **Settings** or **Ctrl+,**.
+The settings window has three pages: **General** (folders, timing, language, theme, updates), **Processing** (behaviour, clean-up, passwords) and **Window**. It opens with **Settings** or **Ctrl+,**.
 
 - **Save** is disabled while a value is wrong; the problem is shown just above it (watched folder that does not exist, destination that is a file or cannot be written to, `par2.exe` path with no file). A destination that does not exist yet is fine: it is created at the first extraction.
 - **Cancel**, the window's ✕ and **Esc** close it; with unsaved changes they first ask **Discard your changes?** (**Discard** or **Keep editing**).
@@ -102,6 +102,14 @@ The settings window has three pages: **General** (folders, timing, language, the
 | `language` | Language | `system`, `english`, `french` | `system` | Interface language. `system` follows the Windows display language (French if it starts with `fr`, English otherwise). |
 | `theme` | Theme | `system`, `light`, `dark` | `system` | `system` follows the Windows light/dark setting, live. |
 
+## Updates *(General page)*
+
+| Key | Window label | Values | Default | Effect |
+|---|---|---|---|---|
+| `check_updates` | Check for updates | bool | `false` | About a minute after start-up, asks GitHub for the number of the latest release, then again once per `update_frequency`. When it is newer, a banner links to its release page (plus a Windows notification while the window is not in front). Nothing is downloaded or installed. Off: no network access at all. A failed check is silent and tried again an hour later. See [SECURITY.md](../SECURITY.md). |
+| `update_frequency` | (list next to it) | `daily`, `weekly`, `monthly` | `weekly` | Time between two checks: 1, 7 or 30 days. |
+| `last_update_check` | — | seconds since 1970 | none | Date of the last successful check, written by the program. |
+
 ## Example file
 
 ```toml
@@ -128,6 +136,10 @@ start_with_windows = false
 log_to_file = true
 show_toasts = true
 system_notifications = true
+language = "system"
+theme = "system"
+check_updates = false
+update_frequency = "weekly"
 
 [window]
 x = 120
@@ -135,8 +147,6 @@ y = 80
 width = 1100
 height = 680
 maximized = false
-language = "system"
-theme = "system"
 ```
 
 ## Other files

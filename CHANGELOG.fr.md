@@ -6,6 +6,14 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+### Ajouté
+
+- Vérification des mises à jour, facultative (Réglages → Général → **Vérifier les mises à jour**), désactivée par défaut. Environ une minute après le lancement, puis chaque jour, semaine ou mois selon ton choix, Rar N Rush demande à GitHub le numéro de la dernière version ; si une version plus récente existe, un bandeau donne le lien vers sa page, avec une notification Windows si la fenêtre n'est pas au premier plan. Rien n'est téléchargé ni installé. La requête passe par le `curl.exe` fourni avec Windows : aucun code réseau n'est ajouté au programme.
+
+### Corrigé
+
+- L'exemple de fichier de réglages de la référence des options plaçait `language` et `theme` sous `[window]`.
+
 ## [1.4.1] - 2026-11-24
 
 Mises à jour de dépendances pour deux alertes de sécurité ; rien ne change à l'écran.

@@ -27,7 +27,7 @@ Written in Rust with an [egui](https://github.com/emilk/egui) interface. The con
 - **Tidy-up** (optional): the other files of a set (`.nfo`, samples…) follow it to the destination, and folders left empty go to the Recycle Bin.
 - **Installer or portable**: a per-user installer (no administrator rights) or a zip to run from anywhere.
 - **Reliable settings**: one file, found again even if you move the program; invalid values are reset one by one (never the whole file) after a backup copy, and you are told about it.
-- **Offline**: no update check, no telemetry, no network access at all. Updating is your choice: download a new release when you want one.
+- **Offline by default**: no telemetry, and no network access at all unless you turn on the optional update check, which only asks GitHub for the number of the latest release (daily, weekly or monthly) and never downloads anything. Updating stays your choice.
 
 ## Installation
 
