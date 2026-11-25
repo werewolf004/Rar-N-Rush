@@ -291,11 +291,20 @@ fn watch_field<'a>(h: &'a Harness<'static, App>) -> egui_kittest::Node<'a> {
 }
 
 /// Types `text` into the watched-folder field and presses Enter.
+/// Waits for the field to have the focus and the text before pressing Enter:
+/// the engine keeps working meanwhile, so a fixed number of frames is not
+/// always enough on a busy machine.
 fn type_watch_dir(h: &mut Harness<'static, App>, text: &str) {
-    watch_field(h).focus();
-    frames(h, 2);
-    watch_field(h).set_text_value_accesskit(text);
-    frames(h, 2);
+    step_until(h, |h| {
+        watch_field(h).focus();
+        h.step();
+        watch_field(h).is_focused()
+    });
+    step_until(h, |h| {
+        watch_field(h).set_text_value_accesskit(text);
+        h.step();
+        watch_field(h).value().as_deref() == Some(text)
+    });
     h.key_press(egui::Key::Enter);
     frames(h, 3);
 }
@@ -903,10 +912,16 @@ fn a_newer_release_is_announced_once() {
     step_until(&mut h, |h| h.query_by_label(&text).is_some());
     h.get_by_label("See the release");
     // Windows notification (the test window is never in front).
-    assert_eq!(
-        *fake.shown.lock().unwrap(),
-        vec![("Rar N Rush".to_owned(), text.clone())]
-    );
+    // (The demo sets may add their own notifications meanwhile.)
+    let ours: Vec<_> = fake
+        .shown
+        .lock()
+        .unwrap()
+        .iter()
+        .filter(|(title, _)| title == "Rar N Rush")
+        .cloned()
+        .collect();
+    assert_eq!(ours, vec![("Rar N Rush".to_owned(), text.clone())]);
     // The date of the check is saved, so the next start does not ask again.
     let saved = store.load_settings().unwrap().last_update_check;
     assert!(saved.is_some_and(|t| t > 1_700_000_000), "{saved:?}");
