@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-25
+
+An optional update check, off by default: Rar N Rush can tell you when a new version is out.
+
 ### Added
 
 - Optional update check (Settings → General → **Check for updates**), off by default. About a minute after start-up, then every day, week or month as chosen, Rar N Rush asks GitHub for the number of the latest release; when a newer one exists, a banner links to its release page, with a Windows notification while the window is not in front. Nothing is downloaded or installed. The request goes through the `curl.exe` shipped with Windows: no network code is added to the program.
@@ -212,7 +216,8 @@ First public version: the complete processing chain, a quality foundation and th
 
 - `#![forbid(unsafe_code)]` on the whole crate; `unwrap`, `expect` and `panic` are denied outside tests.
 
-[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.1...HEAD
+[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.2.0...v1.3.0

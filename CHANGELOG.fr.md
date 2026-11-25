@@ -6,6 +6,10 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+## [1.5.0] - 2026-11-25
+
+Une vérification des mises à jour facultative, désactivée par défaut : Rar N Rush peut te prévenir quand une nouvelle version sort.
+
 ### Ajouté
 
 - Vérification des mises à jour, facultative (Réglages → Général → **Vérifier les mises à jour**), désactivée par défaut. Environ une minute après le lancement, puis chaque jour, semaine ou mois selon ton choix, Rar N Rush demande à GitHub le numéro de la dernière version ; si une version plus récente existe, un bandeau donne le lien vers sa page, avec une notification Windows si la fenêtre n'est pas au premier plan. Rien n'est téléchargé ni installé. La requête passe par le `curl.exe` fourni avec Windows : aucun code réseau n'est ajouté au programme.
@@ -212,7 +216,8 @@ Première version publique : toute la chaîne de traitement, des fondations qual
 
 - `#![forbid(unsafe_code)]` sur tout le crate ; `unwrap`, `expect` et `panic` sont interdits hors des tests.
 
-[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.1...HEAD
+[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.2.0...v1.3.0
