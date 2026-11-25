@@ -117,7 +117,7 @@ If the Credential Manager cannot be used, the passwords stay in the settings fil
 
 ## 6. Settings
 
-**⚙ Settings** opens a window with three pages. Nothing changes until you click **Save**; **Save** is disabled, with the reason shown above it, while a value is wrong (a folder that does not exist, for instance).
+**⚙ Settings** opens a window with three pages. Nothing changes until you click **Save**; **Save** is disabled, with the reason shown above it, while a value is wrong (a folder that does not exist, for instance). A watched folder that is only unavailable for now (drive unplugged) does not block it: a warning is shown and the other settings can still be saved.
 
 **General**: folders, `par2.exe`, timings, language and theme.
 

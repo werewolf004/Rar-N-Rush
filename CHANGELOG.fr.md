@@ -6,6 +6,10 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+### Corrigé
+
+- Les réglages ne pouvaient pas être enregistrés tant que le dossier surveillé était indisponible (disque débranché, partage réseau hors ligne) : aucune autre option ne pouvait donc être changée. Un dossier surveillé ou un `par2.exe` réglé avant l'ouverture de la fenêtre ne donne plus qu'un avertissement ; celui qu'on saisit dans la fenêtre doit toujours exister.
+
 ## [1.5.0] - 2026-11-25
 
 Une vérification des mises à jour facultative, désactivée par défaut : Rar N Rush peut te prévenir quand une nouvelle version sort.

@@ -980,3 +980,25 @@ fn update_option_in_the_settings() {
         rar_n_rush::settings::UpdateFrequency::Monthly
     );
 }
+
+#[test]
+fn settings_can_be_saved_while_the_watched_folder_is_unavailable() {
+    let demo = Demo::new(false);
+    let dir = demo.state_dir("unavailable");
+    let mut settings = demo.settings(LanguagePref::English, ThemePref::Light);
+    // Drive unplugged since the folder was chosen.
+    settings.watch_dir = demo.root.join("Unplugged").display().to_string();
+    let mut h = harness(settings.clone(), &dir, false);
+    frames(&mut h, 2);
+    h.get_by_label("⚙  Settings").click();
+    frames(&mut h, 3);
+    h.get_by_label_contains("Watched folder not found right now");
+    assert!(h.query_by_label("Watched folder: this folder does not exist.").is_none());
+    h.get_by_label("Check for updates").click();
+    frames(&mut h, 2);
+    h.get_by_label("Save").click();
+    frames(&mut h, 3);
+    let saved = Store::at(&dir).load_settings().unwrap();
+    assert!(saved.check_updates, "saved");
+    assert_eq!(saved.watch_dir, settings.watch_dir, "folder kept");
+}

@@ -1081,7 +1081,9 @@ impl App {
         let lang = self.lang;
         let mut open = true;
         let (mut save, mut cancel, mut accept, mut keep) = (false, false, false, false);
-        let problems = draft_problems(&draft, t);
+        let saved = self.draft_original.as_ref().map(|(s, _)| s);
+        let problems = draft_problems(&draft, saved, t);
+        let watch_unavailable = watch_dir_unavailable(&draft, saved);
         egui::Window::new(t.settings_title)
             .open(&mut open)
             .collapsible(false)
@@ -1127,16 +1129,11 @@ impl App {
                         SettingsTab::Window => window_toggles(ui, &mut draft, t),
                     });
                 ui.separator();
-                let error = status_color(Status::Failed, dark);
-                for problem in &problems {
-                    ui.colored_label(error, *problem);
-                }
-                if let Some(e) = &self.tray_error {
-                    ui.colored_label(status_color(Status::NeedPassword, dark), e);
-                }
-                if let Some(e) = &self.settings_error {
-                    ui.colored_label(error, e);
-                }
+                let warnings = [
+                    watch_unavailable.then_some(t.watch_dir_unavailable),
+                    self.tray_error.as_deref(),
+                ];
+                settings_messages(ui, dark, &problems, &warnings, self.settings_error.as_deref());
                 ui.add_space(8.0);
                 if let Some(confirm) = self.confirm {
                     let (question, yes, no) = match confirm {
@@ -1205,10 +1202,38 @@ impl App {
     }
 }
 
+/// Messages above the Save button: blocking problems and the saving error in
+/// red, warnings in amber.
+fn settings_messages(
+    ui: &mut egui::Ui,
+    dark: bool,
+    problems: &[&str],
+    warnings: &[Option<&str>],
+    save_error: Option<&str>,
+) {
+    let error = status_color(Status::Failed, dark);
+    for problem in problems {
+        ui.colored_label(error, *problem);
+    }
+    for warning in warnings.iter().flatten() {
+        ui.colored_label(status_color(Status::NeedPassword, dark), *warning);
+    }
+    if let Some(e) = save_error {
+        ui.colored_label(error, e);
+    }
+}
+
 /// Problems that prevent saving the settings, shown above the Save button.
-fn draft_problems(draft: &Settings, t: &Texts) -> Vec<&'static str> {
+///
+/// A missing watched folder or `par2.exe` only blocks when it was typed in
+/// this window (`saved`: the settings as they were when it opened): one that
+/// is merely unavailable for now (drive unplugged, network share offline)
+/// must not keep the other settings from being changed.
+fn draft_problems(draft: &Settings, saved: Option<&Settings>, t: &Texts) -> Vec<&'static str> {
     let mut problems = Vec::new();
-    if draft.watch_path().is_some_and(|dir| !dir.is_dir()) {
+    let unchanged =
+        |value: fn(&Settings) -> &str| saved.is_some_and(|s| value(s).trim() == value(draft).trim());
+    if draft.watch_path().is_some_and(|dir| !dir.is_dir()) && !unchanged(|s| &s.watch_dir) {
         problems.push(t.problem_watch_dir);
     }
     if let Some(dest) = draft.extract_path().filter(|d| d.exists()) {
@@ -1218,10 +1243,20 @@ fn draft_problems(draft: &Settings, t: &Texts) -> Vec<&'static str> {
             problems.push(t.problem_dest_read_only);
         }
     }
-    if !draft.par2_path.trim().is_empty() && !Path::new(draft.par2_path.trim()).is_file() {
+    if !draft.par2_path.trim().is_empty()
+        && !Path::new(draft.par2_path.trim()).is_file()
+        && !unchanged(|s| &s.par2_path)
+    {
         problems.push(t.problem_par2);
     }
     problems
+}
+
+/// `true` when the watched folder, unchanged in this window, cannot be found
+/// right now: saving stays possible, with a warning.
+fn watch_dir_unavailable(draft: &Settings, saved: Option<&Settings>) -> bool {
+    draft.watch_path().is_some_and(|dir| !dir.is_dir())
+        && saved.is_some_and(|s| s.watch_dir.trim() == draft.watch_dir.trim())
 }
 
 /// Rounds a logical coordinate to whole pixels, saturating.
@@ -1737,7 +1772,10 @@ mod tests {
             extract_dir: dir.path().join("new").display().to_string(), // created later
             ..Settings::default()
         };
-        assert_eq!(draft_problems(&ok, t), Vec::<&str>::new());
+        assert_eq!(
+            draft_problems(&ok, Some(&Settings::default()), t),
+            Vec::<&str>::new()
+        );
 
         let file = dir.path().join("file.txt");
         std::fs::write(&file, b"x").unwrap();
@@ -1747,9 +1785,24 @@ mod tests {
             par2_path: dir.path().join("nope.exe").display().to_string(),
             ..Settings::default()
         };
+        let before = Settings::default();
         assert_eq!(
-            draft_problems(&bad, t),
+            draft_problems(&bad, Some(&before), t),
             vec![t.problem_watch_dir, t.problem_dest_not_dir, t.problem_par2]
+        );
+        assert!(!watch_dir_unavailable(&bad, Some(&before)));
+
+        // Already set before the window opened (drive unplugged since): saving
+        // the other settings stays possible, with a warning.
+        assert_eq!(draft_problems(&bad, Some(&bad), t), vec![t.problem_dest_not_dir]);
+        assert!(watch_dir_unavailable(&bad, Some(&bad)));
+        let padded = Settings {
+            watch_dir: format!("  {}  ", bad.watch_dir),
+            ..bad.clone()
+        };
+        assert_eq!(
+            draft_problems(&padded, Some(&bad), t),
+            vec![t.problem_dest_not_dir]
         );
     }
 }

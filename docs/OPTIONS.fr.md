@@ -28,7 +28,7 @@ Tes réglages ne sont jamais perdus en silence :
 
 La fenêtre des réglages a trois pages : **Général** (dossiers, délais, langue, thème, mises à jour), **Traitement** (comportement, nettoyage, mots de passe) et **Fenêtre**. Elle s'ouvre avec **Réglages** ou **Ctrl+,**.
 
-- **Enregistrer** est désactivé tant qu'une valeur est fausse ; le problème s'affiche juste au-dessus (dossier surveillé inexistant, destination qui est un fichier ou où l'on ne peut pas écrire, chemin de `par2.exe` sans fichier). Une destination qui n'existe pas encore est acceptée : elle est créée à la première extraction.
+- **Enregistrer** est désactivé tant qu'une valeur est fausse ; le problème s'affiche juste au-dessus (dossier surveillé inexistant, destination qui est un fichier ou où l'on ne peut pas écrire, chemin de `par2.exe` sans fichier). Une destination qui n'existe pas encore est acceptée : elle est créée à la première extraction. Un dossier surveillé ou un `par2.exe` déjà réglé avant l'ouverture de la fenêtre et introuvable pour l'instant (disque débranché, partage réseau hors ligne) ne donne qu'un avertissement : les autres réglages peuvent toujours être enregistrés.
 - **Annuler**, le ✕ de la fenêtre et **Échap** la ferment ; s'il y a des modifications non enregistrées, ils demandent d'abord **Abandonner tes modifications ?** (**Abandonner** ou **Continuer**).
 
 ![Fenêtre des réglages, page Général](screenshots/settings-fr-light.png)

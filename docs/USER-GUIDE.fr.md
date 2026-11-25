@@ -117,7 +117,7 @@ Si le Gestionnaire d'identifiants ne peut pas être utilisé, les mots de passe 
 
 ## 6. Réglages
 
-**⚙ Réglages** ouvre une fenêtre à trois pages. Rien ne change tant que tu n'as pas cliqué sur **Enregistrer** ; **Enregistrer** est désactivé, avec la raison affichée juste au-dessus, tant qu'une valeur est incorrecte (un dossier qui n'existe pas, par exemple).
+**⚙ Réglages** ouvre une fenêtre à trois pages. Rien ne change tant que tu n'as pas cliqué sur **Enregistrer** ; **Enregistrer** est désactivé, avec la raison affichée juste au-dessus, tant qu'une valeur est incorrecte (un dossier qui n'existe pas, par exemple). Un dossier surveillé seulement indisponible pour l'instant (disque débranché) ne le bloque pas : un avertissement s'affiche et les autres réglages peuvent quand même être enregistrés.
 
 **Général** : dossiers, `par2.exe`, délais, langue et thème.
 

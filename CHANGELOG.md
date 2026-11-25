@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Fixed
+
+- The settings could not be saved while the watched folder was unavailable (drive unplugged, network share offline), so no other option could be changed. A watched folder or `par2.exe` set before the settings window opened now only gives a warning; one typed in the window must still exist.
+
 ## [1.5.0] - 2026-11-25
 
 An optional update check, off by default: Rar N Rush can tell you when a new version is out.

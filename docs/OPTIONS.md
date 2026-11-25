@@ -28,7 +28,7 @@ Your settings are never silently lost:
 
 The settings window has three pages: **General** (folders, timing, language, theme, updates), **Processing** (behaviour, clean-up, passwords) and **Window**. It opens with **Settings** or **Ctrl+,**.
 
-- **Save** is disabled while a value is wrong; the problem is shown just above it (watched folder that does not exist, destination that is a file or cannot be written to, `par2.exe` path with no file). A destination that does not exist yet is fine: it is created at the first extraction.
+- **Save** is disabled while a value is wrong; the problem is shown just above it (watched folder that does not exist, destination that is a file or cannot be written to, `par2.exe` path with no file). A destination that does not exist yet is fine: it is created at the first extraction. A watched folder or `par2.exe` that was already set before the window opened only gives a warning when it cannot be found (drive unplugged, network share offline), so the other settings can still be saved.
 - **Cancel**, the window's ✕ and **Esc** close it; with unsaved changes they first ask **Discard your changes?** (**Discard** or **Keep editing**).
 
 ![Settings window, General page](screenshots/settings-en-light.png)
