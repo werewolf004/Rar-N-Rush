@@ -6,6 +6,10 @@ Toutes les modifications notables du projet sont documentées ici. Le format sui
 
 ## [Non publié]
 
+## [1.5.1] - 2026-11-26
+
+Les réglages s'enregistrent de nouveau quand le dossier surveillé est indisponible.
+
 ### Corrigé
 
 - Les réglages ne pouvaient pas être enregistrés tant que le dossier surveillé était indisponible (disque débranché, partage réseau hors ligne) : aucune autre option ne pouvait donc être changée. Un dossier surveillé ou un `par2.exe` réglé avant l'ouverture de la fenêtre ne donne plus qu'un avertissement ; celui qu'on saisit dans la fenêtre doit toujours exister.
@@ -220,7 +224,8 @@ Première version publique : toute la chaîne de traitement, des fondations qual
 
 - `#![forbid(unsafe_code)]` sur tout le crate ; `unwrap`, `expect` et `panic` sont interdits hors des tests.
 
-[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.5.0...HEAD
+[Non publié]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.5.1...HEAD
+[1.5.1]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.3.0...v1.4.0

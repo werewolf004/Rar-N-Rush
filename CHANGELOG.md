@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-11-26
+
+The settings can be saved again while the watched folder is unavailable.
+
 ### Fixed
 
 - The settings could not be saved while the watched folder was unavailable (drive unplugged, network share offline), so no other option could be changed. A watched folder or `par2.exe` set before the settings window opened now only gives a warning; one typed in the window must still exist.
@@ -220,7 +224,8 @@ First public version: the complete processing chain, a quality foundation and th
 
 - `#![forbid(unsafe_code)]` on the whole crate; `unwrap`, `expect` and `panic` are denied outside tests.
 
-[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.5.1...HEAD
+[1.5.1]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/werewolf004/Rar-N-Rush/compare/v1.3.0...v1.4.0
